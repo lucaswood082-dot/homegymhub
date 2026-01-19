@@ -1,0 +1,263 @@
+
+
+:root {
+  color-scheme: dark;
+}
+
+/* ===== Reset & Base ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f9fafb;
+  color: #111827;
+}
+
+/* ===== Hero Gradient Banner ===== */
+.threads-hero {
+  width: 100%;
+  padding: 100px 20px 50px; /* slightly taller */
+  background: linear-gradient(135deg, #ff7a00, #1d2a64);
+  color: #fff;
+  text-align: center;
+  border-radius: 0; /* rectangle */
+}
+
+.threads-hero .hero-content {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.threads-hero h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin-bottom: 60px;
+  letter-spacing: -0.02em;
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+/* Subtext under banner title */
+.threads-hero p {
+  font-size: 1.15rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 6px;
+  animation: fadeInUp 0.6s ease 0.2s forwards;
+}
+
+/* ===== Main Section ===== */
+.threads-main {
+  max-width: 900px;
+  margin: -50px auto 60px; /* overlap under banner */
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 40px 30px 60px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.051);
+}
+
+/* ===== Post Reply Form ===== */
+.reply-post-section {
+  margin-bottom: 40px;
+}
+
+.reply-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reply-form textarea {
+  padding: 16px 14px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  font-size: 1rem;
+  min-height: 90px;
+  resize: vertical;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reply-form textarea:focus {
+  outline: none;
+  border-color: #ff7a00;
+  box-shadow: 0 0 8px rgba(255,122,0,0.3);
+}
+
+.reply-form .btn.primary {
+  align-self: flex-start;
+  padding: 10px 24px;
+  font-weight: 600;
+  border-radius: 10px;
+  background: #ff7a00;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.reply-form .btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255,122,0,0.35);
+}
+
+/* ===== Replies Feed ===== */
+.replies-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.reply-card {
+  position: relative;
+  padding: 18px 22px;
+  border-radius: 14px;
+  background: #f3f4f6;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+  border-left: 6px solid #ff7a00;
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.reply-card p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #111827;
+}
+
+.reply-date {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 8px;
+  text-align: right;
+}
+
+/* ===== Empty & Error States ===== */
+.empty-msg,
+.error-msg {
+  font-size: 1rem;
+  color: #6b7280;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* ===== Animations ===== */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  .threads-hero {
+    padding: 100px 16px 40px;
+  }
+
+  .threads-hero h1 {
+    font-size: 2.2rem;
+  }
+
+  .threads-main {
+    margin: -40px 16px 40px;
+    padding: 30px 20px 40px;
+  }
+
+  .reply-form textarea {
+    min-height: 70px;
+  }
+
+  .reply-card {
+    padding: 14px 16px;
+  }
+}
+/* Back Button */
+.back-btn {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+  
+  .back-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+  }
+/* THREADS DETAIL — SUPABASE REPLY BOX WITH ORANGE GLOW */
+textarea,
+input,
+.supabase-reply-box,
+.supabase-reply-box * {
+  background-color: #ffffff !important;      /* clean white */
+  color: #111111 !important;                /* dark text */
+  border: 1px solid #d1d5db !important;     /* subtle light gray border */
+  border-radius: 12px !important;           /* nice rounded edges */
+  padding: 10px 14px !important;            /* comfortable padding */
+  box-sizing: border-box !important;        /* ensures proper sizing */
+  font-size: 15px !important;               /* readable text */
+  line-height: 1.4 !important;              /* spacing inside box */
+  width: 100% !important;                   /* full width */
+  outline: none !important;                 /* remove default outline */
+  transition: border 0.2s ease, box-shadow 0.2s ease; /* smooth hover/focus */
+}
+
+/* Focus: orange border + glow effect */
+textarea:focus,
+input:focus,
+.supabase-reply-box:focus,
+.supabase-reply-box *:focus {
+  border-color: #f97316 !important;           /* your orange */
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.5) !important; /* subtle orange glow */
+}
+
+/* Placeholder color */
+textarea::placeholder,
+input::placeholder,
+.supabase-reply-box ::placeholder {
+  color: #9ca3af !important;
+}
+/* THREADS DETAIL — PAGE CONTENT WHITE, RUBBERBAND ORANGE */
+
+/* Wrap your entire content in a container if not already */
+.threads-wrapper {
+  position: relative;
+  background-color: #ffffff; /* keeps page content white */
+  z-index: 1;
+}
+
+/* Create an “overscroll background” behind the wrapper */
+.threads-wrapper::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #ff7a00; /* orange overscroll */
+  z-index: 0; /* behind everything */
+  pointer-events: none; /* doesn’t block clicks */
+}
+/* THREADS DETAIL — STOP TOP AND BOTTOM OVERSCROLL */
+html, body {
+  overscroll-behavior: none;  /* disables rubber-band / pull-down overscroll */
+  touch-action: pan-x pan-y;  /* allows normal scrolling without overscroll */
+}
+

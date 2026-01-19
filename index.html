@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HomeGymHub</title>
+  <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="darkmode.css">
+</head> 
+
+<head>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+</head>
+
+<body>
+
+<div id="page-wrapper">
+
+  <!-- NAVIGATION -->
+  <header class="nav">
+    <div class="nav-inner">
+      <div class="brand">HomeGymHub</div>
+      <nav class="nav-links">
+        <a href="#modules">Modules</a>
+        <a href="#about">About</a>
+      </nav>
+<!-- Index page login button -->
+<div class="auth-actions">
+  <button id="loginBtn">Log In</button>
+  <button id="accountBtn" onclick="window.location.href='account.html'">Account</button>
+  <button id="logoutBtn" style="display:none;">Log Out</button>
+</div>
+
+<script>
+  document.getElementById("loginBtn").addEventListener("click", () => {
+    // Redirect to your login page
+    window.location.href = "auth.html";
+  });
+</script>
+
+      
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-gradient"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">Your Home Gym, Connected</h1>
+      <p class="hero-subtitle">
+        Plan, explore, and share your home gym setups seamlessly.
+      </p>
+      <div class="hero-actions">
+        <button class="btn primary" data-target="builder.html">Open Planner</button>
+        <button class="btn ghost" data-target="marketplace.html">Marketplace</button>
+        <button class="btn ghost" data-target="threads.html">Community</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- HUB MODULES -->
+  <section class="section" id="modules">
+    <div class="section-inner">
+      <h2>Hub Modules</h2>
+      <p class="section-subtitle">Everything you need for your home gym in one centralized hub.</p>
+      <div class="module-grid">
+        <div class="module-card">
+          <h3>Gym Planner</h3>
+          <p>Design your home gym at scale with precise placement tools.</p>
+          <button class="btn subtle" data-target="builder.html">Launch Planner</button>
+        </div>
+        <div class="module-card">
+          <h3>Marketplace</h3>
+          <p>Browse equipment and see how it fits before you buy.</p>
+          <button class="btn subtle" data-target="marketplace.html">Explore Marketplace</button>
+        </div>
+        <div class="module-card">
+          <h3>Community</h3>
+          <p>Share setups, get feedback, and learn from others.</p>
+          <button class="btn subtle" data-target="threads.html">Open Community</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEFT TEXT -->
+<div class="hero-text">
+  <h1>Build the Perfect Home Gym</h1>
+  <p>
+    Explore a realistic 3D layout of a budget-friendly home gym.
+    Rotate, zoom, and inspect every detail to see how everything fits together.
+  </p>
+</div>
+
+<!-- RIGHT 3D MODEL -->
+<model-viewer src="home-gym.glb"
+  camera-controls
+  disable-auto-rotate
+  shadow-intensity="0.4"
+  exposure="0.9"
+  environment-image="neutral"
+  style="width: 600px; height: 500px;"
+></model-viewer>
+
+
+  <!-- ABOUT SECTION -->
+  <section class="section about" id="about">
+    <div class="section-inner narrow">
+      <h2>About HomeGymHub</h2>
+      <p>
+        HomeGymHub centralises planning, shopping, and community engagement for home gyms.
+        Everything you need to design, purchase, and discuss your gym setup is in one place.
+        Anything from designing a home gym, to meeting new people, HomeGymHub offers it all.
+          Constantly evolving, ascending, and collaborating on new ideas.
+        </p>
+        
+      </p>
+      <p>
+        Professional, clean design with intuitive tools lets you focus on building your ideal home gym.
+      </p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    © 2026 HomeGymHub
+  </footer>
+
+</div>
+
+<script>
+
+  
+  // Page fade-out for navigation
+  const buttons = document.querySelectorAll(".btn[data-target]");
+  const pageWrapper = document.getElementById("page-wrapper");
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.getAttribute("data-target");
+      pageWrapper.style.opacity = "0";
+      setTimeout(() => window.location.href = target, 250);
+    });
+  });
+
+  // Scroll animations for module cards
+  const moduleCards = document.querySelectorAll(".module-card");
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        entry.target.classList.add("animate-card");
+      }
+    });
+  }, {threshold: 0.3});
+
+  moduleCards.forEach(card => observer.observe(card));
+
+
+  
+</script>
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+  
+  const supabase = createClient(
+    "https://nqomiajgtmxxsupjgvvu.supabase.co",
+    "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA"
+  );
+  
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const accountBtn = document.getElementById("accountBtn");
+  
+  /* Navigate */
+  loginBtn?.addEventListener("click", () => {
+    window.location.href = "auth.html";
+  });
+  
+  accountBtn?.addEventListener("click", () => {
+  });
+  
+  /* Log out */
+  logoutBtn?.addEventListener("click", async () => {
+    await supabase.auth.signOut();
+  });
+  
+  /* AUTH STATE HANDLER */
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (session?.user) {
+      loginBtn.style.display = "none";
+      logoutBtn.style.display = "inline-block";
+      accountBtn.style.display = "inline-block";
+    } else {
+      loginBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+      accountBtn.style.display = "none";
+    }
+  });
+  
+  /* Initial load check */
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (session?.user) {
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+    accountBtn.style.display = "inline-block";
+  }
+  
+  </script>
+  
+  <script>
+    const darkToggle = document.getElementById("darkToggle");
+
+// Load saved preference
+if (localStorage.getItem("darkMode") === "true") {
+  document.body.classList.add("dark-mode");
+}
+
+  </script>
+</body>
+
+</html>

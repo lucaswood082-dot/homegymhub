@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Gym 3D</title>
+  
+  <!-- Model Viewer -->
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #0f172a;
+      color: white;
+    }
+
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px;
+      gap: 40px;
+    }
+
+    .hero-text {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .hero-text h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+
+    .hero-text p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    model-viewer {
+      flex: 1;
+      min-width: 300px;
+      width: 600px;
+      height: 500px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Build the Perfect Home Gym</h1>
+      <p>
+        Explore a realistic 3D layout of a budget-friendly home gym.
+        Rotate, zoom, and inspect every detail to see how everything fits together.
+      </p>
+    </div>
+
+    <model-viewer
+      src="home-gym.glb"
+      camera-controls
+      disable-auto-rotate
+      shadow-intensity="0.4"
+      exposure="0.9"
+      environment-image="neutral"
+    ></model-viewer>
+  </section>
+
+</body>
+</html>

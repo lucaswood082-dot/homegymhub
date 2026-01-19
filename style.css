@@ -1,0 +1,1300 @@
+:root {
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --border: #e5e7eb;
+
+  --accent: #f97316;      /* ORANGE */
+  --accent-soft: #ffedd5;
+
+  --text: #111827;
+  --muted: #6b7280;
+}
+
+
+/* ================= RESET ================= */
+
+* {
+  box-sizing: border-box;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+  overflow: hidden; /* 🔒 hard lock layout */
+}
+
+/* ================= HEADER ================= */
+
+.header {
+  height: 72px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 28px;
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.5px;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ================= CONTROLS ================= */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+}
+
+.header-tool {
+  display: flex;
+  align-items: center;
+}
+
+.tool-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #f9fafb;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.tool-icon-btn:hover {
+  background: #eef2ff;
+  border-color: var(--accent);
+}
+
+/* 🔒 FORCE IDENTICAL INPUT SIZES */
+.field {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.field input {
+  width: 76px;
+  height: 34px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* ================= SNAP ================= */
+
+.snap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 40px;
+  border-radius: 999px;
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.snap::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  width: 22px;
+  height: 12px;
+  background: #d1d5db;
+  border-radius: 999px;
+  transition: background 0.25s ease;
+}
+
+.snap .knob {
+  position: absolute;
+  left: 11px;
+  width: 10px;
+  height: 10px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  transition: transform 0.25s ease;
+}
+
+.snap.active::before {
+  background: var(--accent);
+}
+
+.snap.active .knob {
+  transform: translateX(10px);
+}
+
+/* ================= SCALE BUTTON ================= */
+
+#applyScale {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ================= MAIN LAYOUT ================= */
+
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  overflow: hidden;
+
+  /* 🔒 NEW: isolate layout recalculation */
+  contain: layout size;
+}
+
+/* ================= GRID ================= */
+
+.canvas-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #e5e7eb;
+  overflow: hidden;
+  min-width: 0;
+
+  /* 🔒 NEW: grid immune to sibling changes */
+  contain: layout paint size;
+}
+
+#grid {
+  width: 900px;
+  height: 360px;
+  background:
+    linear-gradient(to right, #e5e7eb 1px, transparent 1px),
+    linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-color: #ffffff;
+  border: 2px solid #111;
+  position: relative;
+
+  flex-shrink: 0;
+  flex-grow: 0;
+
+  /* 🔒 NEW: absolute physical lock */
+  transform: translateZ(0);
+}
+
+/* ================= EQUIPMENT ================= */
+
+.equipment {
+  position: absolute;
+  background: rgba(37, 99, 235, 0.12);
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+  cursor: move;
+}
+
+.label {
+  font-size: 11px;
+  text-align: center;
+  padding: 2px;
+  pointer-events: none;
+}
+
+.rotate {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ================= SEARCH ================= */
+
+.search {
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  flex-shrink: 0;
+
+  /* 🔒 NEW: sidebar cannot affect grid */
+  contain: layout paint;
+}
+
+.search input {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+#results {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #f9fafb;
+  cursor: grab;
+}
+
+.result:hover {
+  background: #eef2ff;
+  border-color: var(--accent);
+}
+
+/* ================= TOOL MODAL ================= */
+
+.tool-modal {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  min-height: 200px;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  z-index: 100;
+}
+
+.hidden {
+  display: none;
+}
+
+/* ================= INSPECTOR OFF ================= */
+
+.inspector {
+  display: none !important;
+}
+/* ===============================
+   HARD GRID FREEZE (FINAL)
+================================ */
+
+/* Stop vertical recentering caused by sidebar height changes */
+.canvas-wrap {
+  align-items: flex-start !important;
+  padding-top: calc((100vh - 72px - 360px) / 2);
+}
+
+/* Absolute guarantee grid never participates in layout shifts */
+#grid {
+  will-change: transform;
+}
+
+/* Lock sidebar scroll instead of layout growth */
+#results {
+  min-height: 0 !important;
+}
+/* ===============================
+   TOOL OVERLAY + PANEL (CSS ONLY)
+================================ */
+
+/* Dark overlay behind the modal */
+.tool-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 90;
+}
+
+/* Tool modal panel */
+.tool-modal {
+  position: fixed;
+  top: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 360px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  padding: 18px;
+  z-index: 100;
+}
+
+/* Modal title */
+.tool-modal h3 {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Button grid */
+.tool-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* Tool buttons */
+.tool-action {
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #f9fafb;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.tool-action:hover {
+  background: #eef2ff;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Icon inside button (optional) */
+.tool-action span {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+/* Hide helper */
+.hidden {
+  display: none !important;
+}
+/* ===============================
+   TOOL PANEL – SEARCH STYLE
+================================ */
+
+.tool-modal {
+  position: fixed;
+  top: 90px;
+  right: 32px;
+
+  width: 360px;
+  max-height: 70vh;
+
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  z-index: 1000;
+}
+
+/* hide old buttons visually */
+.tool-actions,
+.tool-action {
+  display: none !important;
+}
+
+/* title */
+.tool-modal h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #222;
+}
+
+/* search input (matches equipment search style) */
+.tool-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  outline: none;
+}
+
+.tool-modal input:focus {
+  border-color: #000;
+}
+
+
+/* hidden state */
+.tool-modal.hidden {
+  display: none;
+}
+/* ===============================
+   TOOL POPUP SEARCH – MATCH MAIN UI
+================================ */
+
+#toolModal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* tighter than before */
+}
+
+/* popup search input */
+#toolModal input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+/* results container */
+#structureResults {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* LESS SPACE BETWEEN ITEMS */
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.grid-item {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.grid-item .label {
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 4px 6px;
+  max-width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.grid-item:hover .label {
+  white-space: normal;
+  background: rgba(255,255,255,0.9);
+  z-index: 10;
+}
+.item-popup {
+  position: fixed;
+  top: 120px;
+  right: 24px;
+  width: 280px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  padding: 14px;
+  z-index: 1000;
+}
+
+.item-popup.hidden {
+  display: none;
+}
+
+.item-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.item-popup-header button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.item-popup-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item-popup-body label {
+  font-size: 12px;
+  color: #374151;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-popup-body input,
+.item-popup-body textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 13px;
+}
+.info-panel {
+  position: fixed;
+  width: 220px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  padding: 10px;
+  font-size: 13px;
+  z-index: 1000;
+}
+
+.info-panel.hidden {
+  display: none;
+}
+
+.info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.info-header button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.info-header button:hover {
+  opacity: 1;
+}
+
+.info-row {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 6px;
+}
+
+.info-row label {
+  font-size: 11px;
+  opacity: 0.6;
+  margin-bottom: 2px;
+}
+
+.info-row input,
+.info-row textarea {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 5px 6px;
+  font-size: 12px;
+  resize: none;
+}
+
+.info-row textarea {
+  height: 48px;
+}
+.equipment .lock {
+  position: absolute;
+  top: 6px;
+  left: 6px; /* rotate is likely right */
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.equipment.locked {
+  outline: 2px dashed #bbb;
+}
+#structureResults {
+  max-height: 260px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+/* ==============================
+   TOOL PANEL (STRUCTURES)
+============================== */
+
+.tool-modal {
+  position: absolute;
+  top: 64px;
+  right: 16px;
+  width: 350px; /* MAKE PANEL WIDEER */
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  padding: 12px;
+  z-index: 50;
+}
+
+.tool-modal h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+#structureSearch {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+#structureResults {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Base result size (equipment search) */
+.result {
+  min-height: 44px;          /* ← adjust this */
+  display: flex;
+  align-items: center;
+}
+/* ======================================
+   STRUCTURE SEARCH – COMPACT MODE ONLY
+====================================== */
+
+/* move list closer to top */
+#structureResults {
+  margin-top: -6px;
+}
+
+/* slightly smaller items */
+#structureResults .result {
+  min-height: 36px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+/* lock button */
+.equipment .lock {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+
+  font-size: 13px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+/* show lock only on hover */
+.equipment:hover .lock {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* hover feedback */
+.equipment .lock:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #b91c1c;
+}
+/* LOCKED STATE — RED REPLACES BLUE */
+.equipment.locked {
+  border-color: #ef4444;      /* override blue */
+  background: rgba(239, 68, 68, 0.08);
+}
+/* REMOVE BROWSER FOCUS / DRAG OUTLINES */
+.equipment,
+.equipment:focus,
+.equipment:focus-visible,
+.equipment:active {
+  outline: none !important;
+}
+.equipment {
+  user-select: none;
+}
+/* PREVENT TEXT SELECTION ON DRAG / CLICK */
+.equipment,
+.equipment * {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+/* also prevent drag ghost images */
+.equipment {
+  -webkit-user-drag: none;
+}
+.logo-btn {
+  width: 44px;        /* was 36px */
+  height: 44px;       /* was 36px */
+  border-radius: 12px; /* scales nicely */
+
+  background: #fff;
+  border: 1px solid var(--border);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-decoration: none;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+
+.logo-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+/* HG letters */
+.logo-h {
+  color: #111827;
+}
+
+.logo-g {
+  color: var(--accent); /* ORANGE G */
+}
+.logo-btn:hover {
+  transform: translateY(-1px);
+}
+.logo-h,
+.logo-g {
+  font-size: 18px; /* was ~14px */
+  line-height: 1;
+}
+.custom-shape-panel {
+  position: fixed;
+  top: 96px;
+  right: 24px;
+  width: 360px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 1100;
+}
+.shape-mode {
+  display: flex;
+  gap: 6px;
+}
+
+.shape-tab {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #f9fafb;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.shape-tab.active {
+  background: #eef2ff;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.shape-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shape-section label {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shape-section input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 13px;
+}
+.draw-canvas {
+  height: 180px;
+  border-radius: 10px;
+  border: 2px dashed #d1d5db;
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #6b7280;
+  user-select: none;
+}
+.shape-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cancel-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+.done-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+.hidden {
+  display: none !important;
+}
+
+.tool-action.full {
+  width: 100%;
+}
+/* Re-enable tool buttons inside tool modal only */
+#toolModal .tool-action {
+  display: flex !important;
+}
+.header-btn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #f9fafb;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-btn:hover {
+  background: #eef2ff;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.custom-shape-panel {
+  position: fixed;
+  top: 64px;
+  right: 150px;
+  width: 400px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  z-index: 1000;
+}
+#drawLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+#freeDrawArea {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  border: 1px dashed #555;
+  border-radius: 6px;
+  background: #0f0f0f;
+}
+
+#freeDrawCanvas {
+  width: 100%;
+  height: 100%;
+}
+#freeDrawArea {
+  width: 100%;
+  height: 220px;
+  border: 1px dashed #444;
+  margin-top: 10px;
+}
+
+#freeDrawCanvas {
+  width: 100%;
+  height: 100%;
+}
+#freeDrawCanvas {
+  position: absolute;
+  inset: 0;
+  z-index: 999;
+  pointer-events: auto;
+  background: transparent;
+}
+#freeDrawArea {
+  position: relative;
+}
+#freeDrawArea {
+  position: relative;
+  height: 220px;
+}
+
+#freeDrawCanvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  touch-action: none;
+}
+/* ================================
+   TOAST NOTIFICATION
+================================ */
+
+#toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+
+  background: rgba(20, 20, 20, 0.92);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 14px;
+
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+  z-index: 9999;
+}
+
+/* visible */
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* hidden helper */
+#toast.hidden {
+  display: none;
+}
+/* hover = lift */
+#applyScale:hover {
+  transform: translateY(-1px) scale(1.03);
+}
+
+/* active = press */
+#applyScale:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+/* focus (keyboard / accessibility) */
+#applyScale:focus-visible {
+  outline: none;
+}
+
+/* hover = lift */
+#toolButton:hover {
+  transform: translateY(-1px) scale(1.03);
+}
+
+/* active = press */
+#toolButton:active {
+  transform: translateY(2px) scale(0.96);
+}
+/* ================================
+   CUSTOM SHAPE BUTTON
+================================ */
+/* hover = lift */
+#customShapeToggle:hover {
+  transform: translateY(-1px) scale(1.03);
+}
+
+/* active = press */
+#customShapeToggle:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+/* focus (keyboard / accessibility) */
+#customShapeToggle:focus-visible {
+  outline: none;
+}
+
+/* hover = lift */
+#customShapeToggle:hover {
+  transform: translateY(-1px) scale(1.03);
+}
+
+/* active = press */
+#customShapeToggle:active {
+  transform: translateY(2px) scale(0.96);
+}
+button:active {
+  animation: pressPop 0.14s ease;
+}
+
+@keyframes pressPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+.shape-section {
+  animation: tabFadeIn 0.16s ease;
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+#freeDrawCanvas {
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+#freeDrawCanvas:active {
+  box-shadow:
+    0 0 0 2px rgba(0,255,136,0.3),
+    inset 0 0 10px rgba(0,255,136,0.15);
+}
+.equipment {
+  animation: spawnIn 0.18s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes spawnIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.equipment.locked {
+  animation: lockPulse 0.18s ease;
+}
+
+@keyframes lockPulse {
+  0%   { box-shadow: 0 0 0 rgba(0,255,136,0); }
+  100% { box-shadow: 0 0 0 rgba(0,255,136,0); }
+}
+.toast {
+  animation: toastIn 0.25s cubic-bezier(.2,.8,.2,1),
+             toastOut 0.2s ease 2.2s forwards;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastOut {
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+}
+.equipment {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.equipment.dragging {
+  transform: scale(1.03);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  z-index: 999;
+}
+.equipment:active {
+  cursor: grabbing;
+  transform: scale(1.01);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.35);
+}
+.rotate {
+  animation: rotateHint 2.5s ease-in-out infinite;
+}
+
+@keyframes rotateHint {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+.result {
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.result:hover {
+  transform: translateX(6px);
+  background: rgba(255,255,255,0.08);
+}
+button {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background-color 0.12s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+
+button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+}
+button:focus:not(:focus-visible),
+.equipment .lock:focus:not(:focus-visible),
+.equipment .rotate:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+.locked {
+  transition: opacity 0.15s ease;
+  opacity: 0.65;
+}
+header {
+  position: relative;
+  z-index: 99999;
+}
+/* Push floating panels down below header */
+.tool-modal,
+.custom-shape-panel {
+  top: 83px; /* adjust this number */
+}
+
+.hidden { display: none; }
+
+#confirmToast {
+    position: fixed;
+    bottom: 30px;
+    right: 20px;
+    background: #333;
+    color: white;
+    padding: 20px 30px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+    font-family: Inter, system-ui, sans-serif;
+}
+
+#confirmToast button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: Inter, system-ui, sans-serif;
+}
+
+#confirmYes { background-color: #4CAF50; color: white; }
+#confirmNo { background-color: #f44336; color: white; }
+
+#confirmToast {
+  width: 315px; /* or auto */
+  height: 200px;
+}
+#confirmToast {
+    background: #fff; /* white background matches your clean UI */
+    color: #333;      /* dark text for readability */
+}
+#confirmYes {
+  background-color: #FF7A00; /* orange to match your accent color */
+  color: white;               /* text stands out */
+}
+
+#confirmNo {
+  background-color: rgb(244, 242, 242); /* light neutral to blend with white UI */
+  color: #FF7A00;            /* same accent color for text */
+}
+#confirmToast {
+  border-radius: 12px;                  /* soft edges */
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15); /* soft floating shadow */
+}
+@keyframes pulse {
+  0% { transform: translateY(-10px) scale(0.95); }
+  50% { transform: translateY(-5px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+#confirmToast.show {
+  animation: pulse 0.3s ease forwards;
+}

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" style="background: linear-gradient(135deg, #1e3a8a, #f97316);">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community – HomeGymHub</title>
+  
+  <!-- INLINE CRITICAL STYLES - BEFORE ANY EXTERNAL CSS -->
+  <style>
+    /* This executes IMMEDIATELY - no white flash possible */
+    html {
+      background: linear-gradient(135deg, #1e3a8a, #f97316);
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      min-height: 100vh;
+    }
+  </style>
+  
+  <link rel="stylesheet" href="threads.css">
+  <link rel="stylesheet" href="darkmode.css">
+</head>
+<body>
+
+  <button class="back-btn" onclick="window.location.href='index.html'">← Back</button>
+
+<!-- Hero Gradient -->
+<header class="threads-hero">
+  <div class="hero-content">
+    <h1>Community</h1>
+    <p>Share setups, ask questions, and learn from others</p>
+  </div>
+</header>
+
+<main class="threads-main">
+  <section class="threads-feed-section">
+    <div id="threadsFeed" class="threads-feed">
+      <!-- Main threads will appear here -->
+    </div>
+  </section>
+</main>
+
+<!-- Supabase -->
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const supabase = createClient(
+  "https://nqomiajgtmxxsupjgvvu.supabase.co",
+  "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA",
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  }
+);
+
+  const threadsFeed = document.getElementById("threadsFeed");
+
+  async function loadThreads() {
+    const { data, error } = await supabase
+      .from("main_threads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      threadsFeed.innerHTML = "<p class='error-msg'>Error loading threads</p>";
+      console.error(error);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      threadsFeed.innerHTML = "<p class='empty-msg'>No threads yet. Add some!</p>";
+      return;
+    }
+
+    threadsFeed.innerHTML = data.map(thread => `
+      <div class="thread-card" data-thread-id="${thread.id}">
+        <h3 class="thread-title">${thread.title}</h3>
+        <p class="thread-body">${thread.body || ''}</p>
+      </div>
+    `).join("");
+
+    // Add click event to navigate to thread detail
+    document.querySelectorAll(".thread-card").forEach(card => {
+      card.addEventListener("click", () => {
+        const id = card.dataset.threadId;
+        window.location.href = `thread_detail.html?thread_id=${id}`;
+      });
+    });
+  }
+
+  loadThreads();
+</script>
+
+</body>
+</html>

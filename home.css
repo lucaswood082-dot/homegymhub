@@ -1,0 +1,233 @@
+
+html, body {
+  overflow-x: hidden;
+}
+/* RESET */
+* {margin:0;padding:0;box-sizing:border-box;}
+html {scroll-behavior:smooth;}
+body {font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f8fafc;color:#0f172a;transition:background 0.3s,color 0.3s;}
+:root{
+  --blue:#0f2d57;
+  --orange:#f97316;
+  --muted:#64748b;
+  --border:#e5e7eb;
+}
+
+/* PAGE WRAPPER */
+#page-wrapper{opacity:1;transition:opacity 0.25s ease-in;}
+
+/* NAVIGATION */
+.nav{position:sticky;top:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);z-index:10;}
+.nav-inner{max-width:1200px;margin:auto;padding:18px 32px;display:flex;align-items:center;justify-content:space-between;}
+.brand{font-weight:700;font-size:1.2rem;}
+.nav-links a{margin:0 14px;text-decoration:none;color:var(--muted);font-weight:500;transition:color 0.2s;}
+.nav-links a:hover{color:var(--blue);}
+.login-btn{background:var(--blue);color:white;border:none;padding:10px 18px;border-radius:12px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(11,31,59,0.25);}
+
+/* HERO */
+.hero{position:relative;padding:140px 32px 120px;text-align:center;overflow:hidden;}
+.hero-gradient{position:absolute;inset:0;background:linear-gradient(135deg,var(--blue),var(--orange));opacity:0.9;z-index:0;}
+.hero-content{position:relative;max-width:760px;margin:auto;color:white;}
+.hero-title{font-size:3rem;font-weight:700;line-height:1.1;margin-bottom:20px;opacity:0;transform:translateY(15px);animation:fadeUp 0.6s ease forwards;}
+.hero-subtitle{font-size:1.15rem;opacity:0.9;margin-bottom:36px;animation:fadeUp 0.6s ease forwards 0.2s;}
+.hero-actions{display:flex;justify-content:center;gap:14px;opacity:0;transform:translateY(8px);animation:fadeUp 0.6s ease forwards 0.4s;}
+
+/* BUTTONS */
+.btn{border-radius:12px;padding:14px 26px;font-weight:600;cursor:pointer;border:none;transition:all 0.2s;}
+.btn.primary{background:white;color:var(--blue);}
+.btn.primary:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 12px 30px rgba(0,0,0,0.18);}
+.btn.ghost{background:transparent;color:white;border:1px solid rgba(255,255,255,0.6);}
+.btn.ghost:hover{background:rgba(255,255,255,0.12);transform:scale(1.02);}
+.btn.subtle{background:none;color:var(--orange);padding:0;}
+.btn.subtle:hover{opacity:0.8;transform:translateX(2px);}
+
+/* SECTIONS */
+.section{padding:100px 32px;}
+.section-inner{max-width:1100px;margin:auto;}
+.section-inner.narrow{max-width:720px;}
+h2{font-size:2.2rem;margin-bottom:12px;}
+.section-subtitle{color:var(--muted);margin-bottom:40px;}
+
+/* MODULE CARDS */
+.module-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;}
+.module-card{background:white;border-radius:18px;padding:32px;border:1px solid var(--border);opacity:0;transform:translateY(20px);transition:transform 0.25s,box-shadow 0.25s,opacity 0.3s;}
+.module-card.animate-card{opacity:1;transform:translateY(0);}
+.module-card:hover{transform:translateY(-6px) scale(1.01);box-shadow:0 20px 46px rgba(0,0,0,0.08);}
+.module-card h3{margin-bottom:8px;}
+.module-card p{color:var(--muted);margin-bottom:20px;}
+
+/* ABOUT */
+.about{background:white;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 32px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.04);opacity:0;transform:translateY(15px);animation:fadeUp 0.6s ease forwards 0.2s;}
+
+/* FOOTER */
+.footer{padding:40px;text-align:center;font-size:0.85rem;color:var(--muted);}
+
+/* ANIMATIONS */
+@keyframes fadeUp{to{opacity:1;transform:translateY(0);}}
+
+/* MOBILE */
+@media (max-width:768px){
+  .nav-links{display:none;}
+  .hero-title{font-size:2.2rem;}
+  .hero-actions{flex-direction:column;}
+  .module-grid{grid-template-columns:1fr;}
+}
+/* 1. Slide Up Fade */
+@keyframes slideUpFade {
+  0% {opacity:0; transform:translateY(20px);}
+  100% {opacity:1; transform:translateY(0);}
+}
+.slideUpFade {animation:slideUpFade 0.6s ease forwards;}
+
+/* 2. Slide Down Fade */
+@keyframes slideDownFade {
+  0% {opacity:0; transform:translateY(-20px);}
+  100% {opacity:1; transform:translateY(0);}
+}
+.slideDownFade {animation:slideDownFade 0.6s ease forwards;}
+
+/* 3. Slide Left Fade */
+@keyframes slideLeftFade {
+  0% {opacity:0; transform:translateX(20px);}
+  100% {opacity:1; transform:translateX(0);}
+}
+.slideLeftFade {animation:slideLeftFade 0.6s ease forwards;}
+
+/* 4. Slide Right Fade */
+@keyframes slideRightFade {
+  0% {opacity:0; transform:translateX(-20px);}
+  100% {opacity:1; transform:translateX(0);}
+}
+.slideRightFade {animation:slideRightFade 0.6s ease forwards;}
+
+/* 5. Bounce In */
+@keyframes bounceIn {
+  0% {opacity:0; transform:scale(0.8);}
+  60% {opacity:1; transform:scale(1.05);}
+  100% {transform:scale(1);}
+}
+.bounceIn {animation:bounceIn 0.5s ease forwards;}
+
+/* 6. Pulse */
+@keyframes pulse {
+  0% {transform:scale(1);}
+  50% {transform:scale(1.03);}
+  100% {transform:scale(1);}
+}
+.pulse:hover {animation:pulse 0.5s ease;}
+
+/* 7. Wiggle */
+@keyframes wiggle {
+  0% {transform:rotate(0deg);}
+  25% {transform:rotate(3deg);}
+  50% {transform:rotate(-3deg);}
+  75% {transform:rotate(2deg);}
+  100% {transform:rotate(0deg);}
+}
+.wiggle:hover {animation:wiggle 0.4s ease;}
+
+/* 8. Fade In */
+@keyframes fadeIn {
+  0% {opacity:0;}
+  100% {opacity:1;}
+}
+.fadeIn {animation:fadeIn 0.6s ease forwards;}
+
+/* 9. Scale Up */
+@keyframes scaleUp {
+  0% {transform:scale(0.9);}
+  100% {transform:scale(1);}
+}
+.scaleUp {animation:scaleUp 0.4s ease forwards;}
+
+/* 10. Skew Pop */
+@keyframes skewPop {
+  0% {transform:skewX(-10deg) scale(0.95); opacity:0;}
+  50% {transform:skewX(5deg) scale(1.05); opacity:1;}
+  100% {transform:skewX(0deg) scale(1);}
+}
+.skewPop {animation:skewPop 0.5s ease forwards;}
+@keyframes glowPulse {
+  0% {box-shadow:0 0 0px rgba(255,151,22,0);}
+  50% {box-shadow:0 0 12px rgba(255,151,22,0.45);}
+  100% {box-shadow:0 0 0px rgba(255,151,22,0);}
+}
+.btn.glow:hover {animation:glowPulse 1s ease infinite;}
+/* ===== Login Button Styling ===== */
+#loginBtn {
+  padding: 8px 20px;                  /* smaller size */
+  font-size: 0.95rem;                 /* smaller text */
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #1e3a8a, #f97316); /* gradient theme */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+  display: inline-block;              /* keeps it in flow, won't move other content */
+}
+
+/* hover lift effect */
+#loginBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+
+/* pressed effect */
+#loginBtn:active {
+  transform: translateY(1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+/* ===== Auth Buttons (Index) ===== */
+.auth-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Shared auth button style */
+.auth-actions button {
+  position: relative;
+  padding: 10px 22px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  color: #ffffff;
+  background: linear-gradient(135deg, #1e3a8a, #f97316);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* Hover lift */
+.auth-actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.22);
+}
+
+/* Active press */
+.auth-actions button:active {
+  transform: translateY(0);
+}
+
+/* Subtle gradient sheen */
+.auth-actions button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 20%,
+    rgba(255,255,255,0.25),
+    transparent 80%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.auth-actions button:hover::after {
+  opacity: 1;
+}

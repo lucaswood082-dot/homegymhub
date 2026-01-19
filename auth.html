@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentication – HomeGymHub</title>
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+
+<button class="back-btn" onclick="history.back()">← Back</button>
+
+<!-- Gradient Hero -->
+<header class="threads-hero auth-hero">
+  <div class="hero-content">
+    <h1>Welcome to HomeGymHub</h1>
+    <p>Create an account or log in to join the community</p>
+  </div>
+</header>
+
+
+<main class="threads-main auth-main">
+
+  <div class="auth-container">
+    <!-- Signup Form -->
+    <form id="signupForm" class="auth-form active">
+      <h2>Sign Up</h2>
+      <input type="email" id="signupEmail" placeholder="Email" required>
+      <input type="password" id="signupPassword" placeholder="Password" required>
+      <button type="submit" class="btn primary">Sign Up</button>
+      <p>Already have an account? <span id="switchToLogin" class="auth-link">Log in</span></p>
+    </form>
+
+    <!-- Login Form -->
+    <form id="loginForm" class="auth-form">
+      <h2>Log In</h2>
+      <input type="email" id="loginEmail" placeholder="Email" required>
+      <input type="password" id="loginPassword" placeholder="Password" required>
+      <button type="submit" class="btn primary">Log In</button>
+      <p>Don't have an account? <span id="switchToSignup" class="auth-link">Sign up</span></p>
+    </form>
+  </div>
+
+</main>
+
+<!-- Toast Container -->
+<div class="toast-container"></div>
+
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+  
+  const supabase = createClient(
+    "https://nqomiajgtmxxsupjgvvu.supabase.co",
+    "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA"
+  );
+  
+  // Elements
+  const signupForm = document.getElementById("signupForm");
+  const loginForm = document.getElementById("loginForm");
+  const switchToLogin = document.getElementById("switchToLogin");
+  const switchToSignup = document.getElementById("switchToSignup");
+  
+  // Toggle forms
+  switchToLogin.addEventListener("click", () => {
+    signupForm.classList.remove("active");
+    loginForm.classList.add("active");
+  });
+  
+  switchToSignup.addEventListener("click", () => {
+    loginForm.classList.remove("active");
+    signupForm.classList.add("active");
+  });
+  
+  // SIGN UP
+  signupForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+  
+    const email = document.getElementById("signupEmail").value.trim();
+    const password = document.getElementById("signupPassword").value.trim();
+  
+    const { error } = await supabase.auth.signUp({
+      email,
+      password
+    });
+  
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("Account created! You can now log in.");
+      signupForm.classList.remove("active");
+      loginForm.classList.add("active");
+    }
+  });
+  
+  
+  // LOG IN
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+  
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+  
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+  
+    if (error) {
+      alert(error.message);
+    } else {
+      window.location.href = "index.html";
+    }
+  });
+
+  /* ===== Professional Custom Toasts ===== */
+(function() {
+  // Create toast container if it doesn't exist
+  let container = document.querySelector(".toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.className = "toast-container";
+    document.body.appendChild(container);
+  }
+
+  // Show toast function
+  window.showToast = function(message, type = "success") {
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    toast.innerHTML = message;
+
+    // Insert at the top of container
+    container.prepend(toast);
+
+    // Animate in
+    toast.style.opacity = 0;
+    toast.style.transform = "translateY(-15px)";
+    requestAnimationFrame(() => {
+      toast.style.transition = "all 0.4s ease";
+      toast.style.opacity = 1;
+      toast.style.transform = "translateY(0)";
+    });
+
+    // Auto remove after 4s
+    setTimeout(() => {
+      toast.style.opacity = 0;
+      toast.style.transform = "translateY(-15px)";
+      setTimeout(() => toast.remove(), 400);
+    }, 4000);
+  };
+
+  // Override default alert
+  window.alert = function(message) {
+    showToast(message, "error");
+  };
+
+  // Optional: override console.error to show as toast
+  const originalError = console.error;
+  console.error = function(...args) {
+    if (args[0] && typeof args[0] === "string") {
+      showToast(args[0], "error");
+    }
+    originalError.apply(console, args);
+  };
+  
+})();
+
+  </script>
+  
+

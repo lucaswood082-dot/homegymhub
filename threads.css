@@ -1,0 +1,217 @@
+
+
+/* ===== Reset ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.new-thread-section {
+  display: none;
+}
+
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #f7f8fa;
+  color: #111827;
+  line-height: 1.6;
+}
+
+/* ===== Hero Gradient ===== */
+.threads-hero {
+  padding: 100px 20px 60px;
+  text-align: center;
+  background: linear-gradient(135deg, #1e3a8a, #f97316);
+  color: #ffffff;
+}
+
+.threads-hero h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  opacity: 0;
+  animation: fadeIn 0.8s forwards;
+}
+
+.threads-hero p {
+  font-size: 1.3rem;
+  opacity: 0;
+  animation: fadeIn 0.8s 0.2s forwards;
+}
+
+/* ===== Main Section ===== */
+.threads-main {
+  max-width: 900px;
+  margin: -50px auto 80px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* ===== Post Thread Form ===== */
+.thread-post-section {
+  background: #ffffff;
+  padding: 28px 32px;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.thread-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.thread-form input,
+.thread-form textarea {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  font-size: 1rem;
+}
+
+.thread-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Smaller Post Button */
+.thread-form .btn.primary {
+  width: fit-content;
+  padding: 12px 28px;
+  background: #f97316;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  border: none; /* removes weird outline */
+}
+
+.thread-form .btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+/* ===== Threads Feed ===== */
+.threads-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ===== Individual Thread Card ===== */
+.thread-card {
+  background: #ffffff;
+  padding: 22px 28px;
+  border-radius: 16px;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.08);
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeUp 0.35s forwards;
+  transition: all 0.25s ease;
+}
+
+
+.thread-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+}
+
+.thread-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.thread-body {
+  font-size: 1rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* ===== Empty/Error Messages ===== */
+.empty-msg,
+.error-msg {
+  text-align: center;
+  padding: 24px;
+  color: #f97316;
+  font-weight: 500;
+  font-size: 1.05rem;
+  background: #fff3ed;
+  border-radius: 12px;
+}
+
+/* ===== Animations ===== */
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .threads-hero h1 { font-size: 2.2rem; }
+  .threads-hero p { font-size: 1rem; }
+  .thread-post-section { padding: 20px; }
+  .thread-form .btn.primary { padding: 10px 22px; font-size: 0.95rem; }
+}
+/* Back Button */
+.back-btn {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+  
+  .back-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+  }
+  /* Flash-prevention overlay background for dark mode */
+body.dark-mode #flash-prevent {
+  background: #1c0f3d !important; /* dark purple for dark mode */
+}
+/* THREADS PAGE — STOP TOP/BOTTOM OVERSCROLL */
+html, body {
+  overscroll-behavior: none;  /* disables top/bottom rubber-band */
+  touch-action: pan-x pan-y;  /* allows normal scrolling without overscroll */
+}
+/* THREADS PAGE — THREAD CARD HOVER GLOW */
+.thread-card {
+  position: relative;
+  background: #ffffff; /* default card background */
+  border-radius: 12px;
+  padding: 18px 22px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+}
+
+.thread-card:hover {
+  transform: translateY(-3px); /* subtle lift */
+  box-shadow: 0 10px 25px rgba(255, 122, 0, 0.35), 0 0 15px rgba(255, 122, 0, 0.2); /* orange glow effect */
+}
+.thread-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.thread-card:hover {
+  transform: scale(1.05); /* slightly bigger */
+  box-shadow: 0 10px 25px rgba(255,122,0,0.35), 0 0 15px rgba(255,122,0,0.2); /* subtle orange glow */
+}

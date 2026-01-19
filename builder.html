@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Home Gym Planner</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="darkmode.css">
+</head>
+
+
+<body class="planner-page">
+
+
+
+  
+<header class="header">
+  <div class="brand">
+    <a href="index.html" class="logo-btn" title="Back to home">
+      <span class="logo-h">H</span><span class="logo-g">G</span>
+    </a>
+    
+    <div>
+      <div class="title">Home Gym Planner</div>
+      <div class="subtitle">True-scale • Locked grid</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="header-tool">
+      <button id="toolButton" class="header-btn" title="Tools">
+       🛌 Structures
+      </button>
+    </div>
+    
+    
+  
+    <button id="customShapeToggle" class="header-btn">
+      ✏️ Shape
+    </button>
+
+    <button id="clearAllBtn" class="header-btn">❌ Clear All</button>
+
+    <div id="confirmToast" class="hidden">
+      <p>Are you sure you want to remove all equipment?</p>
+      <button id="confirmYes">Yes</button>
+      <button id="confirmNo">No</button>
+    </div>
+    
+    
+    
+    <!-- EXPORT STUFF -->
+    <button id="exportBtn" class="header-btn" type="button">⬇ Export</button>
+
+  
+    <div class="field">
+      <label>Width (m)</label>
+      <input id="roomW" type="number" value="6" step="0.5">
+    </div>
+  
+
+    <div class="field">
+      <label>Length (m)</label>
+      <input id="roomL" type="number" value="4" step="0.5">
+    </div>
+
+    <div id="snapToggle" class="snap active">
+      <div class="knob"></div>
+      <span>Snap</span>
+    </div>
+
+
+    <button id="applyScale">Update scale</button>
+    
+  </div>
+</header>
+
+<main class="layout">
+  <div class="canvas-wrap">
+    <div id="grid">
+      <canvas id="drawLayer"></canvas>
+    </div>
+    
+  </div>
+
+  <aside class="search">
+    <input id="search" placeholder="Search equipment…" />
+    <div id="results"></div>
+  </aside>
+</main>
+
+
+
+
+<!-- TOOL OVERLAY / PANEL -->
+<div id="toolModal" class="tool-modal hidden">
+  <h3>Add to layout</h3>
+
+  <input
+    id="structureSearch"
+    placeholder="Search structures…"
+  />
+
+  <div id="structureResults"></div>
+</div>
+<div id="customShapePanel" class="custom-shape-panel hidden">
+  <h3>Create Custom Shape</h3>
+
+  <div class="shape-mode">
+    <button class="shape-tab active" data-mode="dimensions">Dimensions</button>
+    <button class="shape-tab" data-mode="free">Free Draw</button>
+  </div>
+  
+
+  <!-- DIMENSIONS TAB -->
+  <div class="shape-section" data-mode="dimensions">
+    <input
+      id="shapeName"
+      type="text"
+      placeholder="Name (e.g. Platform, Pillar, Wall cutout)"
+    />
+    <input id="shapeWidth" type="number" step="0.1" placeholder="Width (e.g. 1.8 )">
+
+    <input id="shapeLength" type="number" step="0.1" placeholder="Length (e.g. 2.2)">
+  </div>
+
+  <!-- FREE DRAW TAB -->
+  <div class="shape-section hidden" data-mode="free">
+    <div id="freeDrawArea">
+      <canvas id="freeDrawCanvas"></canvas>
+      
+      
+    </div>
+  </div>
+  
+
+  <!-- ACTION BUTTONS (ALWAYS VISIBLE) -->
+  <div class="shape-actions">
+    <button id="shapeCancel" class="cancel-btn">Cancel</button>
+    <button id="shapeDone" class="done-btn">Done</button>
+  </div>
+</div>
+
+
+  </div>
+</div>
+
+
+</div>
+
+</div>
+
+
+
+
+  <div class="tool-actions">
+    <button class="tool-action">🏋️ Equipment</button>
+    <button class="tool-action">🚪 Door</button>
+    <button class="tool-action">🪟 Window</button>
+    <button class="tool-action">📐 Wall</button>
+  </div>
+</div>
+
+
+<script src="script.js"></script>
+
+<div id="inspector" class="inspector">
+  <div><label>X <input id="inspectorX" type="number"></label></div>
+  <div><label>Y <input id="inspectorY" type="number"></label></div>
+  <div><label>Rot <input id="inspectorRot" type="number"></label></div>
+</div>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+  // Apply dark mode on planner page
+  const isDark = localStorage.getItem("darkMode") === "true";
+
+  if (isDark) {
+    document.body.classList.add("planner-dark-mode");
+  } else {
+    document.body.classList.remove("planner-dark-mode");
+  }
+
+  // Listen for changes from other pages
+  window.addEventListener("storage", (e) => {
+    if (e.key === "darkMode") {
+      document.body.classList.toggle(
+        "planner-dark-mode",
+        e.newValue === "true"
+      );
+    }
+  });
+</script>
+
+
+</body>
