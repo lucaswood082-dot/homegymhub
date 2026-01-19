@@ -80,6 +80,8 @@
       </div>
     </div>
   </section>
+  
+
   <!-- 3D Model Section -->
 <section class="hero-3d" style="display:flex; align-items:center; gap:50px; flex-wrap:wrap; justify-content:center; padding:40px 0;">
   
@@ -96,18 +98,19 @@
   <model-viewer
     src="home-gym.glb"
     alt="3D Home Gym Model"
-    camera-controls
-    auto-rotate
-    rotation-per-second="30deg"
-    min-camera-orbit="auto auto 1m"
-    max-camera-orbit="auto auto 3m"
-    min-field-of-view="20deg"
-    max-field-of-view="80deg"
-    shadow-intensity="1"
-    exposure="1"
+    camera-controls            <!-- enables rotate & zoom -->
+    touch-action="pan-y"       <!-- improves mobile pinch/rotate -->
+    min-camera-orbit="auto auto 3m"  <!-- start slightly zoomed out -->
+    max-camera-orbit="auto auto 10m" <!-- allow zooming in -->
+    interaction-prompt="auto"
+    shadow-intensity="0.4"
+    exposure="0.9"
     environment-image="neutral"
-    style="flex:1; min-width:300px; width:800px; height:600px; border-radius:12px; box-shadow: 0 15px 40px rgba(0,0,0,0.6);"
+    style="flex:1; min-width:300px; width:700px; height:550px; border-radius:12px; box-shadow:0 15px 40px rgba(0,0,0,0.6);"
   ></model-viewer>
+
+</section>
+
 
 </section>
 
