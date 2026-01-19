@@ -83,35 +83,55 @@
   
 
 
- <!-- 3D Model Section (No Card, Less Space Above) -->
- <section class="hero-3d" style="display:flex; align-items:center; gap:50px; flex-wrap:wrap; justify-content:center; padding:10px 20px 30px 20px;">
-  <!-- padding: top 20px, right 20px, bottom 40px, left 20px -->
+ <!-- 3D Model Section -->
+<section class="hero-3d" style="
+display: flex; 
+align-items: center; 
+gap: 40px; 
+flex-wrap: wrap; 
+justify-content: center; 
+padding: 20px 40px; /* top/bottom 20px, left/right 40px */
+">
 
-  <!-- LEFT TEXT -->
-  <div class="hero-text" style="flex:1; min-width:300px; max-width:450px; padding-left:20px; padding-right:20px;">
-    <h1>Build the Perfect Home Gym</h1>
-    <p>
-      Explore a realistic 3D layout of a budget-friendly home gym.
-      Rotate, zoom, and inspect every detail to see how everything fits together.
-    </p>
-  </div>
+<!-- LEFT TEXT -->
+<div class="hero-text" style="
+  flex: 1; 
+  min-width: 300px; 
+  max-width: 450px; 
+  padding-left: 20px; 
+  padding-right: 20px;
+">
+  <h1 style="margin: 0 0 10px 0;">Build the Perfect Home Gym</h1>
+  <p style="margin: 0;">
+    Explore a realistic 3D layout of a budget-friendly home gym.
+    Rotate, zoom, and inspect every detail to see how everything fits together.
+  </p>
+</div>
 
-  <!-- RIGHT 3D MODEL -->
-  <model-viewer
-    src="home-gym.glb"
-    alt="3D Home Gym Model"
-    camera-controls
-    touch-action="pan-y"
-    min-camera-orbit="auto auto 12m"  
-    max-camera-orbit="auto auto 30m"  
-    interaction-prompt="auto"
-    shadow-intensity="0.4"
-    exposure="0.9"
-    environment-image="neutral"
-    style="flex:1; min-width:250px; width:600px; height:480px;"
-  ></model-viewer>
+<!-- RIGHT 3D MODEL -->
+<model-viewer
+  src="home-gym.glb"
+  alt="3D Home Gym Model"
+  camera-controls
+  touch-action="pan-y"
+  min-camera-orbit="auto auto 12m"  
+  max-camera-orbit="auto auto 35m"  
+  interaction-prompt="auto"
+  shadow-intensity="0.4"
+  exposure="0.9"
+  environment-image="neutral"
+  style="
+    flex: 1; 
+    min-width: 250px; 
+    width: 600px; 
+    height: 480px;
+  "
+></model-viewer>
 
 </section>
+
+
+
 
 
 </section>
