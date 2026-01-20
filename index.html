@@ -90,7 +90,7 @@ align-items: center;
 gap: 40px; 
 flex-wrap: wrap; 
 justify-content: center; 
-padding: 0px 20px 20px 40px; 
+padding: 12px 40px; /* even top & bottom, safe left & right */
 ">
 
 <!-- LEFT TEXT -->
@@ -98,14 +98,12 @@ padding: 0px 20px 20px 40px;
   flex: 1; 
   min-width: 300px; 
   max-width: 450px; 
-  padding-left: 20px; 
-  padding-right: 20px;
+  padding: 0 20px;
 ">
-  <h1 style="margin: 0 0 10px 0;">Build the Perfect Home Gym</h1>
+  <h1 style="margin: 0 0 8px 0;">Build the Perfect Home Gym</h1>
   <p style="margin: 0;">
     Explore a realistic 3D layout of a budget-friendly home gym.
     Rotate, zoom, and inspect every detail to see how everything fits together.
-    
   </p>
 </div>
 
@@ -115,8 +113,8 @@ padding: 0px 20px 20px 40px;
   alt="3D Home Gym Model"
   camera-controls
   touch-action="pan-y"
-  min-camera-orbit="auto auto 12m"  
-  max-camera-orbit="auto auto 35m" 
+  min-camera-orbit="auto auto 12m"
+  max-camera-orbit="auto auto 35m"
   interaction-prompt="auto"
   shadow-intensity="0.4"
   exposure="0.9"
@@ -128,6 +126,8 @@ padding: 0px 20px 20px 40px;
     height: 480px;
   "
 ></model-viewer>
+
+</section>
 
 </section>
 
