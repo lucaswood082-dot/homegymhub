@@ -1401,3 +1401,26 @@ plannerToggle.addEventListener("click", () => {
   const isDark = document.body.classList.toggle("planner-dark-mode");
   localStorage.setItem("plannerDarkMode", isDark ? "true" : "false");
 });
+function getEventCoords(e) {
+  if (e.touches && e.touches.length > 0) {
+    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+  if (e.changedTouches && e.changedTouches.length > 0) {
+    return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+  }
+  return { x: e.clientX, y: e.clientY };
+}
+item.addEventListener("touchstart", (e) => {
+  longPressTimer = setTimeout(() => {
+    showToast("Release to delete");
+    item.classList.add("deleting");
+  }, 800);
+});
+let lastTap = 0;
+el.addEventListener("click", (e) => {
+  const now = Date.now();
+  if (now - lastTap < 300) {
+    openInfo(el);
+  }
+  lastTap = now;
+});
