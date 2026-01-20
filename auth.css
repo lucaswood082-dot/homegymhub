@@ -12,6 +12,7 @@ body {
   background: #f7f8fa;
   color: #111827;
   line-height: 1.6;
+  overflow: hidden;
 }
 
 /* ===== Hero Gradient (matches threads.css) ===== */
