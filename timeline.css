@@ -1,317 +1,348 @@
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #fafbfc;
-    color: #0f172a;
-    line-height: 1.6;
-  }
-  
-  /* Page Container */
-  .timeline-page {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 4rem 2rem 6rem;
-  }
-  
-  /* Header */
-  .timeline-header {
-    text-align: center;
-    margin-bottom: 5rem;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #ffffff;
+  color: #1a1a1a;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Animated gradient background */
+.bg-gradient {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #fff 0%, #ffe5cc 20%, #ffccaa 40%, #ff9966 60%, #ffccaa 80%, #fff 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 20s ease infinite;
+  z-index: -2;
+  opacity: 0.7;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Page Container */
+.timeline-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 4rem 2rem 6rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Header */
+.timeline-header {
+  text-align: center;
+  margin-bottom: 5rem;
+  opacity: 0;
+  animation: fadeIn 0.8s ease forwards;
+}
+
+.timeline-header h1 {
+  font-size: 3.5rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, #1a1a1a, #ff6b35);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.timeline-header p {
+  font-size: 1.2rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* Timeline Container */
+.timeline-container {
+  position: relative;
+  padding-left: 2rem;
+}
+
+/* Vertical Line */
+.timeline-container::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, 
+    rgba(255, 107, 53, 0.3) 0%, 
+    rgba(255, 107, 53, 0.5) 50%, 
+    rgba(255, 107, 53, 0.3) 100%);
+  border-radius: 2px;
+}
+
+/* Timeline Phase */
+.timeline-phase {
+  position: relative;
+  margin-bottom: 4rem;
+  display: flex;
+  gap: 2rem;
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.timeline-phase.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.timeline-phase:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-phase:last-child .marker-line {
+  display: none;
+}
+
+/* Phase Marker */
+.phase-marker {
+  position: absolute;
+  left: -2rem;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.marker-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  border: 4px solid rgba(255, 107, 53, 0.3);
+  position: relative;
+  z-index: 2;
+  transition: all 0.4s ease;
+  box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.2);
+}
+
+.timeline-phase.visible .marker-dot {
+  border-color: #ff6b35;
+  box-shadow: 0 0 0 8px rgba(255, 107, 53, 0.15);
+}
+
+.timeline-phase:hover .marker-dot {
+  transform: scale(1.3);
+  border-color: #ff8c42;
+  box-shadow: 0 0 0 12px rgba(255, 107, 53, 0.2);
+}
+
+.marker-line {
+  width: 3px;
+  flex: 1;
+  min-height: 100px;
+  position: relative;
+  top: -3px;
+}
+
+/* Phase Content */
+.phase-content {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 2px solid rgba(255, 107, 53, 0.2);
+  box-shadow: 0 15px 50px rgba(255, 107, 53, 0.1);
+  backdrop-filter: blur(20px);
+  transition: all 0.3s ease;
+}
+
+.timeline-phase:hover .phase-content {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 60px rgba(255, 107, 53, 0.2);
+  border-color: #ff6b35;
+}
+
+/* Phase Header */
+.phase-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.phase-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.5rem 1.2rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.completed {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+}
+
+.status-badge.in-progress {
+  background: linear-gradient(135deg, #ff8c42, #ffaa80);
+  color: #fff;
+}
+
+.status-badge.planned {
+  background: rgba(255, 107, 53, 0.1);
+  color: #ff6b35;
+  border: 2px solid rgba(255, 107, 53, 0.3);
+}
+
+/* Phase Title */
+.phase-content h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 0.75rem;
+}
+
+/* Phase Description */
+.phase-description {
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* Feature List */
+.feature-list {
+  list-style: none;
+  padding: 0;
+}
+
+.feature-list li {
+  padding: 0.6rem 0;
+  padding-left: 1.75rem;
+  color: #666;
+  position: relative;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.feature-list li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: #ff6b35;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.feature-list li:hover {
+  color: #1a1a1a;
+  padding-left: 2rem;
+}
+
+.feature-list li:hover::before {
+  left: 0.25rem;
+  color: #ff8c42;
+}
+
+/* Back Link */
+.back-container {
+  text-align: center;
+  margin-top: 5rem;
+}
+
+.back-link {
+  display: inline-block;
+  padding: 1rem 2.5rem;
+  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+}
+
+.back-link:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 40px rgba(255, 107, 53, 0.4);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
     opacity: 0;
-    animation: fadeIn 0.8s ease forwards;
+    transform: translateY(-10px);
   }
-  
-  .timeline-header h1 {
-    font-size: 3rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 1rem;
-    letter-spacing: -0.5px;
-  }
-  
-  .timeline-header p {
-    font-size: 1.1rem;
-    color: #64748b;
-    max-width: 600px;
-    margin: 0 auto;
-    line-height: 1.7;
-  }
-  
-  /* Timeline Container */
-  .timeline-container {
-    position: relative;
-    padding-left: 2rem;
-  }
-  
-  /* Vertical Line */
-  .timeline-container::before {
-    content: '';
-    position: absolute;
-    left: 11px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: linear-gradient(to bottom, #e2e8f0 0%, #cbd5e1 50%, #e2e8f0 100%);
-  }
-  
-  /* Timeline Phase */
-  .timeline-phase {
-    position: relative;
-    margin-bottom: 4rem;
-    display: flex;
-    gap: 2rem;
-    opacity: 0;
-    transform: translateX(-20px);
-    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  
-  .timeline-phase.visible {
+  to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
   }
-  
-  .timeline-phase:last-child {
-    margin-bottom: 0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .timeline-page {
+    padding: 3rem 1.5rem 4rem;
   }
-  
-  .timeline-phase:last-child .marker-line {
-    display: none;
+
+  .timeline-header h1 {
+    font-size: 2.5rem;
   }
-  
-  /* Phase Marker */
+
+  .timeline-header p {
+    font-size: 1rem;
+  }
+
+  .timeline-container {
+    padding-left: 1.5rem;
+  }
+
+  .timeline-container::before {
+    left: 7px;
+  }
+
   .phase-marker {
-    position: absolute;
-    left: -2rem;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    left: -1.5rem;
   }
-  
+
   .marker-dot {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: white;
-    border: 3px solid #cbd5e1;
-    position: relative;
-    z-index: 2;
-    transition: all 0.4s ease;
+    width: 16px;
+    height: 16px;
+    border-width: 3px;
   }
-  
-  .timeline-phase.visible .marker-dot {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.1);
-  }
-  
-  .timeline-phase:hover .marker-dot {
-    transform: scale(1.2);
-    border-color: #2563eb;
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.15);
-  }
-  
-  .marker-line {
-    width: 2px;
-    flex: 1;
-    min-height: 100px;
-    position: relative;
-    top: -3px;
-  }
-  
-  /* Phase Content */
+
   .phase-content {
-    flex: 1;
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
+    padding: 1.5rem;
   }
-  
-  .timeline-phase:hover .phase-content {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-    border-color: #cbd5e1;
-  }
-  
-  /* Phase Header */
-  .phase-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-  
-  .phase-label {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  
-  /* Status Badges */
-  .status-badge {
-    display: inline-block;
-    padding: 0.4rem 1rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  
-  .status-badge.completed {
-    background: #ecfdf5;
-    color: #059669;
-    border: 1px solid #d1fae5;
-  }
-  
-  .status-badge.in-progress {
-    background: #fff7ed;
-    color: #ea580c;
-    border: 1px solid #fed7aa;
-  }
-  
-  .status-badge.planned {
-    background: #f1f5f9;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
-  }
-  
-  /* Phase Title */
+
   .phase-content h2 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
   }
-  
-  /* Phase Description */
-  .phase-description {
-    color: #64748b;
-    margin-bottom: 1.5rem;
-    font-size: 0.95rem;
+
+  .timeline-phase {
+    margin-bottom: 3rem;
   }
-  
-  /* Feature List */
-  .feature-list {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .feature-list li {
-    padding: 0.6rem 0;
-    padding-left: 1.75rem;
-    color: #475569;
-    position: relative;
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
-  }
-  
-  .feature-list li::before {
-    content: '→';
-    position: absolute;
-    left: 0;
-    color: #3b82f6;
-    font-weight: bold;
-    transition: all 0.2s ease;
-  }
-  
-  .feature-list li:hover {
-    color: #0f172a;
-    padding-left: 2rem;
-  }
-  
-  .feature-list li:hover::before {
-    left: 0.25rem;
-  }
-  
-  /* Back Link */
-  .back-container {
-    text-align: center;
-    margin-top: 5rem;
-  }
-  
-  .back-link {
-    display: inline-block;
-    padding: 0.875rem 1.75rem;
-    background: #0f172a;
-    color: white;
-    text-decoration: none;
-    font-weight: 600;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-  }
-  
-  .back-link:hover {
-    background: #1e293b;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
-  }
-  
-  /* Animations */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Mobile Responsive */
-  @media (max-width: 768px) {
-    .timeline-page {
-      padding: 3rem 1.5rem 4rem;
-    }
-  
-    .timeline-header h1 {
-      font-size: 2.25rem;
-    }
-  
-    .timeline-header p {
-      font-size: 1rem;
-    }
-  
-    .timeline-container {
-      padding-left: 1.5rem;
-    }
-  
-    .timeline-container::before {
-      left: 7px;
-    }
-  
-    .phase-marker {
-      left: -1.5rem;
-    }
-  
-    .marker-dot {
-      width: 16px;
-      height: 16px;
-      border-width: 2px;
-    }
-  
-    .phase-content {
-      padding: 1.5rem;
-    }
-  
-    .phase-content h2 {
-      font-size: 1.5rem;
-    }
-  
-    .timeline-phase {
-      margin-bottom: 3rem;
-    }
-  }
+}

@@ -303,12 +303,10 @@ body {
   position: relative;
   border-radius: 30px;
   padding: 3rem;
-  background: rgba(255, 255, 255, 0.6);
-  border: 2px solid rgba(255, 107, 53, 0.2);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 30px 80px rgba(255, 107, 53, 0.15),
-              inset 0 0 60px rgba(255, 140, 66, 0.05);
-  animation: modelGlow 4s ease-in-out infinite;
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  box-shadow: none;
 }
 
 @keyframes modelGlow {

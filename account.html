@@ -1,170 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Account | HomeGymHub</title>
-<link rel="stylesheet" href="account.css">
-<style>
-  #displayNameInput {
-    width: 100%;
-    padding: 12px 16px;
-    margin: 8px 0 12px 0;
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    font-size: 16px;
-    outline: none;
-    transition: all 0.2s ease;
-  }
-  #displayNameInput:focus {
-    border-color: var(--orange);
-    box-shadow: 0 0 12px rgba(249,115,22,0.3);
-  }
-
-  #saveNameBtn {
-    width: 100%;
-    padding: 12px 0;
-    border: none;
-    border-radius: 16px;
-    font-weight: 600;
-    font-size: 16px;
-    color: #fff;
-    background: linear-gradient(135deg, var(--blue), var(--orange));
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-bottom: 12px;
-  }
-  #saveNameBtn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow:0 8px 20px rgba(11,31,59,0.25);
-  }
-  #saveNameBtn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  #toast {
-    visibility: hidden;
-    min-width: 220px;
-    background: linear-gradient(135deg, var(--blue), var(--orange));
-    color: #fff;
-    text-align: center;
-    border-radius: 16px;
-    padding: 14px 20px;
-    position: fixed;
-    z-index: 1000;
-    left: 50%;
-    bottom: 30px;
-    transform: translateX(-50%);
-    font-size: 16px;
-    opacity: 0;
-    transition: opacity 0.4s, bottom 0.4s, visibility 0.4s;
-  }
-  #toast.show {
-    visibility: visible;
-    opacity: 1;
-    bottom: 50px;
-  }
-
-  .validation-hint {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: -8px;
-    margin-bottom: 8px;
-  }
-
-  .edit-panel {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-height 0.4s ease, opacity 0.4s ease, margin-top 0.4s ease;
-    margin-top: 0;
-  }
-
-  .edit-panel:not(.hidden) {
-    max-height: 600px;
-    opacity: 1;
-    margin-top: 28px;
-  }
-
-  .avatar-wrap img {
-    min-width: 100%;
-    min-height: 100%;
-    background: linear-gradient(135deg, #0f2d57, #f97316);
-  }
-
-  .profile-card.loading {
-    opacity: 0.6;
-    pointer-events: none;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account | HomeGymHub</title>
+  <link rel="stylesheet" href="account.css">
 </head>
 <body>
+  <div class="bg-gradient"></div>
+  <div id="particles"></div>
 
   <nav class="nav">
     <div class="nav-inner">
-      <div class="brand">HomeGymHub</div>
+      <div class="brand" onclick="window.location.href='index.html'">HomeGymHub</div>
       <div class="nav-links">
         <a href="index.html">Home</a>
         <a href="builder.html">Planner</a>
         <a href="marketplace.html">Marketplace</a>
-        <a href="threads.html">Threads</a>
+        <a href="threads.html">Community</a>
       </div>
-      <a class="account-btn" href="account.html">Account</a>
+      <div class="auth-actions">
+        <button id="logoutBtn">Log Out</button>
+      </div>
     </div>
   </nav>
 
-  <header class="account-header">
-    <a href="index.html" class="back-btn">← Back</a>
-    <h1>Your Account</h1>
-    <p>Manage your profile and preferences</p>
-  </header>
+  <section class="account-hero">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div>
+      <h1>Your Account</h1>
+      <p>Manage your profile and track your fitness journey</p>
+    </div>
+  </section>
 
-  <main class="account-layout">
-
+  <main class="account-container">
+    <!-- LEFT SIDEBAR - My Listings -->
     <aside class="side-card">
       <h3>My Listings</h3>
-      <p>Marketplace items you sell.</p>
-      <span class="pill">Coming Soon</span>
+      <p>Equipment you're selling on the marketplace</p>
+      
+      <div class="listings-list" id="myListings">
+        <!-- Listings will be added here dynamically -->
+        <div class="empty-state">
+          <p>No listings yet</p>
+          <span class="pill">Coming Soon</span>
+        </div>
+      </div>
     </aside>
 
+    <!-- CENTER - PROFILE CARD -->
     <section class="profile-card">
-      <div class="profile-top">
+      <div class="avatar-section">
         <div class="avatar-wrap">
-          <img id="profileImg" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3af'><path d='M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z'/></svg>" alt="Profile picture">
+          <div class="avatar-inner">
+            <img id="profileImg" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'><path d='M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z'/></svg>" alt="Profile">
+          </div>
+          <button class="avatar-edit-btn" id="changeAvatarBtn">✎</button>
+          <input type="file" id="avatarInput" accept="image/*" hidden>
         </div>
-        <div class="profile-meta">
-          <h2 id="displayName">Loading...</h2>
-          <span class="email">Loading...</span>
+        
+        <div class="profile-info">
+          <h2 id="displayNameText">Loading...</h2>
+          <span class="email" id="emailText">Loading...</span>
         </div>
       </div>
 
-      <button id="editBtn" class="btn primary">Edit Profile</button>
+      <button class="btn primary" id="editProfileBtn">Edit Profile</button>
 
-      <div id="editPanel" class="edit-panel hidden">
-        <label for="displayNameInput" style="font-weight:600;">Display Name:</label>
-        <input type="text" id="displayNameInput" placeholder="Enter display name" maxlength="30">
-        <p class="validation-hint">3-30 characters. Letters, numbers, spaces, _ and - only.</p>
-        <button id="saveNameBtn">Save Name</button>
+      <div class="edit-section hidden" id="editSection">
+        <div class="form-group">
+          <label for="displayNameInput">Display Name</label>
+          <input type="text" id="displayNameInput" placeholder="Enter your name" maxlength="30">
+          <p class="hint-text">3-30 characters. Letters, numbers, spaces, _ and - only.</p>
+        </div>
 
-        <button id="changePicBtn" class="btn secondary" type="button">Change Profile Picture</button>
-        <input type="file" id="imgInput" accept="image/*" hidden>
-        <button id="doneBtn" class="btn primary">Done</button>
+        <button class="btn primary" id="saveNameBtn">
+          <span>Save Changes</span>
+        </button>
+
+        <button class="btn secondary" id="cancelBtn">Cancel</button>
       </div>
     </section>
 
+    <!-- RIGHT SIDEBAR - Wishlist -->
     <aside class="side-card">
       <h3>Wishlist</h3>
-      <p>Items you want to buy later.</p>
-      <span class="pill">Coming Soon</span>
+      <p>Items you want to buy later</p>
+      
+      <div class="wishlist-grid" id="wishlistItems">
+        <!-- Wishlist items will be added here dynamically -->
+        <div class="empty-state">
+          <p>No items saved yet</p>
+          <span class="pill">Coming Soon</span>
+        </div>
+      </div>
     </aside>
-
   </main>
 
-  <div id="toast"></div>
+  <div id="toast" class="toast"></div>
 
-  <footer class="footer">© 2026 HomeGymHub</footer>
-  
+  <footer class="footer">
+    © 2026 HomeGymHub - Building the Future of Home Fitness
+  </footer>
+
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -173,20 +112,43 @@
       "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA"
     );
 
+    // Particle system
+    const particlesContainer = document.getElementById('particles');
+    for(let i = 0; i < 40; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (Math.random() * 12 + 8) + 's';
+      p.style.animationDelay = Math.random() * 5 + 's';
+      p.style.setProperty('--drift', (Math.random() * 200 - 100) + 'px');
+      particlesContainer.appendChild(p);
+    }
+
+    // Navbar scroll effect
+    const nav = document.querySelector('.nav');
+    window.addEventListener('scroll', () => {
+      if(window.scrollY > 50) {
+        nav.classList.add('scrolled');
+      } else {
+        nav.classList.remove('scrolled');
+      }
+    });
+
     // DOM Elements
-    const editBtn = document.getElementById("editBtn");
-    const editPanel = document.getElementById("editPanel");
-    const changePicBtn = document.getElementById("changePicBtn");
-    const imgInput = document.getElementById("imgInput");
+    const editProfileBtn = document.getElementById("editProfileBtn");
+    const editSection = document.getElementById("editSection");
+    const changeAvatarBtn = document.getElementById("changeAvatarBtn");
+    const avatarInput = document.getElementById("avatarInput");
     const profileImg = document.getElementById("profileImg");
-    const doneBtn = document.getElementById("doneBtn");
-    const displayNameEl = document.getElementById("displayName");
+    const displayNameText = document.getElementById("displayNameText");
     const displayNameInput = document.getElementById("displayNameInput");
     const saveNameBtn = document.getElementById("saveNameBtn");
-    const emailEl = document.querySelector(".email");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const emailText = document.getElementById("emailText");
+    const logoutBtn = document.getElementById("logoutBtn");
     const toast = document.getElementById("toast");
 
-    const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3af'><path d='M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z'/></svg>";
+    const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'><path d='M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z'/></svg>";
 
     let currentUser = null;
     let currentProfile = null;
@@ -194,14 +156,12 @@
     // Toast function
     function showToast(msg, isError = false) {
       toast.textContent = msg;
-      toast.style.background = isError 
-        ? "linear-gradient(135deg, #ef4444, #dc2626)" 
-        : "linear-gradient(135deg, #0f2d57, #f97316)";
-      toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 3000);
+      toast.className = 'toast ' + (isError ? 'error' : 'success');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // Load user data from Supabase
+    // Load user data
     async function loadUserData() {
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -213,15 +173,15 @@
         }
 
         currentUser = user;
-        emailEl.textContent = user.email;
+        emailText.textContent = user.email;
 
-        // Load profile image from localStorage first
+        // Load profile image from localStorage
         const savedImage = localStorage.getItem(`profileImage_${user.id}`);
         if (savedImage && savedImage !== defaultAvatar) {
           profileImg.src = savedImage;
         }
 
-        // Load or create profile
+        // Load profile from database
         const { data: profiles, error: profileError } = await supabase
           .from("profiles")
           .select("*")
@@ -234,11 +194,10 @@
         }
 
         if (profiles && profiles.length > 0) {
-          // Profile exists
           currentProfile = profiles[0];
-          displayNameEl.textContent = currentProfile.display_name || "Your Name";
+          displayNameText.textContent = currentProfile.display_name || "Your Name";
         } else {
-          // Create new profile with default name
+          // Create new profile
           const { data: newProfile, error: createError } = await supabase
             .from("profiles")
             .insert([{ 
@@ -249,22 +208,38 @@
 
           if (createError) {
             console.error("Profile creation error:", createError);
-            showToast("Error creating profile", true);
-            displayNameEl.textContent = "Your Name";
+            displayNameText.textContent = "Your Name";
             return;
           }
 
           if (newProfile && newProfile.length > 0) {
             currentProfile = newProfile[0];
-            displayNameEl.textContent = currentProfile.display_name;
+            displayNameText.textContent = currentProfile.display_name;
           }
         }
-
       } catch (err) {
         console.error("Load user data error:", err);
-        displayNameEl.textContent = "Your Name";
+        displayNameText.textContent = "Your Name";
         showToast("Error loading account data", true);
       }
+    }
+
+    // Validate display name
+    function validateDisplayName(name) {
+      if (!name || name.trim().length === 0) {
+        return { valid: false, error: "Display name cannot be empty" };
+      }
+      if (name.length < 3) {
+        return { valid: false, error: "Display name must be at least 3 characters" };
+      }
+      if (name.length > 30) {
+        return { valid: false, error: "Display name must be less than 30 characters" };
+      }
+      const validPattern = /^[a-zA-Z0-9_\- ]+$/;
+      if (!validPattern.test(name)) {
+        return { valid: false, error: "Display name can only contain letters, numbers, spaces, underscores, and hyphens" };
+      }
+      return { valid: true };
     }
 
     // Check if display name is available
@@ -280,7 +255,6 @@
           console.error("Display name check error:", error);
           return false;
         }
-        
         return !data || data.length === 0;
       } catch (err) {
         console.error("Display name check error:", err);
@@ -288,36 +262,20 @@
       }
     }
 
-    // Validate display name
-    function validateDisplayName(name) {
-      if (!name || name.trim().length === 0) {
-        return { valid: false, error: "Display name cannot be empty" };
-      }
-
-      if (name.length < 3) {
-        return { valid: false, error: "Display name must be at least 3 characters" };
-      }
-
-      if (name.length > 30) {
-        return { valid: false, error: "Display name must be less than 30 characters" };
-      }
-
-      const validPattern = /^[a-zA-Z0-9_\- ]+$/;
-      if (!validPattern.test(name)) {
-        return { valid: false, error: "Display name can only contain letters, numbers, spaces, underscores, and hyphens" };
-      }
-
-      return { valid: true };
-    }
-
-    // Open edit panel
-    editBtn.addEventListener("click", () => {
-      editPanel.classList.remove("hidden");
-      editBtn.classList.add("hidden");
-      displayNameInput.value = currentProfile?.display_name || displayNameEl.textContent;
+    // Edit profile button
+    editProfileBtn.addEventListener("click", () => {
+      editSection.classList.remove("hidden");
+      editProfileBtn.style.display = "none";
+      displayNameInput.value = currentProfile?.display_name || displayNameText.textContent;
     });
 
-    // Save display name
+    // Cancel button
+    cancelBtn.addEventListener("click", () => {
+      editSection.classList.add("hidden");
+      editProfileBtn.style.display = "block";
+    });
+
+    // Save name button
     saveNameBtn.addEventListener("click", async () => {
       if (!currentUser) {
         showToast("Please log in first", true);
@@ -338,7 +296,7 @@
       }
 
       saveNameBtn.disabled = true;
-      saveNameBtn.textContent = "Checking...";
+      saveNameBtn.innerHTML = '<span>Saving...</span>';
 
       try {
         const isAvailable = await isDisplayNameAvailable(newName);
@@ -346,11 +304,10 @@
         if (!isAvailable) {
           showToast("This display name is already taken!", true);
           saveNameBtn.disabled = false;
-          saveNameBtn.textContent = "Save Name";
+          saveNameBtn.innerHTML = '<span>Save Changes</span>';
           return;
         }
 
-        // Update profile
         const { data, error } = await supabase
           .from("profiles")
           .update({ display_name: newName })
@@ -359,37 +316,36 @@
 
         if (error) {
           console.error("Update error:", error);
-          
           if (error.code === '23505') {
             showToast("This display name is already taken!", true);
           } else {
             showToast(`Error: ${error.message}`, true);
           }
-          
           saveNameBtn.disabled = false;
-          saveNameBtn.textContent = "Save Name";
+          saveNameBtn.innerHTML = '<span>Save Changes</span>';
           return;
         }
 
         if (data && data.length > 0) {
           currentProfile = data[0];
-          displayNameEl.textContent = newName;
+          displayNameText.textContent = newName;
           showToast("Display name saved!");
+          editSection.classList.add("hidden");
+          editProfileBtn.style.display = "block";
         }
-        
       } catch (err) {
         console.error("Save error:", err);
         showToast(`Error: ${err.message}`, true);
       } finally {
         saveNameBtn.disabled = false;
-        saveNameBtn.textContent = "Save Name";
+        saveNameBtn.innerHTML = '<span>Save Changes</span>';
       }
     });
 
     // Avatar change
-    changePicBtn.addEventListener("click", () => imgInput.click());
+    changeAvatarBtn.addEventListener("click", () => avatarInput.click());
 
-    imgInput.addEventListener("change", e => {
+    avatarInput.addEventListener("change", e => {
       const file = e.target.files[0];
       if (!file) return;
       
@@ -401,21 +357,19 @@
       const reader = new FileReader();
       reader.onload = () => {
         profileImg.src = reader.result;
-        showToast("Profile picture updated! Click 'Done' to save.");
+        if (currentUser) {
+          localStorage.setItem(`profileImage_${currentUser.id}`, reader.result);
+        }
+        showToast("Profile picture updated!");
       };
       reader.readAsDataURL(file);
-      imgInput.value = "";
+      avatarInput.value = "";
     });
 
-    // Done editing
-    doneBtn.addEventListener("click", () => {
-      if (currentUser) {
-        localStorage.setItem(`profileImage_${currentUser.id}`, profileImg.src);
-      }
-      
-      editPanel.classList.add("hidden");
-      editBtn.classList.remove("hidden");
-      showToast("Profile saved!");
+    // Logout
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "index.html";
     });
 
     // Load data on page load
@@ -429,6 +383,38 @@
         loadUserData();
       }
     });
+
+    // DEMO: You can add listings dynamically like this later:
+    // Example function to add a listing (uncomment when ready to implement)
+    /*
+    function addListing(title, price) {
+      const listingsContainer = document.getElementById('myListings');
+      const emptyState = listingsContainer.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+      
+      const listing = document.createElement('div');
+      listing.className = 'listing-item';
+      listing.innerHTML = `
+        <div class="listing-title">${title}</div>
+        <div class="listing-price">$${price}</div>
+      `;
+      listingsContainer.appendChild(listing);
+    }
+    */
+
+    // DEMO: You can add wishlist items dynamically like this later:
+    /*
+    function addWishlistItem(title) {
+      const wishlistContainer = document.getElementById('wishlistItems');
+      const emptyState = wishlistContainer.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+      
+      const item = document.createElement('div');
+      item.className = 'wishlist-item';
+      item.innerHTML = `<div class="wishlist-title">${title}</div>`;
+      wishlistContainer.appendChild(item);
+    }
+    */
   </script>
 </body>
 </html>
