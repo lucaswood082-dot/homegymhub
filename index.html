@@ -5,16 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HomeGymHub</title>
   <link rel="stylesheet" href="home.css">
-  <link rel="stylesheet" href="darkmode.css">
-</head>
-<head>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
 <body>
+  <div class="bg-gradient"></div>
+  <div id="particles"></div>
 
-<div id="page-wrapper">
-
-  <!-- NAVIGATION -->
   <header class="nav">
     <div class="nav-inner">
       <div class="brand">HomeGymHub</div>
@@ -22,31 +18,21 @@
         <a href="#modules">Modules</a>
         <a href="#about">About</a>
       </nav>
-<!-- Index page login button -->
-<div class="auth-actions">
-  <button id="loginBtn">Log In</button>
-  <button id="accountBtn" onclick="window.location.href='account.html'">Account</button>
-  <button id="logoutBtn" style="display:none;">Log Out</button>
-</div>
-
-<script>
-  document.getElementById("loginBtn").addEventListener("click", () => {
-    // Redirect to your login page
-    window.location.href = "auth.html";
-  });
-</script>
-
-      
+      <div class="auth-actions">
+        <button id="loginBtn">Log In</button>
+        <button id="accountBtn" style="display:none;">Account</button>
+        <button id="logoutBtn" style="display:none;">Log Out</button>
+      </div>
     </div>
   </header>
 
-  <!-- HERO -->
   <section class="hero">
-    <div class="hero-gradient"></div>
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
     <div class="hero-content">
       <h1 class="hero-title">Your Home Gym, Connected</h1>
       <p class="hero-subtitle">
-        Plan, explore, and share your home gym setups seamlessly.
+        Plan, explore, and share your home gym setups seamlessly in stunning 3D.
       </p>
       <div class="hero-actions">
         <button class="btn primary" data-target="builder.html">Open Planner</button>
@@ -56,7 +42,40 @@
     </div>
   </section>
 
-  <!-- HUB MODULES -->
+  <section class="model-showcase">
+    <div class="orb orb3"></div>
+    <div class="model-container">
+      <h2 class="model-title">Experience Your Gym in 3D</h2>
+      <p class="model-subtitle">
+        Rotate, zoom, and explore every angle of a professional home gym setup. 
+        See how equipment fits together in real space.
+      </p>
+      <div class="model-viewer-wrapper">
+        <model-viewer
+          id="gymModel"
+          src="home-gym.glb"
+          alt="3D Home Gym Model"
+          camera-controls
+          auto-rotate
+          rotation-per-second="20deg"
+          touch-action="pan-y"
+          min-camera-orbit="auto auto 10m"
+          max-camera-orbit="auto auto 40m"
+          interaction-prompt="auto"
+          shadow-intensity="0.7"
+          exposure="1.2"
+          environment-image="neutral"
+        ></model-viewer>
+      </div>
+      <div class="model-controls">
+        <button class="control-btn active" id="toggleRotation">Auto Rotate: ON</button>
+        <button class="control-btn" id="resetView">Reset View</button>
+        <button class="control-btn" id="topView">Top View</button>
+        <button class="control-btn" id="sideView">Side View</button>
+      </div>
+    </div>
+  </section>
+
   <section class="section" id="modules">
     <div class="section-inner">
       <h2>Hub Modules</h2>
@@ -64,257 +83,85 @@
       <div class="module-grid">
         <div class="module-card">
           <h3>Gym Planner</h3>
-          <p>Design your home gym at scale with precise placement tools.</p>
+          <p>Design your home gym at scale with precise placement tools and real-time 3D visualization.</p>
           <button class="btn subtle" data-target="builder.html">Launch Planner</button>
         </div>
         <div class="module-card">
           <h3>Marketplace</h3>
-          <p>Browse equipment and see how it fits before you buy.</p>
+          <p>Browse equipment and see how it fits in 3D before you buy.</p>
           <button class="btn subtle" data-target="marketplace.html">Explore Marketplace</button>
         </div>
         <div class="module-card">
           <h3>Community</h3>
-          <p>Share setups, get feedback, and learn from others.</p>
+          <p>Share setups, get feedback, and learn from other fitness enthusiasts.</p>
           <button class="btn subtle" data-target="threads.html">Open Community</button>
         </div>
       </div>
     </div>
   </section>
-  <!-- ===== HOME ROADMAP SECTION WITH SEMI-OPAQUE PROGRESS BAR & MICRO ANIMATIONS ===== -->
-<section class="home-roadmap">
 
-  <div class="home-roadmap-divider"></div>
-
-  <div class="home-roadmap-container">
-    <header class="home-roadmap-header">
-      <h2>Development Progress</h2>
-      <p>
-        Hover for details, click to see selected progress with smooth animations.
-      </p>
-    </header>
-
-    <div class="home-roadmap-grid">
-      <div class="home-roadmap-card completed" data-title="Core Platform" data-percent="100" data-color="rgba(22,163,74,0.7)">
-        <span class="status">Completed</span>
-        <h3>Core Platform</h3>
-        <p class="short-text">
-          Responsive layout, mobile & touch support, performance improvements.
+  <section class="home-roadmap">
+    <div class="home-roadmap-divider"></div>
+    <div class="home-roadmap-container">
+      <header class="home-roadmap-header">
+        <h2>Development Progress</h2>
+        <p>
+          Hover for details, click to see selected progress with smooth animations.
         </p>
-        <p class="extra-text">
-          Everything needed for a solid foundation: smooth scroll, clean spacing,
-          overflow prevention, typography, and base styles.
-        </p>
-      </div>
+      </header>
 
-      <div class="home-roadmap-card active" data-title="Home Gym Builder" data-percent="75" data-color="rgba(217,119,6,0.7)">
-        <span class="status">In Progress</span>
-        <h3>Home Gym Builder</h3>
-        <p class="short-text">
-          Drag & drop equipment, snapping grid, locking, and mobile-first interactions.
-        </p>
-        <p class="extra-text">
-          Users can place equipment freely, snap items to a grid, lock them,
-          and adjust spacing. Fully optimized for desktop and touch devices.
-        </p>
-      </div>
+      <div class="home-roadmap-grid">
+        <div class="home-roadmap-card completed" data-title="Core Platform" data-percent="100" data-color="linear-gradient(90deg, #ff6b35, #ff8c42)">
+          <span class="status">Completed</span>
+          <h3>Core Platform</h3>
+          <p class="short-text">
+            Responsive layout, mobile & touch support, performance improvements.
+          </p>
+          <p class="extra-text">
+            Everything needed for a solid foundation: smooth scroll, clean spacing,
+            overflow prevention, typography, and base styles.
+          </p>
+        </div>
 
-      <div class="home-roadmap-card upcoming" data-title="Save & Share Layouts" data-percent="50" data-color="rgba(55,48,163,0.7)">
-        <span class="status">Up Next</span>
-        <h3>Save & Share Layouts</h3>
-        <p class="short-text">
-          Save gym designs, reload later, and share layouts with others.
-        </p>
-        <p class="extra-text">
-          Persist layouts, reload anytime, and share with friends or social media.
-          Optional comments or tags can be added for organization.
-        </p>
-      </div>
-    </div>
+        <div class="home-roadmap-card active" data-title="Home Gym Builder" data-percent="75" data-color="linear-gradient(90deg, #ff8c42, #ffaa80)">
+          <span class="status">In Progress</span>
+          <h3>Home Gym Builder</h3>
+          <p class="short-text">
+            Drag & drop equipment, snapping grid, locking, and mobile-first interactions.
+          </p>
+          <p class="extra-text">
+            Users can place equipment freely, snap items to a grid, lock them,
+            and adjust spacing. Fully optimized for desktop and touch devices.
+          </p>
+        </div>
 
-    <a href="timeline.html" class="home-roadmap-link">
-      View full roadmap →
-    </a>
-  </div>
-
-  <!-- MODAL -->
-  <div class="roadmap-modal">
-    <div class="roadmap-modal-content">
-      <button class="roadmap-modal-close">×</button>
-      <h2 class="roadmap-modal-title"></h2>
-      <div class="roadmap-modal-body"></div>
-    </div>
-  </div>
-</section>
-
-<style>
-/* ===== HOME ROADMAP ===== */
-.home-roadmap { width:100%; background:#ffffff; padding-bottom:5rem; }
-.home-roadmap-divider { width:100%; height:1px; background:#e5e7eb; margin:5rem 0; }
-.home-roadmap-container { max-width:1100px; margin:0 auto; padding:0 1.5rem; }
-.home-roadmap-header { text-align:center; margin-bottom:3rem; }
-.home-roadmap-header h2 { font-size:clamp(1.9rem,3vw,2.4rem); }
-.home-roadmap-header p { max-width:640px; margin:0.75rem auto 0; color:#6b7280; }
-
-.home-roadmap-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:2rem; }
-.home-roadmap-card { background:#f9fafb; border-radius:20px; padding:2rem; text-align:left; border:1px solid #e5e7eb;
-  box-shadow:0 8px 20px rgba(0,0,0,0.05); opacity:0; transform:translateY(40px) scale(1);
-  transition:opacity 0.6s ease, transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-  position:relative; overflow:hidden; cursor:pointer; }
-.home-roadmap-card.show { opacity:1; transform:translateY(0) scale(1); }
-.home-roadmap-card:hover { transform:scale(1.08); box-shadow:0 20px 50px rgba(0,0,0,0.1); border-color:#d1d5db; }
-
-.home-roadmap-card h3 { margin:0.75rem 0 0.5rem; }
-.home-roadmap-card p { color:#4b5563; margin:0.5rem 0 0; }
-.extra-text { opacity:0; transform:scale(0.95); max-height:0; overflow:hidden; transition:opacity 0.4s ease, transform 0.4s ease, max-height 0.4s ease; }
-.home-roadmap-card:hover .extra-text { opacity:1; transform:scale(1); max-height:500px; margin-top:0.75rem; }
-
-.status { font-size:0.7rem; font-weight:700; letter-spacing:0.08em; padding:0.35rem 0.75rem; border-radius:999px; display:inline-block; }
-.completed .status { background:#dcfce7; color:#166534; }
-.active .status { background:#fef3c7; color:#92400e; }
-.upcoming .status { background:#eef2ff; color:#3730a3; }
-
-.home-roadmap-link { display:block; width:fit-content; margin:3.5rem auto 0; font-weight:600; text-decoration:none; color:#111827; border-bottom:2px solid transparent; transition:border-color 0.25s ease; }
-.home-roadmap-link:hover { border-color:#111827; }
-
-/* MODAL */
-.roadmap-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9);
-  display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease; z-index:999; }
-.roadmap-modal.active { opacity:1; pointer-events:auto; }
-
-.roadmap-modal-content { background:#ffffff; border-radius:20px; padding:2.5rem; width:90%; max-width:500px; max-height:90%; overflow-y:auto;
-  transform:scale(0.8); transition:transform 0.4s ease; box-shadow:0 25px 60px rgba(0,0,0,0.15); }
-.roadmap-modal.active .roadmap-modal-content { transform:scale(1); }
-
-.roadmap-modal-close { position:absolute; top:15px; right:20px; font-size:2rem; background:none; border:none; cursor:pointer; color:#374151; }
-.roadmap-modal-title { margin-bottom:1rem; font-size:1.8rem; }
-
-.progress-container { margin-top:20px; }
-.progress-label { font-weight:600; margin-bottom:6px; display:block; }
-.progress-bar { width:100%; height:22px; border-radius:10px; background:#d1d5db; overflow:hidden; opacity:0.9; }
-.progress-fill { width:0; height:100%; border-radius:10px; transition:width 1s ease, transform 1s ease; opacity:0.85; }
-
-/* MICRO ANIMATIONS FOR FILL */
-.progress-fill.pulse { animation:pulse 1.5s infinite alternate ease-in-out; }
-@keyframes pulse { 0% { transform: scaleX(1); } 50% { transform: scaleX(1.03); } 100% { transform: scaleX(1); } }
-</style>
-
-<script>
-/* SCROLL REVEAL */
-const homeRoadmapCards = document.querySelectorAll('.home-roadmap-card');
-const revealHomeRoadmap = () => {
-  homeRoadmapCards.forEach((card,i)=>{
-    const top = card.getBoundingClientRect().top;
-    if(top < window.innerHeight-120){ setTimeout(()=>card.classList.add('show'), i*120); }
-  });
-};
-window.addEventListener('scroll', revealHomeRoadmap);
-revealHomeRoadmap();
-
-/* MODAL WITH SINGLE SEMI-OPAQUE PROGRESS BAR */
-const modal = document.querySelector('.roadmap-modal');
-const modalTitle = modal.querySelector('.roadmap-modal-title');
-const modalBody = modal.querySelector('.roadmap-modal-body');
-const modalClose = modal.querySelector('.roadmap-modal-close');
-
-homeRoadmapCards.forEach(card=>{
-  card.addEventListener('click',()=>{
-    const title = card.getAttribute('data-title');
-    const percent = card.getAttribute('data-percent');
-    const color = card.getAttribute('data-color');
-
-    modalTitle.textContent = title;
-
-    modalBody.innerHTML = `
-      <div class="progress-container">
-        <span class="progress-label">${title}</span>
-        <div class="progress-bar">
-          <div class="progress-fill" style="background:${color}; width:0;" class="progress-fill"></div>
+        <div class="home-roadmap-card upcoming" data-title="Save & Share Layouts" data-percent="50" data-color="linear-gradient(90deg, #ffaa80, #ffd4b3)">
+          <span class="status">Up Next</span>
+          <h3>Save & Share Layouts</h3>
+          <p class="short-text">
+            Save gym designs, reload later, and share layouts with others.
+          </p>
+          <p class="extra-text">
+            Persist layouts, reload anytime, and share with friends or social media.
+            Optional comments or tags can be added for organization.
+          </p>
         </div>
       </div>
-    `;
-    modal.classList.add('active');
 
-    // Animate fill & pulse
-    const fill = modalBody.querySelector('.progress-fill');
-    setTimeout(()=>{
-      fill.style.width = percent+'%';
-      fill.style.opacity = '0.85';
-      fill.classList.add('pulse');
-    },50);
-  });
-});
+      <a href="timeline.html" class="home-roadmap-link">
+        View Full Roadmap →
+      </a>
+    </div>
 
-modalClose.addEventListener('click',()=> modal.classList.remove('active'));
-modal.addEventListener('click', e=> { if(e.target===modal) modal.classList.remove('active'); });
-</script>
+    <div class="roadmap-modal">
+      <div class="roadmap-modal-content">
+        <button class="roadmap-modal-close">×</button>
+        <h2 class="roadmap-modal-title"></h2>
+        <div class="roadmap-modal-body"></div>
+      </div>
+    </div>
+  </section>
 
-  
-
-
- <!-- 3D Model Section -->
-<section class="hero-3d" style="
-display: flex; 
-align-items: center; 
-gap: 40px; 
-flex-wrap: wrap; 
-justify-content: center; 
-padding: 12px 40px; /* even top & bottom, safe left & right */
-">
-
-<!-- LEFT TEXT -->
-<div class="hero-text" style="
-  flex: 1; 
-  min-width: 300px; 
-  max-width: 450px; 
-  padding: 0 20px;
-">
-  <h1 style="margin: 0 0 8px 0;">Build the Perfect Home Gym</h1>
-  <p style="margin: 0;">
-    Explore a realistic 3D layout of a budget-friendly home gym.
-    Rotate, zoom, and inspect every detail to see how everything fits together.
-  </p>
-</div>
-
-<!-- RIGHT 3D MODEL -->
-<model-viewer
-  src="home-gym.glb"
-  alt="3D Home Gym Model"
-  camera-controls
-  touch-action="pan-y"
-  min-camera-orbit="auto auto 12m"
-  max-camera-orbit="auto auto 35m"
-  interaction-prompt="auto"
-  shadow-intensity="0.4"
-  exposure="0.9"
-  environment-image="neutral"
-  style="
-    flex: 1; 
-    min-width: 250px; 
-    width: 600px; 
-    height: 480px;
-  "
-></model-viewer>
-
-</section>
-
-</section>
-
-
-
-
-
-</section>
-
-
-</section>
-
-
-</section>
-
-
-
-
-  <!-- ABOUT SECTION -->
   <section class="section about" id="about">
     <div class="section-inner narrow">
       <h2>About HomeGymHub</h2>
@@ -322,9 +169,7 @@ padding: 12px 40px; /* even top & bottom, safe left & right */
         HomeGymHub centralises planning, shopping, and community engagement for home gyms.
         Everything you need to design, purchase, and discuss your gym setup is in one place.
         Anything from designing a home gym, to meeting new people, HomeGymHub offers it all.
-          Constantly evolving, ascending, and collaborating on new ideas.
-        </p>
-        
+        Constantly evolving, ascending, and collaborating on new ideas.
       </p>
       <p>
         Professional, clean design with intuitive tools lets you focus on building your ideal home gym.
@@ -332,101 +177,198 @@ padding: 12px 40px; /* even top & bottom, safe left & right */
     </div>
   </section>
 
-  <!-- FOOTER -->
   <footer class="footer">
-    © 2026 HomeGymHub
+    © 2026 HomeGymHub - Building the Future of Home Fitness
   </footer>
 
-</div>
-
-<script>
-
-  
-  // Page fade-out for navigation
-  const buttons = document.querySelectorAll(".btn[data-target]");
-  const pageWrapper = document.getElementById("page-wrapper");
-
-  buttons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const target = btn.getAttribute("data-target");
-      pageWrapper.style.opacity = "0";
-      setTimeout(() => window.location.href = target, 250);
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    
+    const supabase = createClient(
+      "https://nqomiajgtmxxsupjgvvu.supabase.co",
+      "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA"
+    );
+    
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const accountBtn = document.getElementById("accountBtn");
+    
+    loginBtn?.addEventListener("click", () => {
+      window.location.href = "auth.html";
     });
-  });
-
-  // Scroll animations for module cards
-  const moduleCards = document.querySelectorAll(".module-card");
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if(entry.isIntersecting){
-        entry.target.classList.add("animate-card");
+    
+    logoutBtn?.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+    });
+    
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        accountBtn.style.display = "inline-block";
+      } else {
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        accountBtn.style.display = "none";
       }
     });
-  }, {threshold: 0.3});
-
-  moduleCards.forEach(card => observer.observe(card));
-
-
-  
-</script>
-<script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-  
-  const supabase = createClient(
-    "https://nqomiajgtmxxsupjgvvu.supabase.co",
-    "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA"
-  );
-  
-  const loginBtn = document.getElementById("loginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const accountBtn = document.getElementById("accountBtn");
-  
-  /* Navigate */
-  loginBtn?.addEventListener("click", () => {
-    window.location.href = "auth.html";
-  });
-  
-  accountBtn?.addEventListener("click", () => {
-  });
-  
-  /* Log out */
-  logoutBtn?.addEventListener("click", async () => {
-    await supabase.auth.signOut();
-  });
-  
-  /* AUTH STATE HANDLER */
-  supabase.auth.onAuthStateChange((event, session) => {
+    
+    const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       loginBtn.style.display = "none";
       logoutBtn.style.display = "inline-block";
       accountBtn.style.display = "inline-block";
-    } else {
-      loginBtn.style.display = "inline-block";
-      logoutBtn.style.display = "none";
-      accountBtn.style.display = "none";
     }
-  });
-  
-  /* Initial load check */
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  if (session?.user) {
-    loginBtn.style.display = "none";
-    logoutBtn.style.display = "inline-block";
-    accountBtn.style.display = "inline-block";
-  }
-  
   </script>
-  
+
   <script>
-    const darkToggle = document.getElementById("darkToggle");
+    // Particle system
+    const particlesContainer = document.getElementById('particles');
+    for(let i = 0; i < 40; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (Math.random() * 12 + 8) + 's';
+      p.style.animationDelay = Math.random() * 5 + 's';
+      p.style.setProperty('--drift', (Math.random() * 200 - 100) + 'px');
+      particlesContainer.appendChild(p);
+    }
 
-// Load saved preference
-if (localStorage.getItem("darkMode") === "true") {
-  document.body.classList.add("dark-mode");
-}
+    // Navbar scroll effect
+    const nav = document.querySelector('.nav');
+    window.addEventListener('scroll', () => {
+      if(window.scrollY > 50) {
+        nav.classList.add('scrolled');
+      } else {
+        nav.classList.remove('scrolled');
+      }
+    });
 
+    // Module cards animation
+    const moduleCards = document.querySelectorAll(".module-card");
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach((entry, i) => {
+        if(entry.isIntersecting){
+          setTimeout(() => {
+            entry.target.classList.add("animate-card");
+          }, i * 150);
+        }
+      });
+    }, {threshold: 0.2});
+
+    moduleCards.forEach(card => observer.observe(card));
+
+    // Roadmap scroll reveal
+    const homeRoadmapCards = document.querySelectorAll('.home-roadmap-card');
+    const revealHomeRoadmap = () => {
+      homeRoadmapCards.forEach((card, i) => {
+        const top = card.getBoundingClientRect().top;
+        if(top < window.innerHeight - 120) {
+          setTimeout(() => card.classList.add('show'), i * 120);
+        }
+      });
+    };
+    window.addEventListener('scroll', revealHomeRoadmap);
+    revealHomeRoadmap();
+
+    // Modal with progress bar
+    const modal = document.querySelector('.roadmap-modal');
+    const modalTitle = modal.querySelector('.roadmap-modal-title');
+    const modalBody = modal.querySelector('.roadmap-modal-body');
+    const modalClose = modal.querySelector('.roadmap-modal-close');
+
+    homeRoadmapCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const title = card.getAttribute('data-title');
+        const percent = card.getAttribute('data-percent');
+        const color = card.getAttribute('data-color');
+
+        modalTitle.textContent = title;
+
+        modalBody.innerHTML = `
+          <div class="progress-container">
+            <span class="progress-label">${title} - ${percent}% Complete</span>
+            <div class="progress-bar">
+              <div class="progress-fill" style="background:${color}; width:0;"></div>
+            </div>
+          </div>
+        `;
+        modal.classList.add('active');
+
+        const fill = modalBody.querySelector('.progress-fill');
+        setTimeout(() => {
+          fill.style.width = percent + '%';
+          fill.classList.add('pulse');
+        }, 100);
+      });
+    });
+
+    modalClose.addEventListener('click', () => modal.classList.remove('active'));
+    modal.addEventListener('click', e => { if(e.target === modal) modal.classList.remove('active'); });
+
+    // 3D Model Controls
+    const modelViewer = document.getElementById('gymModel');
+    const toggleBtn = document.getElementById('toggleRotation');
+    const resetBtn = document.getElementById('resetView');
+    const topViewBtn = document.getElementById('topView');
+    const sideViewBtn = document.getElementById('sideView');
+    
+    let rotating = true;
+    
+    toggleBtn.addEventListener('click', () => {
+      rotating = !rotating;
+      if(rotating) {
+        modelViewer.setAttribute('auto-rotate', '');
+        toggleBtn.textContent = 'Auto Rotate: ON';
+        toggleBtn.classList.add('active');
+      } else {
+        modelViewer.removeAttribute('auto-rotate');
+        toggleBtn.textContent = 'Auto Rotate: OFF';
+        toggleBtn.classList.remove('active');
+      }
+    });
+    
+    resetBtn.addEventListener('click', () => {
+      modelViewer.resetTurntableRotation();
+      modelViewer.cameraOrbit = 'auto auto auto';
+      if(!rotating) {
+        modelViewer.setAttribute('auto-rotate', '');
+        rotating = true;
+        toggleBtn.textContent = 'Auto Rotate: ON';
+        toggleBtn.classList.add('active');
+      }
+    });
+    
+    topViewBtn.addEventListener('click', () => {
+      modelViewer.cameraOrbit = '0deg 90deg 18m';
+      if(rotating) {
+        modelViewer.removeAttribute('auto-rotate');
+        rotating = false;
+        toggleBtn.textContent = 'Auto Rotate: OFF';
+        toggleBtn.classList.remove('active');
+      }
+    });
+
+    sideViewBtn.addEventListener('click', () => {
+      modelViewer.cameraOrbit = '90deg 75deg 20m';
+      if(rotating) {
+        modelViewer.removeAttribute('auto-rotate');
+        rotating = false;
+        toggleBtn.textContent = 'Auto Rotate: OFF';
+        toggleBtn.classList.remove('active');
+      }
+    });
+
+    // Button navigation with fade
+    const buttons = document.querySelectorAll(".btn[data-target]");
+    buttons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = btn.getAttribute("data-target");
+        document.body.style.transition = 'opacity 0.3s ease';
+        document.body.style.opacity = "0";
+        setTimeout(() => window.location.href = target, 300);
+      });
+    });
   </script>
 </body>
-
 </html>
