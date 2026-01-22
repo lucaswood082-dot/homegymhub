@@ -4,43 +4,76 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Thread Detail – HomeGymHub</title>
-<link rel="stylesheet" href="thread_detail.css">
+
 <style>
-  /* Make subtitle bigger and move it closer to the title */
-  .threads-hero .hero-content p {
-    margin-top: 4px;       /* Less space below title */
-    font-size: 1.15rem;    /* Slightly bigger for readability */
-    font-weight: 500;
-    color: #f8fafc;        /* Keep consistent with header gradient */
+  html {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #fff 0%, #ffe5cc 20%, #ffccaa 40%, #ff9966 60%, #ffccaa 80%, #fff 100%);
+    background-size: 400% 400%;
+    background-attachment: fixed;
+    animation: gradientShift 20s ease infinite;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+  }
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 </style>
+
+<link rel="stylesheet" href="thread_detail.css">
 </head>
 <body>
 
+<div class="bg-gradient"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
 <button class="back-btn" onclick="window.location.href='threads.html'">← Back</button>
 
-<header class="threads-hero">
+<section class="hero">
   <div class="hero-content">
-    <h1 id="threadTitleHeader">Thread</h1>
+    <h1 class="hero-title" id="threadTitleHeader">Thread</h1>
   </div>
-</header>
+</section>
 
-<main class="threads-main">
-  <!-- Post Reply Form -->
-  <section class="reply-post-section">
-    <form id="newReplyForm" class="reply-form">
-      <textarea id="replyBody" placeholder="Write your reply..." required></textarea>
-      <button type="submit" class="btn primary">Post Reply</button>
-    </form>
-  </section>
-
-  <!-- Replies Section -->
-  <section class="thread-replies-section">
-    <div id="repliesFeed" class="replies-feed">
-      <!-- Replies will load here -->
+<section class="detail-section">
+  <div class="detail-container">
+    
+    <div class="reply-form-card">
+      <form id="newReplyForm" class="reply-form">
+        <textarea id="replyBody" placeholder="Write your reply..." required></textarea>
+        <button type="submit" class="btn primary">Post Reply</button>
+      </form>
     </div>
-  </section>
-</main>
+
+    <div id="repliesFeed" class="replies-list">
+    </div>
+
+  </div>
+</section>
+
+<div id="toast" class="toast">
+  <div class="toast-content">
+    <span class="toast-icon">⚠️</span>
+    <span class="toast-message"></span>
+  </div>
+</div>
 
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -54,17 +87,31 @@ const repliesFeed = document.getElementById("repliesFeed");
 const newReplyForm = document.getElementById("newReplyForm");
 const replyBody = document.getElementById("replyBody");
 const threadTitleHeader = document.getElementById("threadTitleHeader");
-const threadDescHeader = document.getElementById("threadDescHeader");
+const toast = document.getElementById("toast");
+const toastMessage = toast.querySelector(".toast-message");
 
-// Get thread_id from URL
 const urlParams = new URLSearchParams(window.location.search);
 const thread_id = urlParams.get("thread_id");
+
+const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'><path d='M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z'/></svg>";
 
 if (!thread_id) {
   repliesFeed.innerHTML = "<p class='error-msg'>No thread selected.</p>";
 }
 
-// Load thread info
+function showToast(message) {
+  toastMessage.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
+}
+
+function getProfileImage(userId) {
+  const savedImage = localStorage.getItem(`profileImage_${userId}`);
+  return savedImage || defaultAvatar;
+}
+
 async function loadThread() {
   const { data, error } = await supabase
     .from("main_threads")
@@ -74,21 +121,19 @@ async function loadThread() {
 
   if (error || !data) {
     threadTitleHeader.textContent = "Thread not found";
-    threadDescHeader.textContent = "";
     return;
   }
 
   threadTitleHeader.textContent = data.title;
-  threadDescHeader.textContent = data.description || "";
 }
 
-// Load replies with display names
 async function loadReplies() {
   const { data, error } = await supabase
     .from("replies")
     .select(`
       body,
       created_at,
+      author_id,
       profiles!inner(display_name)
     `)
     .eq("main_thread_id", thread_id)
@@ -105,28 +150,42 @@ async function loadReplies() {
     return;
   }
 
-  repliesFeed.innerHTML = data.map(r => `
-    <div class="reply-card">
-      <strong>${r.profiles.display_name}</strong>
-      <p>${r.body}</p>
-      <span class="reply-date">${new Date(r.created_at).toLocaleString()}</span>
+  repliesFeed.innerHTML = data.map((r, index) => {
+    const profileImg = getProfileImage(r.author_id);
+    return `
+    <div class="reply-card" style="animation-delay: ${index * 0.08}s">
+      <div class="reply-header">
+        <div class="reply-author-section">
+          <img src="${profileImg}" alt="Profile" class="reply-avatar">
+          <strong class="reply-author">${r.profiles.display_name}</strong>
+        </div>
+        <span class="reply-date">${new Date(r.created_at).toLocaleString()}</span>
+      </div>
+      <p class="reply-body">${r.body}</p>
     </div>
-  `).join("");
+  `;
+  }).join("");
+
+  setTimeout(() => {
+    document.querySelectorAll('.reply-card').forEach(card => {
+      card.classList.add('animate-card');
+    });
+  }, 50);
 }
 
-// Post new reply
 newReplyForm.addEventListener("submit", async e => {
   e.preventDefault();
   const body = replyBody.value.trim();
   if (!body) return;
 
-  // Get current logged-in user
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) return alert("You must be logged in to post.");
+  if (userError || !user) {
+    showToast("You must be logged in to post");
+    return;
+  }
 
   const userId = user.id;
 
-  // Ensure profile exists
   const { data: profileData } = await supabase
     .from("profiles")
     .select("*")
@@ -139,11 +198,11 @@ newReplyForm.addEventListener("submit", async e => {
       .insert([{ id: userId, display_name: "Your Name" }]);
     if (insertError) {
       console.error("Error creating profile:", insertError);
-      return alert("Cannot create profile. Check console.");
+      showToast("Cannot create profile. Check console.");
+      return;
     }
   }
 
-  // Insert reply
   const { data: replyData, error: replyError } = await supabase
     .from("replies")
     .insert([{ body, main_thread_id: thread_id, author_id: userId }])
@@ -151,26 +210,14 @@ newReplyForm.addEventListener("submit", async e => {
 
   if (replyError) {
     console.error(replyError);
-    return alert("Error posting reply");
+    showToast("Error posting reply");
+    return;
   }
 
   replyBody.value = "";
-
-  // Append new reply
-  const newReply = replyData[0];
-  const replyCard = document.createElement("div");
-  replyCard.className = "reply-card animate-card";
-  replyCard.style.animationDelay = "0s";
-  replyCard.innerHTML = `
-    <strong>${profileData?.display_name || "You"}</strong>
-    <p>${newReply.body}</p>
-    <span class="reply-date">${new Date(newReply.created_at).toLocaleString()}</span>
-  `;
-  repliesFeed.appendChild(replyCard);
-  replyCard.scrollIntoView({ behavior: "smooth", block: "end" });
+  loadReplies();
 });
 
-// Initial load
 loadThread();
 loadReplies();
 </script>

@@ -6,6 +6,16 @@
   <title>HomeGymHub</title>
   <link rel="stylesheet" href="home.css">
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <style>
+    html {
+      background: linear-gradient(135deg, #fff 0%, #ffe5cc 20%, #ffccaa 40%, #ff9966 60%, #ffccaa 80%, #fff 100%);
+      background-size: 400% 400%;
+      background-attachment: fixed;
+    }
+    body {
+      background: transparent;
+    }
+  </style>
 </head>
 <body>
   <div class="bg-gradient"></div>
@@ -20,7 +30,7 @@
       </nav>
       <div class="auth-actions">
         <button id="loginBtn">Log In</button>
-        <button id="accountBtn" style="display:none;" onclick="window.location.href='account.html'">Account</button>
+        <button id="accountBtn" style="display:none;">Account</button>
         <button id="logoutBtn" style="display:none;">Log Out</button>
       </div>
     </div>
@@ -79,7 +89,7 @@
   <section class="section" id="modules">
     <div class="section-inner">
       <h2>Hub Modules</h2>
-      <p class="section-subtitle">Everything you need for your home gym in one centralised hub.</p>
+      <p class="section-subtitle">Everything you need for your home gym in one centralized hub.</p>
       <div class="module-grid">
         <div class="module-card">
           <h3>Gym Planner</h3>
@@ -192,6 +202,18 @@
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const accountBtn = document.getElementById("accountBtn");
+
+    loginBtn?.addEventListener("click", () => {
+  window.location.href = "auth.html";
+});
+
+accountBtn?.addEventListener("click", () => {
+  window.location.href = "account.html"; // change to your actual account page
+});
+
+logoutBtn?.addEventListener("click", async () => {
+  await supabase.auth.signOut();
+});
     
     loginBtn?.addEventListener("click", () => {
       window.location.href = "auth.html";
@@ -359,14 +381,12 @@
       }
     });
 
-    // Button navigation with fade
+    // Button navigation WITHOUT fade (to prevent white flash)
     const buttons = document.querySelectorAll(".btn[data-target]");
     buttons.forEach(btn => {
       btn.addEventListener("click", () => {
         const target = btn.getAttribute("data-target");
-        document.body.style.transition = 'opacity 0.3s ease';
-        document.body.style.opacity = "0";
-        setTimeout(() => window.location.href = target, 300);
+        window.location.href = target;
       });
     });
   </script>

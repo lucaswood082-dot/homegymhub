@@ -1,103 +1,136 @@
 <!DOCTYPE html>
-<html lang="en" style="background: linear-gradient(135deg, #1e3a8a, #f97316);">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Community – HomeGymHub</title>
   
-  <!-- INLINE CRITICAL STYLES - BEFORE ANY EXTERNAL CSS -->
   <style>
-    /* This executes IMMEDIATELY - no white flash possible */
     html {
-      background: linear-gradient(135deg, #1e3a8a, #f97316);
       margin: 0;
       padding: 0;
+      background: linear-gradient(135deg, #fff 0%, #ffe5cc 20%, #ffccaa 40%, #ff9966 60%, #ffccaa 80%, #fff 100%);
+      background-size: 400% 400%;
+      background-attachment: fixed;
+      animation: gradientShift 20s ease infinite;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100%;
+      height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
-    
     body {
       margin: 0;
       padding: 0;
       background: transparent;
-      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior-y: none;
+      overscroll-behavior-x: none;
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
   </style>
   
   <link rel="stylesheet" href="threads.css">
-  <link rel="stylesheet" href="darkmode.css">
 </head>
 <body>
 
+  <div class="bg-gradient"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+
   <button class="back-btn" onclick="window.location.href='index.html'">← Back</button>
 
-<!-- Hero Gradient -->
-<header class="threads-hero">
-  <div class="hero-content">
-    <h1>Community</h1>
-    <p>Share setups, ask questions, and learn from others</p>
-  </div>
-</header>
-
-<main class="threads-main">
-  <section class="threads-feed-section">
-    <div id="threadsFeed" class="threads-feed">
-      <!-- Main threads will appear here -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">Community</h1>
+      <p class="hero-subtitle">Share setups, ask questions, and get advice from the HomeGymHub crew</p>
     </div>
   </section>
-</main>
 
-<!-- Supabase -->
-<script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const supabase = createClient(
-  "https://nqomiajgtmxxsupjgvvu.supabase.co",
-  "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA",
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true
-    }
-  }
-);
-
-  const threadsFeed = document.getElementById("threadsFeed");
-
-  async function loadThreads() {
-    const { data, error } = await supabase
-      .from("main_threads")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      threadsFeed.innerHTML = "<p class='error-msg'>Error loading threads</p>";
-      console.error(error);
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      threadsFeed.innerHTML = "<p class='empty-msg'>No threads yet. Add some!</p>";
-      return;
-    }
-
-    threadsFeed.innerHTML = data.map(thread => `
-      <div class="thread-card" data-thread-id="${thread.id}">
-        <h3 class="thread-title">${thread.title}</h3>
-        <p class="thread-body">${thread.body || ''}</p>
+  <section class="threads-section">
+    <div class="threads-container">
+      <div id="threadsFeed" class="threads-list">
+        <div class="loading">Loading community threads...</div>
       </div>
-    `).join("");
+    </div>
+  </section>
 
-    // Add click event to navigate to thread detail
-    document.querySelectorAll(".thread-card").forEach(card => {
-      card.addEventListener("click", () => {
-        const id = card.dataset.threadId;
-        window.location.href = `thread_detail.html?thread_id=${id}`;
+  <div id="toast" class="toast">
+    <div class="toast-content">
+      <span class="toast-icon">⚠️</span>
+      <span class="toast-message"></span>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const supabase = createClient(
+      "https://nqomiajgtmxxsupjgvvu.supabase.co",
+      "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA"
+    );
+
+    const threadsFeed = document.getElementById("threadsFeed");
+
+    async function loadThreads() {
+      threadsFeed.innerHTML = '<div class="loading">Loading threads...</div>';
+
+      const { data, error } = await supabase
+        .from("main_threads")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        threadsFeed.innerHTML = '<p class="error-msg">Couldn\'t load threads right now. Try refreshing.</p>';
+        console.error("Threads load error:", error);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        threadsFeed.innerHTML = '<p class="empty-msg">No threads yet.</p>';
+        return;
+      }
+
+      threadsFeed.innerHTML = data.map((thread, index) => `
+        <div class="thread-card" data-thread-id="${thread.id}" style="animation-delay: ${index * 0.08}s">
+          <h3 class="thread-title">${thread.title}</h3>
+          <p class="thread-body">${thread.body || ''}</p>
+          <div class="thread-meta">
+            <span class="thread-date">
+              ${new Date(thread.created_at).toLocaleDateString('en-AU', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </span>
+          </div>
+        </div>
+      `).join("");
+
+      setTimeout(() => {
+        document.querySelectorAll('.thread-card').forEach(card => {
+          card.classList.add('animate-card');
+        });
+      }, 50);
+
+      document.querySelectorAll(".thread-card").forEach(card => {
+        card.addEventListener("click", () => {
+          const id = card.dataset.threadId;
+          window.location.href = `thread_detail.html?thread_id=${id}`;
+        });
       });
-    });
-  }
+    }
 
-  loadThreads();
-</script>
+    loadThreads();
+  </script>
 
 </body>
 </html>

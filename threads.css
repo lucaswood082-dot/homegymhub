@@ -1,217 +1,284 @@
+* { 
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box; 
+}
 
-
-/* ===== Reset ===== */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+html, body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
 }
-
-.new-thread-section {
-  display: none;
-}
-
 
 body {
-  font-family: system-ui, sans-serif;
-  background: #f7f8fa;
-  color: #111827;
-  line-height: 1.6;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #1a1a1a;
+  position: relative;
+  overscroll-behavior: none;
 }
 
-/* ===== Hero Gradient ===== */
-.threads-hero {
-  padding: 100px 20px 60px;
-  text-align: center;
-  background: linear-gradient(135deg, #1e3a8a, #f97316);
-  color: #ffffff;
+.bg-gradient {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  z-index: -2;
+  opacity: 0.7;
 }
 
-.threads-hero h1 {
-  font-size: 3rem;
-  margin-bottom: 10px;
-  opacity: 0;
-  animation: fadeIn 0.8s forwards;
-}
-
-.threads-hero p {
-  font-size: 1.3rem;
-  opacity: 0;
-  animation: fadeIn 0.8s 0.2s forwards;
-}
-
-/* ===== Main Section ===== */
-.threads-main {
-  max-width: 900px;
-  margin: -50px auto 80px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
-}
-
-/* ===== Post Thread Form ===== */
-.thread-post-section {
-  background: #ffffff;
-  padding: 28px 32px;
-  border-radius: 18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-}
-
-.thread-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.thread-form input,
-.thread-form textarea {
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid #d1d5db;
-  font-size: 1rem;
-}
-
-.thread-form textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-/* Smaller Post Button */
-.thread-form .btn.primary {
-  width: fit-content;
-  padding: 12px 28px;
-  background: #f97316;
-  color: #ffffff;
-  font-weight: 600;
+.back-btn {
+  position: fixed;
+  top: 30px;
+  left: 30px;
+  padding: 0.7rem 1.8rem;
+  border: 2px solid rgba(255, 107, 53, 0.3);
+  background: transparent;
+  color: #1a1a1a;
+  border-radius: 50px;
   cursor: pointer;
-  border-radius: 12px;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-  border: none; /* removes weird outline */
+  font-weight: 700;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  z-index: 100;
 }
 
-.thread-form .btn.primary:hover {
+.back-btn:hover {
+  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  color: #fff;
+  border-color: #ff6b35;
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
 }
 
-/* ===== Threads Feed ===== */
-.threads-feed {
+.hero {
+  min-height: 35vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 2rem 2rem;
+  position: relative;
+}
+
+.hero-content {
+  text-align: center;
+  max-width: 900px;
+  z-index: 2;
+}
+
+.hero-title {
+  font-size: clamp(2.8rem, 8vw, 5.5rem);
+  font-weight: 900;
+  margin-bottom: 0.75rem;
+  background: linear-gradient(135deg, #1a1a1a 20%, #ff6b35 50%, #ff8c42 80%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -2px;
+  line-height: 1.1;
+  animation: titleGlow 3s ease-in-out infinite;
+  opacity: 0;
+  animation: titleGlow 3s ease-in-out infinite, fadeInScale 0.8s ease forwards;
+}
+
+@keyframes titleGlow {
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(255, 107, 53, 0.3)); }
+  50% { filter: drop-shadow(0 0 40px rgba(255, 140, 66, 0.5)); }
+}
+
+@keyframes fadeInScale {
+  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: scale(0.95); }
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: #666;
+  font-weight: 400;
+  opacity: 0;
+  animation: fadeInUp 0.8s ease 0.2s forwards;
+}
+
+@keyframes fadeInUp {
+  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(20px); }
+}
+
+.threads-section {
+  padding: 0 2rem 4rem;
+  position: relative;
+}
+
+.threads-container {
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+.threads-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 1.25rem;
 }
 
-/* ===== Individual Thread Card ===== */
 .thread-card {
-  background: #ffffff;
-  padding: 22px 28px;
-  border-radius: 16px;
-  box-shadow: 0 8px 22px rgba(0,0,0,0.08);
+  padding: 1.75rem;
+  background: rgba(255, 255, 255, 0.75);
+  border: 2px solid rgba(255, 107, 53, 0.2);
+  border-radius: 18px;
+  backdrop-filter: blur(20px);
+  transition: all 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   opacity: 0;
-  transform: translateY(12px);
-  animation: fadeUp 0.35s forwards;
-  transition: all 0.25s ease;
+  transform: translateY(30px) scale(0.98);
+  box-shadow: 0 8px 30px rgba(255, 107, 53, 0.06);
+  cursor: pointer;
 }
 
+.thread-card.animate-card {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
 
 .thread-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+  transform: translateY(-10px) scale(1.01);
+  border-color: #ff6b35;
+  box-shadow: 0 20px 50px rgba(255, 107, 53, 0.22);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.thread-card:active {
+  transform: translateY(-5px) scale(0.99);
 }
 
 .thread-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin-bottom: 6px;
+  font-size: 1.5rem;
+  margin-bottom: 0.6rem;
+  color: #1a1a1a;
+  font-weight: 800;
+  transition: color 0.3s ease;
+}
+
+.thread-card:hover .thread-title {
+  color: #ff6b35;
 }
 
 .thread-body {
-  font-size: 1rem;
-  color: #374151;
-  line-height: 1.5;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 0.6rem;
 }
 
-/* ===== Empty/Error Messages ===== */
+.thread-meta {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(255, 107, 53, 0.15);
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.thread-date {
+  font-style: italic;
+}
+
+.loading,
 .empty-msg,
 .error-msg {
   text-align: center;
-  padding: 24px;
-  color: #f97316;
-  font-weight: 500;
+  padding: 2.5rem 1rem;
+  color: #6b7280;
   font-size: 1.05rem;
-  background: #fff3ed;
-  border-radius: 12px;
 }
 
-/* ===== Animations ===== */
-@keyframes fadeUp {
-  to { opacity: 1; transform: translateY(0); }
+.error-msg {
+  color: #ef4444;
 }
 
-@keyframes fadeIn {
-  to { opacity: 1; }
+.toast {
+  position: fixed;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  transition: top 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-/* ===== Responsive ===== */
-@media (max-width: 480px) {
-  .threads-hero h1 { font-size: 2.2rem; }
-  .threads-hero p { font-size: 1rem; }
-  .thread-post-section { padding: 20px; }
-  .thread-form .btn.primary { padding: 10px 22px; font-size: 0.95rem; }
-}
-/* Back Button */
-.back-btn {
-    position: absolute;
-    top: 30px;
-    left: 30px;
-    padding: 8px 14px;
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s ease, transform 0.15s ease;
-  }
-  
-  .back-btn:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: translateY(-2px);
-  }
-  /* Flash-prevention overlay background for dark mode */
-body.dark-mode #flash-prevent {
-  background: #1c0f3d !important; /* dark purple for dark mode */
-}
-/* THREADS PAGE — STOP TOP/BOTTOM OVERSCROLL */
-html, body {
-  overscroll-behavior: none;  /* disables top/bottom rubber-band */
-  touch-action: pan-x pan-y;  /* allows normal scrolling without overscroll */
-}
-/* THREADS PAGE — THREAD CARD HOVER GLOW */
-.thread-card {
-  position: relative;
-  background: #ffffff; /* default card background */
-  border-radius: 12px;
-  padding: 18px 22px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-  transition: transform 0.2s ease, box-shadow 0.25s ease;
-  cursor: pointer;
+.toast.show {
+  top: 30px;
 }
 
-.thread-card:hover {
-  transform: translateY(-3px); /* subtle lift */
-  box-shadow: 0 10px 25px rgba(255, 122, 0, 0.35), 0 0 15px rgba(255, 122, 0, 0.2); /* orange glow effect */
-}
-.thread-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  color: #fff;
+  padding: 1rem 1.75rem;
+  border-radius: 50px;
+  box-shadow: 0 10px 40px rgba(255, 107, 53, 0.4);
+  font-weight: 600;
+  backdrop-filter: blur(10px);
 }
 
-.thread-card:hover {
-  transform: scale(1.05); /* slightly bigger */
-  box-shadow: 0 10px 25px rgba(255,122,0,0.35), 0 0 15px rgba(255,122,0,0.2); /* subtle orange glow */
+.toast-icon {
+  font-size: 1.3rem;
+}
+
+.toast-message {
+  font-size: 0.95rem;
+}
+
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.25;
+  animation: orbFloat 25s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.orb1 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #ff8c42, transparent);
+  top: 15%;
+  left: -8%;
+  animation-delay: 0s;
+}
+
+.orb2 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, #ff6b35, transparent);
+  bottom: 20%;
+  right: -5%;
+  animation-delay: 7s;
+}
+
+.orb3 {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, #ffaa80, transparent);
+  top: 45%;
+  right: 8%;
+  animation-delay: 14s;
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(60px, -60px) scale(1.15); }
+  66% { transform: translate(-60px, 60px) scale(0.85); }
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 4.5rem 1rem 1.5rem; min-height: 30vh; }
+  .hero-title { font-size: 2.2rem; }
+  .hero-subtitle { font-size: 1.05rem; }
+  .threads-section { padding: 0 1rem 3rem; }
+  .thread-card { padding: 1.4rem; }
+  .back-btn { top: 20px; left: 20px; padding: 0.6rem 1.4rem; }
+  .toast.show { top: 20px; }
+  .toast-content { padding: 0.85rem 1.5rem; }
 }
