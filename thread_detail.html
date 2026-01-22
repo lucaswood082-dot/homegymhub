@@ -58,7 +58,25 @@
     <div class="reply-form-card">
       <form id="newReplyForm" class="reply-form">
         <textarea id="replyBody" placeholder="Write your reply..." required></textarea>
-        <button type="submit" class="btn primary">Post Reply</button>
+        
+        <div class="image-upload-section">
+          <label for="imageUpload" class="image-upload-label">
+            📸 Add Image (Optional)
+          </label>
+          <input 
+            type="file" 
+            id="imageUpload" 
+            class="image-upload-input"
+            accept="image/*"
+          >
+          
+          <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
+            <img id="imagePreview" class="image-preview" src="" alt="Preview">
+            <button type="button" class="remove-image-btn" id="removeImageBtn">×</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn primary" id="submitBtn">Post Reply</button>
       </form>
     </div>
 
@@ -70,7 +88,6 @@
 
 <div id="toast" class="toast">
   <div class="toast-content">
-    <span class="toast-icon">⚠️</span>
     <span class="toast-message"></span>
   </div>
 </div>
@@ -89,22 +106,64 @@ const replyBody = document.getElementById("replyBody");
 const threadTitleHeader = document.getElementById("threadTitleHeader");
 const toast = document.getElementById("toast");
 const toastMessage = toast.querySelector(".toast-message");
+const imageUpload = document.getElementById("imageUpload");
+const imagePreview = document.getElementById("imagePreview");
+const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+const removeImageBtn = document.getElementById("removeImageBtn");
+const submitBtn = document.getElementById("submitBtn");
 
 const urlParams = new URLSearchParams(window.location.search);
 const thread_id = urlParams.get("thread_id");
 
 const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'><path d='M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z'/></svg>";
 
+let selectedImage = null;
+
 if (!thread_id) {
   repliesFeed.innerHTML = "<p class='error-msg'>No thread selected.</p>";
 }
 
-// Get public URL for profile image from Supabase Storage
+imageUpload.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Image must be less than 5MB");
+      imageUpload.value = "";
+      return;
+    }
+    
+    selectedImage = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagePreview.src = e.target.result;
+      imagePreviewContainer.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+removeImageBtn.addEventListener("click", () => {
+  selectedImage = null;
+  imageUpload.value = "";
+  imagePreviewContainer.style.display = "none";
+  imagePreview.src = "";
+});
+
 function getPublicImageUrl(path) {
   if (!path) return defaultAvatar;
   
   const { data } = supabase.storage
     .from('profile-images')
+    .getPublicUrl(path);
+  
+  return data.publicUrl;
+}
+
+function getReplyImageUrl(path) {
+  if (!path) return null;
+  
+  const { data } = supabase.storage
+    .from('reply-images')
     .getPublicUrl(path);
   
   return data.publicUrl;
@@ -118,7 +177,6 @@ function showToast(message) {
   }, 3000);
 }
 
-// Load profile image from database
 async function getProfileImage(userId) {
   try {
     const { data, error } = await supabase
@@ -160,6 +218,7 @@ async function loadReplies() {
       body,
       created_at,
       author_id,
+      image_url,
       profiles!inner(display_name)
     `)
     .eq("main_thread_id", thread_id)
@@ -176,12 +235,13 @@ async function loadReplies() {
     return;
   }
 
-  // Load all profile images from Supabase Storage
   const imagePromises = data.map(r => getProfileImage(r.author_id));
   const profileImages = await Promise.all(imagePromises);
 
   repliesFeed.innerHTML = data.map((r, index) => {
     const profileImg = profileImages[index];
+    const replyImageUrl = r.image_url ? getReplyImageUrl(r.image_url) : null;
+    
     return `
     <div class="reply-card" style="animation-delay: ${index * 0.08}s">
       <div class="reply-header">
@@ -192,6 +252,7 @@ async function loadReplies() {
         <span class="reply-date">${new Date(r.created_at).toLocaleString()}</span>
       </div>
       <p class="reply-body">${r.body}</p>
+      ${replyImageUrl ? `<img src="${replyImageUrl}" alt="Reply image" class="reply-image">` : ''}
     </div>
   `;
   }).join("");
@@ -203,50 +264,103 @@ async function loadReplies() {
   }, 50);
 }
 
-newReplyForm.addEventListener("submit", async e => {
+async function uploadImage(file, userId) {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${userId}/${Date.now()}.${fileExt}`;
+  
+  const { data, error } = await supabase.storage
+    .from('reply-images')
+    .upload(fileName, file);
+
+  if (error) {
+    console.error("Upload error:", error);
+    throw error;
+  }
+
+  return fileName;
+}
+
+newReplyForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const body = replyBody.value.trim();
   if (!body) return;
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
-    showToast("You must be logged in to post");
-    return;
-  }
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Posting...";
 
-  const userId = user.id;
-
-  const { data: profileData } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .single();
-
-  if (!profileData) {
-    const { error: insertError } = await supabase
-      .from("profiles")
-      .insert([{ id: userId, display_name: `User${userId.substring(0, 6)}` }]);
-    if (insertError) {
-      console.error("Error creating profile:", insertError);
-      showToast("Cannot create profile. Check console.");
+  try {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      showToast("You must be logged in to post");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Post Reply";
       return;
     }
+
+    const userId = user.id;
+
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (!profileData) {
+      const { error: insertError } = await supabase
+        .from("profiles")
+        .insert([{ id: userId, display_name: `User${userId.substring(0, 6)}` }]);
+      if (insertError) {
+        console.error("Error creating profile:", insertError);
+        showToast("Cannot create profile. Check console.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Post Reply";
+        return;
+      }
+    }
+
+    let imageUrl = null;
+    if (selectedImage) {
+      try {
+        imageUrl = await uploadImage(selectedImage, userId);
+      } catch (uploadError) {
+        console.error("Image upload failed:", uploadError);
+        showToast("Image upload failed, posting without image");
+      }
+    }
+
+    const { data: replyData, error: replyError } = await supabase
+      .from("replies")
+      .insert([{ 
+        body, 
+        main_thread_id: thread_id, 
+        author_id: userId,
+        image_url: imageUrl 
+      }])
+      .select();
+
+    if (replyError) {
+      console.error(replyError);
+      showToast("Error posting reply");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Post Reply";
+      return;
+    }
+
+    replyBody.value = "";
+    selectedImage = null;
+    imageUpload.value = "";
+    imagePreviewContainer.style.display = "none";
+    imagePreview.src = "";
+    
+    showToast("Reply posted!");
+    await loadReplies();
+  } catch (error) {
+    console.error("Error:", error);
+    showToast("An error occurred");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Post Reply";
   }
-
-  const { data: replyData, error: replyError } = await supabase
-    .from("replies")
-    .insert([{ body, main_thread_id: thread_id, author_id: userId }])
-    .select();
-
-  if (replyError) {
-    console.error(replyError);
-    showToast("Error posting reply");
-    return;
-  }
-
-  replyBody.value = "";
-  showToast("Reply posted!");
-  loadReplies();
 });
 
 loadThread();

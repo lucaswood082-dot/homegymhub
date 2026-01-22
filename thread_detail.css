@@ -143,6 +143,77 @@ body {
   transform: translateY(-2px);
 }
 
+.image-upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.image-upload-input {
+  display: none;
+}
+
+.image-upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 107, 53, 0.1);
+  border: 2px dashed rgba(255, 107, 53, 0.3);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  color: #ff6b35;
+  width: fit-content;
+}
+
+.image-upload-label:hover {
+  background: rgba(255, 107, 53, 0.15);
+  border-color: #ff6b35;
+  transform: translateY(-2px);
+}
+
+.image-preview-container {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 107, 53, 0.2);
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.15);
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ff6b35;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+  transition: all 0.3s ease;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.remove-image-btn:hover {
+  background: #ff4411;
+  transform: scale(1.1);
+}
+
 .btn {
   padding: 1rem 2.5rem;
   border: none;
@@ -187,6 +258,12 @@ body {
 
 .btn.primary:active {
   transform: translateY(-1px) scale(1.02);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
 .replies-list {
@@ -269,6 +346,21 @@ body {
 .reply-body {
   color: #666;
   line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.reply-image {
+  max-width: 100%;
+  border-radius: 12px;
+  margin-top: 0.75rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.reply-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .loading,
@@ -308,10 +400,6 @@ body {
   box-shadow: 0 10px 40px rgba(255, 107, 53, 0.4);
   font-weight: 600;
   backdrop-filter: blur(10px);
-}
-
-.toast-icon {
-  font-size: 1.3rem;
 }
 
 .toast-message {
