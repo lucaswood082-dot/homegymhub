@@ -41,7 +41,6 @@
       <p>Equipment you're selling on the marketplace</p>
       
       <div class="listings-list" id="myListings">
-        <!-- Listings will be added here dynamically -->
         <div class="empty-state">
           <p>No listings yet</p>
           <span class="pill">Coming Soon</span>
@@ -89,7 +88,6 @@
       <p>Items you want to buy later</p>
       
       <div class="wishlist-grid" id="wishlistItems">
-        <!-- Wishlist items will be added here dynamically -->
         <div class="empty-state">
           <p>No items saved yet</p>
           <span class="pill">Coming Soon</span>
@@ -161,6 +159,48 @@
       setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
+    // Get public URL for profile image
+    function getPublicImageUrl(path) {
+      if (!path) return defaultAvatar;
+      
+      const { data } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(path);
+      
+      return data.publicUrl;
+    }
+
+    // Upload image to Supabase Storage
+    async function uploadProfileImage(file, userId) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${userId}/profile.${fileExt}`;
+        
+        // Delete old image if it exists
+        await supabase.storage
+          .from('profile-images')
+          .remove([fileName]);
+        
+        // Upload new image
+        const { data, error } = await supabase.storage
+          .from('profile-images')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+        
+        if (error) {
+          console.error("Upload error:", error);
+          throw error;
+        }
+        
+        return fileName;
+      } catch (err) {
+        console.error("Upload error:", err);
+        throw err;
+      }
+    }
+
     // Load user data
     async function loadUserData() {
       try {
@@ -174,12 +214,6 @@
 
         currentUser = user;
         emailText.textContent = user.email;
-
-        // Load profile image from localStorage
-        const savedImage = localStorage.getItem(`profileImage_${user.id}`);
-        if (savedImage && savedImage !== defaultAvatar) {
-          profileImg.src = savedImage;
-        }
 
         // Load profile from database
         const { data: profiles, error: profileError } = await supabase
@@ -196,6 +230,13 @@
         if (profiles && profiles.length > 0) {
           currentProfile = profiles[0];
           displayNameText.textContent = currentProfile.display_name || "Your Name";
+          
+          // Load profile image from Supabase Storage
+          if (currentProfile.profile_image_url) {
+            profileImg.src = getPublicImageUrl(currentProfile.profile_image_url);
+          } else {
+            profileImg.src = defaultAvatar;
+          }
         } else {
           // Create new profile
           const { data: newProfile, error: createError } = await supabase
@@ -215,6 +256,7 @@
           if (newProfile && newProfile.length > 0) {
             currentProfile = newProfile[0];
             displayNameText.textContent = currentProfile.display_name;
+            profileImg.src = defaultAvatar;
           }
         }
       } catch (err) {
@@ -342,10 +384,10 @@
       }
     });
 
-    // Avatar change
+    // Avatar change - AUTOMATICALLY UPLOADS
     changeAvatarBtn.addEventListener("click", () => avatarInput.click());
 
-    avatarInput.addEventListener("change", e => {
+    avatarInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
       
@@ -354,16 +396,72 @@
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        profileImg.src = reader.result;
-        if (currentUser) {
-          localStorage.setItem(`profileImage_${currentUser.id}`, reader.result);
+      if (file.size > 5000000) {
+        showToast("Image too large! Please choose an image under 5MB", true);
+        return;
+      }
+
+      if (!currentUser) {
+        showToast("Please log in first", true);
+        return;
+      }
+
+      // Show loading state
+      changeAvatarBtn.disabled = true;
+      changeAvatarBtn.innerHTML = '⏳';
+      
+      try {
+        // Preview image immediately
+        const reader = new FileReader();
+        reader.onload = () => {
+          profileImg.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+
+        showToast("Uploading image...");
+
+        // Upload to Supabase Storage
+        const imagePath = await uploadProfileImage(file, currentUser.id);
+
+        // Update database with new image URL
+        const { data, error } = await supabase
+          .from("profiles")
+          .update({ profile_image_url: imagePath })
+          .eq("id", currentUser.id)
+          .select();
+
+        if (error) {
+          console.error("Database update error:", error);
+          showToast("Error saving image", true);
+          // Revert to old image
+          if (currentProfile?.profile_image_url) {
+            profileImg.src = getPublicImageUrl(currentProfile.profile_image_url);
+          } else {
+            profileImg.src = defaultAvatar;
+          }
+          return;
         }
-        showToast("Profile picture updated!");
-      };
-      reader.readAsDataURL(file);
-      avatarInput.value = "";
+
+        if (data && data.length > 0) {
+          currentProfile = data[0];
+          profileImg.src = getPublicImageUrl(currentProfile.profile_image_url);
+          showToast("Profile picture updated successfully!");
+        }
+
+      } catch (err) {
+        console.error("Upload error:", err);
+        showToast("Error uploading image", true);
+        // Revert to old image
+        if (currentProfile?.profile_image_url) {
+          profileImg.src = getPublicImageUrl(currentProfile.profile_image_url);
+        } else {
+          profileImg.src = defaultAvatar;
+        }
+      } finally {
+        changeAvatarBtn.disabled = false;
+        changeAvatarBtn.innerHTML = '✎';
+        avatarInput.value = "";
+      }
     });
 
     // Logout
@@ -383,38 +481,6 @@
         loadUserData();
       }
     });
-
-    // DEMO: You can add listings dynamically like this later:
-    // Example function to add a listing (uncomment when ready to implement)
-    /*
-    function addListing(title, price) {
-      const listingsContainer = document.getElementById('myListings');
-      const emptyState = listingsContainer.querySelector('.empty-state');
-      if (emptyState) emptyState.remove();
-      
-      const listing = document.createElement('div');
-      listing.className = 'listing-item';
-      listing.innerHTML = `
-        <div class="listing-title">${title}</div>
-        <div class="listing-price">$${price}</div>
-      `;
-      listingsContainer.appendChild(listing);
-    }
-    */
-
-    // DEMO: You can add wishlist items dynamically like this later:
-    /*
-    function addWishlistItem(title) {
-      const wishlistContainer = document.getElementById('wishlistItems');
-      const emptyState = wishlistContainer.querySelector('.empty-state');
-      if (emptyState) emptyState.remove();
-      
-      const item = document.createElement('div');
-      item.className = 'wishlist-item';
-      item.innerHTML = `<div class="wishlist-title">${title}</div>`;
-      wishlistContainer.appendChild(item);
-    }
-    */
   </script>
 </body>
 </html>

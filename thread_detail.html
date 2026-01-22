@@ -99,6 +99,17 @@ if (!thread_id) {
   repliesFeed.innerHTML = "<p class='error-msg'>No thread selected.</p>";
 }
 
+// Get public URL for profile image from Supabase Storage
+function getPublicImageUrl(path) {
+  if (!path) return defaultAvatar;
+  
+  const { data } = supabase.storage
+    .from('profile-images')
+    .getPublicUrl(path);
+  
+  return data.publicUrl;
+}
+
 function showToast(message) {
   toastMessage.textContent = message;
   toast.classList.add("show");
@@ -107,9 +118,24 @@ function showToast(message) {
   }, 3000);
 }
 
-function getProfileImage(userId) {
-  const savedImage = localStorage.getItem(`profileImage_${userId}`);
-  return savedImage || defaultAvatar;
+// Load profile image from database
+async function getProfileImage(userId) {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("profile_image_url")
+      .eq("id", userId)
+      .single();
+    
+    if (error || !data) {
+      return defaultAvatar;
+    }
+    
+    return getPublicImageUrl(data.profile_image_url);
+  } catch (err) {
+    console.error("Error loading profile image:", err);
+    return defaultAvatar;
+  }
 }
 
 async function loadThread() {
@@ -150,8 +176,12 @@ async function loadReplies() {
     return;
   }
 
+  // Load all profile images from Supabase Storage
+  const imagePromises = data.map(r => getProfileImage(r.author_id));
+  const profileImages = await Promise.all(imagePromises);
+
   repliesFeed.innerHTML = data.map((r, index) => {
-    const profileImg = getProfileImage(r.author_id);
+    const profileImg = profileImages[index];
     return `
     <div class="reply-card" style="animation-delay: ${index * 0.08}s">
       <div class="reply-header">
@@ -195,7 +225,7 @@ newReplyForm.addEventListener("submit", async e => {
   if (!profileData) {
     const { error: insertError } = await supabase
       .from("profiles")
-      .insert([{ id: userId, display_name: "Your Name" }]);
+      .insert([{ id: userId, display_name: `User${userId.substring(0, 6)}` }]);
     if (insertError) {
       console.error("Error creating profile:", insertError);
       showToast("Cannot create profile. Check console.");
@@ -215,6 +245,7 @@ newReplyForm.addEventListener("submit", async e => {
   }
 
   replyBody.value = "";
+  showToast("Reply posted!");
   loadReplies();
 });
 
