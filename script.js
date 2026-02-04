@@ -513,6 +513,12 @@ function createResult({ name, w, h, layer }) {
 }
 
 function spawn(name, w, h, x, y, layer = "equipment") {
+  const pxW = w / metersPerPixelX;
+  const pxH = h / metersPerPixelY;
+  if (pxW > grid.clientWidth || pxH > grid.clientHeight) {
+    showToast("Item is too large for the current room size");
+    return null;
+  }
   const el = document.createElement("div");
   el.className = "equipment";
   el.dataset.name = name;
