@@ -1,939 +1,1031 @@
-// ============================================
-// PRIMAL LAB MARKETPLACE - COMPLETE JAVASCRIPT
-// ============================================
+// Primal Lab Planner - Core Interactions
 
-// ============================================
-// CONFIGURATION
-// ============================================
-const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // Replace with your Supabase URL
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your Supabase anon key
+// ===============================
+// ELEMENTS
+// ===============================
+const grid = document.getElementById("grid");
+const drawLayer = document.getElementById("drawLayer");
+const equipmentSearch = document.getElementById("search");
+const equipmentResults = document.getElementById("results");
+const toolButton = document.getElementById("toolButton");
+const toolModal = document.getElementById("toolModal");
+const structureSearch = document.getElementById("structureSearch");
+const structureResults = document.getElementById("structureResults");
+const snapToggle = document.getElementById("snapToggle");
+const applyScaleBtn = document.getElementById("applyScale");
+const roomW = document.getElementById("roomW");
+const roomL = document.getElementById("roomL");
+const viewButtons = document.querySelectorAll(".view-btn");
 
-// Initialize Supabase client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const shapeBtn = document.getElementById("customShapeToggle");
+const shapePanel = document.getElementById("customShapePanel");
+const shapeTabs = document.querySelectorAll(".shape-tab");
+const shapeSections = document.querySelectorAll(".shape-section");
+const shapeDone = document.getElementById("shapeDone");
+const shapeCancel = document.getElementById("shapeCancel");
+const shapeName = document.getElementById("shapeName");
+const shapeWidth = document.getElementById("shapeWidth");
+const shapeLength = document.getElementById("shapeLength");
 
-// ============================================
-// GLOBAL STATE
-// ============================================
-let currentUser = null;
-let currentFilter = 'all';
-let allListings = [];
-let currentConversationId = null;
-let messagePollingInterval = null;
+const freeDrawArea = document.getElementById("freeDrawArea");
+const freeDrawCanvas = document.getElementById("freeDrawCanvas");
 
-// ============================================
-// AUTHENTICATION
-// ============================================
+const clearAllBtn = document.getElementById("clearAllBtn");
+const confirmToast = document.getElementById("confirmToast");
+const confirmYes = document.getElementById("confirmYes");
+const confirmNo = document.getElementById("confirmNo");
 
-// Check if user is logged in on page load
-async function checkAuth() {
-    const token = localStorage.getItem('primal_auth_token');
-    const userId = localStorage.getItem('primal_user_id');
-    
-    if (token && userId) {
-        try {
-            const { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', userId)
-                .single();
-            
-            if (data && !error) {
-                currentUser = data;
-                updateUIForLoggedInUser();
-            } else {
-                // Token invalid, clear it
-                localStorage.removeItem('primal_auth_token');
-                localStorage.removeItem('primal_user_id');
-            }
-        } catch (err) {
-            console.error('Auth check error:', err);
-        }
-    }
+const exportBtn = document.getElementById("exportBtn");
+const exportModal = document.getElementById("exportModal");
+const exportConfirm = document.getElementById("exportConfirm");
+const exportCancel = document.getElementById("exportCancel");
+const exportFlooring = document.getElementById("exportFlooring");
+const exportStructures = document.getElementById("exportStructures");
+const exportEquipment = document.getElementById("exportEquipment");
+
+const toast = document.getElementById("toast");
+
+// ===============================
+// STATE
+// ===============================
+let snapEnabled = true;
+let metersPerPixelX = 1;
+let metersPerPixelY = 1;
+let gridSizePx = 50;
+let currentView = "all";
+let activeStructureCategory = "structure";
+
+let drawCtx = null;
+let drawing = false;
+let drawStart = null;
+let drawPoints = [];
+let lastShape = null;
+
+// ===============================
+// DATA
+// ===============================
+const EQUIPMENT = [
+  // ===== FREE WEIGHTS =====
+  ["Dumbbells", 2.0, 0.6],
+  ["Adjustable dumbbells", 0.6, 0.6],
+  ["Pro-style dumbbells", 2.4, 0.7],
+  ["Studio dumbbells", 1.5, 0.5],
+  ["Olympic barbell", 2.2, 0.45],
+  ["Power bar", 2.2, 0.45],
+  ["Deadlift bar", 2.3, 0.45],
+  ["Weightlifting bar", 2.2, 0.45],
+  ["Technique bar", 1.8, 0.45],
+  ["EZ curl bar", 1.2, 0.25],
+  ["Super curl bar", 1.2, 0.25],
+  ["Trap bar", 2.2, 0.75],
+  ["Open trap bar", 2.2, 0.75],
+  ["Safety squat bar", 2.2, 0.45],
+  ["Cambered bar", 2.2, 0.45],
+  ["Swiss bar", 2.2, 0.45],
+  ["Football bar", 2.2, 0.45],
+  ["Axle bar", 2.2, 0.5],
+  ["Log bar", 2.0, 1.0],
+
+  // ===== BENCHES =====
+  ["Flat bench", 1.2, 0.6],
+  ["Competition bench", 1.4, 0.6],
+  ["Adjustable bench", 1.4, 0.7],
+  ["Heavy-duty adjustable bench", 1.5, 0.75],
+  ["Incline bench", 1.4, 0.6],
+  ["Decline bench", 1.4, 0.6],
+  ["Utility bench", 1.1, 0.5],
+  ["Ab bench", 1.4, 0.6],
+  ["Nordic bench", 1.6, 0.6],
+  ["Seal row bench", 1.6, 0.6],
+
+  // ===== RACKS & FRAMES =====
+  ["Power rack", 1.5, 1.5],
+  ["6-post power rack", 1.5, 2.4],
+  ["Half rack", 1.4, 1.3],
+  ["Squat rack", 1.4, 1.2],
+  ["Wall-mounted rack", 1.3, 1.2],
+  ["Folding rack", 1.3, 1.2],
+  ["Monolift", 1.6, 1.5],
+  ["Combo rack", 1.6, 1.5],
+  ["Smith machine", 2.2, 1.5],
+  ["Counterbalanced Smith", 2.2, 1.5],
+
+  // ===== PLATES & STORAGE =====
+  ["Bumper plates set", 2.0, 0.6],
+  ["Competition bumpers", 2.0, 0.6],
+  ["Iron plates set", 2.0, 0.6],
+  ["Calibrated plates set", 2.0, 0.6],
+  ["Change plates rack", 0.8, 0.4],
+  ["Plate tree", 1.0, 1.0],
+  ["Horizontal plate rack", 2.0, 0.6],
+  ["Vertical plate rack", 1.5, 0.6],
+  ["Dumbbell rack", 2.0, 0.6],
+  ["3-tier dumbbell rack", 2.4, 0.7],
+  ["Kettlebell rack", 1.2, 0.6],
+  ["Multi-tier kettlebell rack", 1.8, 0.6],
+  ["Medicine ball rack", 1.2, 0.6],
+  ["Wall ball rack", 1.2, 0.6],
+  ["Barbell vertical storage", 0.6, 0.6],
+  ["Barbell horizontal storage", 1.2, 0.4],
+
+  // ===== CABLE & SELECTORISED =====
+  ["Cable machine", 2.0, 1.0],
+  ["Dual adjustable pulley", 2.2, 1.2],
+  ["Functional trainer", 2.2, 1.2],
+  ["Cable crossover", 3.5, 1.0],
+  ["Lat pulldown", 1.2, 1.0],
+  ["Wide lat pulldown", 1.3, 1.0],
+  ["Low row machine", 1.2, 1.0],
+  ["High row machine", 1.3, 1.0],
+  ["Assisted pull-up machine", 1.4, 1.2],
+  ["Selectorised tricep pushdown", 1.2, 1.0],
+
+  // ===== UPPER BODY MACHINES =====
+  ["Chest press machine", 1.4, 1.2],
+  ["Iso-lateral chest press", 1.6, 1.3],
+  ["Incline chest press", 1.4, 1.2],
+  ["Decline chest press", 1.4, 1.2],
+  ["Seated row machine", 1.4, 1.2],
+  ["Iso-lateral row", 1.6, 1.3],
+  ["Plate-loaded row", 1.8, 1.4],
+  ["Shoulder press machine", 1.4, 1.2],
+  ["Iso-lateral shoulder press", 1.6, 1.3],
+  ["Lateral raise machine", 1.2, 1.0],
+  ["Pec deck", 1.5, 1.3],
+  ["Rear delt fly", 1.4, 1.2],
+  ["Pullover machine", 1.5, 1.2],
+  ["Bicep curl machine", 1.2, 1.0],
+  ["Preacher curl machine", 1.3, 1.0],
+  ["Tricep extension machine", 1.2, 1.0],
+  ["Dip assist machine", 1.4, 1.2],
+
+  // ===== LOWER BODY MACHINES =====
+  ["Leg press", 2.3, 1.6],
+  ["45-degree leg press", 2.5, 1.8],
+  ["Horizontal leg press", 2.2, 1.6],
+  ["Hack squat", 2.5, 1.6],
+  ["Pendulum squat", 2.6, 1.6],
+  ["Belt squat", 2.0, 1.5],
+  ["Leg extension", 1.3, 1.1],
+  ["Seated leg curl", 1.3, 1.1],
+  ["Lying leg curl", 1.6, 1.1],
+  ["Standing leg curl", 1.2, 1.0],
+  ["Hip abductor", 1.3, 1.1],
+  ["Hip adductor", 1.3, 1.1],
+  ["Glute kickback machine", 1.4, 1.2],
+  ["Glute bridge machine", 1.6, 1.3],
+  ["Standing calf raise", 1.2, 1.0],
+  ["Seated calf raise", 1.2, 1.0],
+  ["Donkey calf raise", 1.4, 1.1],
+
+  // ===== STRONGMAN =====
+  ["Yoke", 2.5, 1.2],
+  ["Farmers carry handles", 1.2, 0.4],
+  ["Farmers walk frame", 2.0, 1.0],
+  ["Atlas stones", 1.5, 1.5],
+  ["Stone loading platform", 1.5, 1.5],
+  ["Circus dumbbell", 1.6, 0.6],
+  ["Husafell stone", 1.0, 0.8],
+  ["Tire flip tire", 2.0, 0.8],
+  ["Sled", 1.5, 0.8],
+  ["Heavy sled", 2.0, 1.0],
+
+  // ===== CARDIO =====
+  ["Treadmill", 2.0, 1.0],
+  ["Curved treadmill", 2.0, 0.9],
+  ["Incline trainer", 2.2, 1.0],
+  ["Rowing machine", 2.4, 0.6],
+  ["Water rower", 2.4, 0.6],
+  ["Air bike", 1.2, 0.6],
+  ["Spin bike", 1.4, 0.6],
+  ["Upright bike", 1.2, 0.6],
+  ["Recumbent bike", 1.6, 0.8],
+  ["Elliptical", 2.0, 0.8],
+  ["Cross trainer", 2.0, 0.8],
+  ["Stair climber", 1.6, 1.0],
+  ["Ski erg", 1.2, 0.6],
+  ["Arm ergometer", 1.2, 0.6],
+
+  // ===== FUNCTIONAL / CONDITIONING =====
+  ["Kettlebells", 1.2, 0.6],
+  ["Competition kettlebells", 1.2, 0.6],
+  ["Medicine balls", 1.2, 0.6],
+  ["Wall balls", 1.2, 0.6],
+  ["Sandbags", 1.2, 0.6],
+  ["Bulgarian bags", 1.2, 0.6],
+  ["Battle ropes", 5.0, 0.5],
+  ["Climbing rope", 4.0, 0.5],
+  ["Plyo box", 0.75, 0.75],
+  ["Soft plyo box", 0.9, 0.9],
+  ["TRX suspension trainer", 0.6, 0.3],
+  ["Gymnastic rings", 0.6, 0.3],
+  ["Speed ladder", 4.0, 0.5],
+  ["Agility hurdles", 1.5, 0.6],
+  ["Reaction trainer", 0.6, 0.6],
+
+  // ===== COMBAT / SPORT =====
+  ["Heavy boxing bag", 0.6, 0.6],
+  ["Uppercut bag", 0.6, 0.6],
+  ["Double-end bag", 0.5, 0.5],
+  ["Speed bag platform", 1.2, 1.2],
+  ["Grappling dummy", 1.5, 0.6],
+  ["MMA cage panel", 2.5, 0.1],
+
+  // ===== RECOVERY / REHAB =====
+  ["Foam roller rack", 0.8, 0.4],
+  ["Massage gun station", 0.6, 0.4],
+  ["Stretching mat area", 2.0, 1.0],
+  ["Inversion table", 1.4, 0.8],
+  ["Compression boots station", 0.8, 0.6],
+  ["Cold plunge", 1.5, 0.8],
+  ["Sauna", 2.0, 2.0],
+  
+  // ===== BOXING BAGS =====
+  ["Heavy boxing bag", 0.6, 0.6],
+  ["Muay Thai heavy bag", 0.6, 0.6],
+  ["Uppercut bag", 0.6, 0.6],
+  ["Angle bag", 0.6, 0.6],
+  ["Teardrop bag", 0.6, 0.6],
+  ["Banana bag", 1.8, 0.6],
+  ["Body opponent bag", 0.7, 0.7],
+  ["Freestanding heavy bag", 0.8, 0.8],
+  ["Water-filled heavy bag", 0.7, 0.7],
+  ["Aqua training bag", 0.7, 0.7],
+
+  // ===== SPEED & REFLEX =====
+  ["Speed bag", 0.3, 0.3],
+  ["Speed bag platform", 1.2, 1.2],
+  ["Double-end bag", 0.5, 0.5],
+  ["Reflex bag", 0.5, 0.5],
+  ["Slip bag", 0.3, 0.3],
+  ["Cobra reflex bar", 0.5, 0.5],
+  ["Reaction ball station", 0.4, 0.4],
+
+  // ===== PADS & TARGETS =====
+  ["Focus mitts", 0.5, 0.3],
+  ["Thai pads", 0.8, 0.4],
+  ["Kick shields", 1.0, 0.6],
+  ["Body shields", 1.2, 0.7],
+  ["Forearm pads", 0.6, 0.3],
+  ["Wall-mounted striking pad", 1.2, 0.6],
+
+  // ===== RINGS & CAGES =====
+  ["Boxing ring", 6.0, 6.0],
+  ["Training boxing ring", 5.0, 5.0],
+  ["MMA cage", 7.0, 7.0],
+  ["Training MMA cage", 5.0, 5.0],
+  ["Cage wall panel", 2.5, 0.1],
+  ["Cage door section", 1.2, 0.1],
+  ["Ring corner stool", 0.6, 0.6],
+
+  // ===== FLOORING & MATS =====
+  ["Tatami mats", 2.0, 2.0],
+  ["Roll-out grappling mats", 10.0, 2.0],
+  ["Wrestling mat", 9.0, 9.0],
+  ["Judo mat", 2.0, 2.0],
+  ["Wall padding", 2.0, 0.1],
+  ["Cage wall padding", 2.5, 0.1],
+
+  // ===== GRAPPLING & WRESTLING =====
+  ["Grappling dummy", 1.5, 0.6],
+  ["Throwing dummy", 1.6, 0.7],
+  ["Wrestling dummy", 1.6, 0.7],
+  ["Takedown shield", 1.2, 0.6],
+  ["Wall wrestling pad", 2.0, 0.6],
+  ["Clinch wall", 3.0, 0.2],
+
+  // ===== BJJ =====
+  ["BJJ mat space", 6.0, 6.0],
+  ["Gi drying rack", 1.5, 0.6],
+  ["Belt display rack", 1.2, 0.3],
+  ["Grip training board", 1.2, 0.3],
+  ["Finger strength board", 1.2, 0.3],
+
+  // ===== CONDITIONING =====
+  ["Jump ropes station", 1.2, 0.4],
+  ["Weighted jump ropes", 1.2, 0.4],
+  ["Agility ladder", 4.0, 0.5],
+  ["Agility hurdles", 1.5, 0.6],
+  ["Battle ropes", 5.0, 0.5],
+  ["Sledgehammer station", 1.5, 1.5],
+  ["Tire flip tire", 2.0, 0.8],
+  ["Sled", 1.5, 0.8],
+  ["Pull-up rig", 2.5, 1.2],
+
+  // ===== STRENGTH (COMBAT-FOCUSED) =====
+  ["Landmine station", 1.5, 0.6],
+  ["Grip rollers", 1.2, 0.4],
+  ["Thick grip bars", 1.2, 0.4],
+  ["Neck harness station", 0.8, 0.8],
+  ["Neck training bench", 1.4, 0.6],
+  ["Wrist roller station", 1.2, 0.4],
+
+  // ===== COACHING & ANALYSIS =====
+  ["Coach corner", 2.0, 2.0],
+  ["Video replay screen", 1.5, 0.1],
+  ["Fight timer display", 0.6, 0.2],
+  ["Round timer clock", 0.6, 0.2],
+  ["Strategy whiteboard", 1.2, 0.05],
+
+  // ===== RECOVERY =====
+  ["Ice bath", 1.5, 0.8],
+  ["Cold plunge", 1.5, 0.8],
+  ["Foam roller station", 1.2, 0.6],
+  ["Massage table", 2.0, 0.8],
+  ["Stretching mat area", 2.0, 1.0],
+  ["Breathwork zone", 2.0, 2.0],
+
+  // ===== STORAGE =====
+  ["Glove storage rack", 1.5, 0.6],
+  ["Headgear storage", 1.2, 0.6],
+  ["Shin guard rack", 1.2, 0.6],
+  ["Mouthguard station", 0.6, 0.4],
+  ["Towel station", 0.6, 0.4],
+
+  // ===== EVENT / FIGHT NIGHT =====
+  ["Judges table", 2.0, 0.8],
+  ["Announcer table", 2.0, 0.8],
+  ["Lighting rig", 3.0, 3.0],
+  ["Walkout tunnel", 4.0, 1.5],
+  ["Backdrop wall", 3.0, 0.2]
+];
+
+const FLOORING = [
+  ["Rubber floor mats", 2.0, 2.0],
+  ["Interlocking tiles", 2.0, 2.0],
+  ["Heavy-duty rubber rolls", 10.0, 1.5],
+  ["Lifting platform", 3.0, 2.5],
+  ["Deadlift platform", 2.5, 2.0],
+  ["Olympic platform", 4.0, 3.0],
+  ["Turf strip", 15.0, 1.5],
+  ["Sprint track turf", 20.0, 2.0],
+  ["Sled track", 25.0, 2.0],
+  ["Shock-absorbing tiles", 2.0, 2.0],
+  ["Tatami mats", 2.0, 2.0]
+];
+
+const STRUCTURES = [
+  ["Wall mirror", 1.8, 0.06],
+  ["Mirror wall section", 3.0, 0.06],
+  ["Full mirror wall", 6.0, 0.06],
+  ["Wall clock", 0.35, 0.08],
+  ["Digital clock", 0.5, 0.1],
+  ["Door", 0.82, 0.1],
+  ["Double door", 1.6, 0.1],
+  ["Roller door", 3.0, 0.2],
+  ["Window", 1.2, 0.1],
+  ["Floor-to-ceiling window", 2.5, 0.1],
+  ["Shelving unit", 1.8, 0.45],
+  ["Storage cabinet", 1.2, 0.6],
+  ["Equipment cage", 2.0, 2.0],
+  ["Locker unit", 2.0, 0.6],
+  ["Bench seating", 1.5, 0.5],
+  ["Reception desk", 2.0, 0.8],
+  ["POS terminal", 0.5, 0.4],
+  ["Retail display", 1.2, 0.6],
+  ["Towel station", 0.6, 0.4],
+  ["Laundry unit", 1.2, 0.8],
+  ["Water cooler", 0.4, 0.4],
+  ["Bottle refill station", 0.6, 0.4],
+  ["TV display", 1.2, 0.08],
+  ["LED video wall", 3.0, 0.1],
+  ["Digital leaderboard", 1.5, 0.1],
+  ["Whiteboard", 1.2, 0.05],
+  ["Coach desk", 1.5, 0.7],
+  ["Speaker system", 0.3, 0.3],
+  ["Subwoofer", 0.6, 0.6],
+  ["Wall fan", 0.7, 0.4],
+  ["Industrial fan", 1.0, 1.0],
+  ["Air conditioning unit", 0.9, 0.4],
+  ["HVAC ducting", 2.0, 0.6],
+  ["First aid station", 0.6, 0.3],
+  ["AED", 0.4, 0.3],
+  ["Fire extinguisher", 0.3, 0.2],
+  ["Emergency exit sign", 0.5, 0.1]
+];
+
+
+const FLOORING_NAMES = new Set(FLOORING.map(([name]) => name));
+
+// ===============================
+// HELPERS
+// ===============================
+function showToast(message) {
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.remove("hidden");
+  toast.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.classList.add("hidden"), 200);
+  }, 2000);
 }
 
-// Update UI based on login status
-function updateUIForLoggedInUser() {
-    if (currentUser) {
-        document.getElementById('loginBtn').style.display = 'none';
-        document.getElementById('listGearBtn').style.display = 'block';
-        document.getElementById('myListingsNav').style.display = 'block';
-        document.getElementById('myChatsNav').style.display = 'block';
-        document.getElementById('userMenu').style.display = 'block';
-        document.getElementById('userNameDisplay').textContent = currentUser.name;
-    } else {
-        document.getElementById('loginBtn').style.display = 'block';
-        document.getElementById('listGearBtn').style.display = 'none';
-        document.getElementById('myListingsNav').style.display = 'none';
-        document.getElementById('myChatsNav').style.display = 'none';
-        document.getElementById('userMenu').style.display = 'none';
-    }
+function syncGridScale() {
+  if (!grid) return;
+  const wrap = grid.parentElement;
+  if (!wrap) return;
+
+  const roomWidth = Math.max(0.1, Number(roomW.value) || 1);
+  const roomLength = Math.max(0.1, Number(roomL.value) || 1);
+  const ratio = roomWidth / roomLength;
+
+  const padding = 40;
+  const maxWidth = Math.max(200, wrap.clientWidth - padding);
+  const maxHeight = Math.max(200, wrap.clientHeight - padding);
+
+  let width = maxWidth;
+  let height = Math.round(maxWidth / ratio);
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = Math.round(maxHeight * ratio);
+  }
+
+  grid.style.setProperty("--grid-w", `${width}px`);
+  grid.style.setProperty("--grid-h", `${height}px`);
+
+  metersPerPixelX = roomWidth / width;
+  metersPerPixelY = roomLength / height;
+  gridSizePx = width / roomWidth;
+  grid.style.setProperty("--grid-size", `${gridSizePx}px`);
+
+  drawLayer.width = grid.clientWidth;
+  drawLayer.height = grid.clientHeight;
+
+  document.querySelectorAll(".equipment").forEach(resize);
 }
 
-// Hash password (simple for demo - use proper bcrypt in production)
-async function hashPassword(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+function resize(el) {
+  el.style.width = (el.dataset.w / metersPerPixelX) + "px";
+  el.style.height = (el.dataset.h / metersPerPixelY) + "px";
 }
 
-// Login
-async function login(email, password) {
-    try {
-        const passwordHash = await hashPassword(password);
-        
-        const { data, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', email)
-            .eq('password_hash', passwordHash)
-            .single();
-        
-        if (error || !data) {
-            showToast('Invalid email or password', 'error');
-            return false;
-        }
-        
-        currentUser = data;
-        localStorage.setItem('primal_auth_token', 'logged_in'); // Simple token
-        localStorage.setItem('primal_user_id', data.id);
-        
-        showToast('Welcome back, ' + data.name + '!', 'success');
-        updateUIForLoggedInUser();
-        closeModal('authModal');
-        return true;
-    } catch (err) {
-        console.error('Login error:', err);
-        showToast('Login failed', 'error');
-        return false;
-    }
+function setPosition(el, x, y) {
+  if (snapEnabled) {
+    x = Math.round(x / gridSizePx) * gridSizePx;
+    y = Math.round(y / gridSizePx) * gridSizePx;
+  }
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+  clamp(el);
 }
 
-// Register
-async function register(name, email, password) {
-    try {
-        // Check if email already exists
-        const { data: existing } = await supabase
-            .from('users')
-            .select('id')
-            .eq('email', email)
-            .single();
-        
-        if (existing) {
-            showToast('Email already registered', 'error');
-            return false;
-        }
-        
-        const passwordHash = await hashPassword(password);
-        
-        const { data, error } = await supabase
-            .from('users')
-            .insert([{
-                email: email,
-                password_hash: passwordHash,
-                name: name
-            }])
-            .select()
-            .single();
-        
-        if (error) {
-            console.error('Registration error:', error);
-            showToast('Registration failed', 'error');
-            return false;
-        }
-        
-        currentUser = data;
-        localStorage.setItem('primal_auth_token', 'logged_in');
-        localStorage.setItem('primal_user_id', data.id);
-        
-        showToast('Account created successfully!', 'success');
-        updateUIForLoggedInUser();
-        closeModal('authModal');
-        return true;
-    } catch (err) {
-        console.error('Registration error:', err);
-        showToast('Registration failed', 'error');
-        return false;
-    }
+function clamp(el) {
+  const g = grid.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  let dx = 0, dy = 0;
+  if (r.left < g.left) dx = g.left - r.left;
+  if (r.right > g.right) dx = g.right - r.right;
+  if (r.top < g.top) dy = g.top - r.top;
+  if (r.bottom > g.bottom) dy = g.bottom - r.bottom;
+  el.style.left = (el.offsetLeft + dx) + "px";
+  el.style.top = (el.offsetTop + dy) + "px";
 }
 
-// Logout
-function logout() {
-    currentUser = null;
-    localStorage.removeItem('primal_auth_token');
-    localStorage.removeItem('primal_user_id');
-    updateUIForLoggedInUser();
-    showToast('Logged out successfully', 'success');
-    loadListings(); // Reload to show only active listings
+function applyLayerStyles(el) {
+  const layer = el.dataset.layer || "equipment";
+  if (layer === "flooring") el.style.zIndex = "1";
+  else if (layer === "structure") el.style.zIndex = "5";
+  else el.style.zIndex = "10";
 }
 
-// ============================================
-// LISTINGS
-// ============================================
-
-// Load all listings
-async function loadListings() {
-    const loadingState = document.getElementById('loadingState');
-    const productGrid = document.getElementById('productGrid');
-    
-    loadingState.style.display = 'block';
-    
-    try {
-        let query = supabase
-            .from('listings')
-            .select(`
-                *,
-                users!inner(name, email)
-            `)
-            .eq('status', 'active')
-            .order('created_at', { ascending: false });
-        
-        const { data, error } = await query;
-        
-        if (error) throw error;
-        
-        allListings = data || [];
-        displayListings(allListings);
-        
-    } catch (err) {
-        console.error('Error loading listings:', err);
-        productGrid.innerHTML = '<div class="error-state"><p>Failed to load listings</p></div>';
-    } finally {
-        loadingState.style.display = 'none';
-    }
+function applyViewFilter() {
+  document.querySelectorAll(".equipment").forEach((el) => {
+    const layer = el.dataset.layer || "equipment";
+    const show = currentView === "all" || currentView === layer;
+    el.style.display = show ? "block" : "none";
+  });
 }
 
-// Display listings
-function displayListings(listings) {
-    const productGrid = document.getElementById('productGrid');
-    
-    if (!listings || listings.length === 0) {
-        productGrid.innerHTML = '<div class="empty-state"><p>No listings found</p></div>';
-        return;
-    }
-    
-    productGrid.innerHTML = listings.map(listing => `
-        <div class="product-card" data-category="${listing.category}">
-            <div class="product-image" style="background-image: url('${listing.image_url || 'https://via.placeholder.com/400x300?text=No+Image'}');">
-                <div class="product-badge">${formatCondition(listing.condition)}</div>
-            </div>
-            <div class="product-info">
-                <div class="product-header">
-                    <h3 class="product-title">${escapeHtml(listing.title)}</h3>
-                    <div class="product-price">$${listing.price.toFixed(2)}</div>
-                </div>
-                <p class="product-description">${escapeHtml(listing.description.substring(0, 100))}${listing.description.length > 100 ? '...' : ''}</p>
-                <div class="product-meta">
-                    <span class="product-location">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path d="M7 1C4.5 1 2.5 3 2.5 5.5C2.5 9 7 13 7 13C7 13 11.5 9 11.5 5.5C11.5 3 9.5 1 7 1Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            <circle cx="7" cy="5.5" r="1.5" stroke="currentColor" stroke-width="1.5"/>
-                        </svg>
-                        ${escapeHtml(listing.city)}, ${escapeHtml(listing.state)}
-                    </span>
-                    <span class="product-seller">by ${escapeHtml(listing.users.name)}</span>
-                </div>
-                <button class="action-btn action-btn--primary action-btn--full contact-seller-btn" data-listing-id="${listing.id}" data-seller-id="${listing.user_id}">
-                    <span class="btn-text">Contact Seller</span>
-                </button>
-            </div>
-        </div>
-    `).join('');
-    
-    // Add event listeners to contact buttons
-    document.querySelectorAll('.contact-seller-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const listingId = this.dataset.listingId;
-            const sellerId = this.dataset.sellerId;
-            handleContactSeller(listingId, sellerId);
-        });
-    });
+// ===============================
+// SPAWN + RESULTS
+// ===============================
+function createResult({ name, w, h, layer }) {
+  const item = document.createElement("div");
+  item.className = "result";
+  item.textContent = `${name} (${w}m × ${h}m)`;
+  item.draggable = true;
+  item.addEventListener("dragstart", (e) => {
+    e.dataTransfer.setData("item", JSON.stringify({ name, w, h, layer }));
+  });
+  return item;
 }
 
-// Filter listings
-function filterListings(category) {
-    currentFilter = category;
-    
-    // Update active filter chip
-    document.querySelectorAll('.filter-chip').forEach(chip => {
-        chip.classList.remove('filter-chip--active');
-        if (chip.dataset.filter === category) {
-            chip.classList.add('filter-chip--active');
-        }
-    });
-    
-    // Filter and display
-    if (category === 'all') {
-        displayListings(allListings);
-    } else {
-        const filtered = allListings.filter(listing => listing.category === category);
-        displayListings(filtered);
-    }
+function spawn(name, w, h, x, y, layer = "equipment") {
+  const el = document.createElement("div");
+  el.className = "equipment";
+  el.dataset.name = name;
+  el.dataset.w = w;
+  el.dataset.h = h;
+  el.dataset.layer = layer;
+  el.dataset.locked = "false";
+
+  el.innerHTML = `
+    <div class="rotate">⟳</div>
+    <div class="lock">🔓</div>
+    <div class="label">${name}</div>
+  `;
+
+  applyLayerStyles(el);
+  resize(el);
+  grid.appendChild(el);
+  setPosition(el, x - el.offsetWidth / 2, y - el.offsetHeight / 2);
+  bind(el);
+  applyViewFilter();
+  return el;
 }
 
-// Create new listing
-async function createListing(formData) {
-    if (!currentUser) {
-        showToast('Please sign in to list items', 'error');
-        openModal('authModal');
-        return false;
-    }
-    
-    try {
-        const { data, error } = await supabase
-            .from('listings')
-            .insert([{
-                user_id: currentUser.id,
-                title: formData.title,
-                description: formData.description,
-                category: formData.category,
-                condition: formData.condition,
-                price: parseFloat(formData.price),
-                negotiable: formData.negotiable,
-                city: formData.city,
-                state: formData.state,
-                postal_code: formData.postal_code,
-                local_pickup: formData.local_pickup,
-                shipping: formData.shipping,
-                local_delivery: formData.local_delivery,
-                image_url: formData.image_url || null
-            }])
-            .select()
-            .single();
-        
-        if (error) throw error;
-        
-        showToast('Listing created successfully!', 'success');
-        closeModal('listGearModal');
-        loadListings(); // Reload listings
-        return true;
-        
-    } catch (err) {
-        console.error('Error creating listing:', err);
-        showToast('Failed to create listing', 'error');
-        return false;
-    }
+// ===============================
+// INTERACTIONS
+// ===============================
+function bind(el) {
+  enableDrag(el);
+  enableRotate(el);
+  enableLock(el);
+
+  el.oncontextmenu = (e) => {
+    e.preventDefault();
+    if (el.dataset.locked === "true") return;
+    el.remove();
+  };
 }
 
-// Load user's listings
-async function loadMyListings() {
-    if (!currentUser) {
-        showToast('Please sign in first', 'error');
-        return;
-    }
-    
-    const container = document.getElementById('myListingsContainer');
-    container.innerHTML = '<div class="loading-state"><p>Loading your listings...</p></div>';
-    
-    try {
-        const { data, error } = await supabase
-            .from('listings')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>You haven\'t listed any items yet</p></div>';
-            return;
-        }
-        
-        container.innerHTML = data.map(listing => `
-            <div class="my-listing-card">
-                <div class="my-listing-image" style="background-image: url('${listing.image_url || 'https://via.placeholder.com/200x150?text=No+Image'}');"></div>
-                <div class="my-listing-info">
-                    <h4>${escapeHtml(listing.title)}</h4>
-                    <p class="my-listing-price">$${listing.price.toFixed(2)}</p>
-                    <p class="my-listing-status">Status: ${formatStatus(listing.status)}</p>
-                    <div class="my-listing-actions">
-                        <button class="action-btn action-btn--small edit-listing-btn" data-listing-id="${listing.id}">
-                            Edit
-                        </button>
-                        <button class="action-btn action-btn--small delete-listing-btn" data-listing-id="${listing.id}">
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-        
-        // Add event listeners
-        container.querySelectorAll('.edit-listing-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                // For simplicity, just show update options
-                showToast('Edit functionality - update status or delete', 'info');
-            });
-        });
-        
-        container.querySelectorAll('.delete-listing-btn').forEach(btn => {
-            btn.addEventListener('click', async function() {
-                const listingId = this.dataset.listingId;
-                if (confirm('Are you sure you want to delete this listing?')) {
-                    await deleteListing(listingId);
-                }
-            });
-        });
-        
-    } catch (err) {
-        console.error('Error loading my listings:', err);
-        container.innerHTML = '<div class="error-state"><p>Failed to load listings</p></div>';
-    }
-}
+function enableDrag(el) {
+  el.onmousedown = (e) => {
+    if (el.dataset.locked === "true") return;
+    if (e.target.classList.contains("rotate")) return;
+    if (e.target.classList.contains("lock")) return;
 
-// Delete listing
-async function deleteListing(listingId) {
-    try {
-        const { error } = await supabase
-            .from('listings')
-            .delete()
-            .eq('id', listingId)
-            .eq('user_id', currentUser.id); // Ensure user owns the listing
-        
-        if (error) throw error;
-        
-        showToast('Listing deleted successfully', 'success');
-        loadMyListings(); // Reload
-        loadListings(); // Refresh main view
-        
-    } catch (err) {
-        console.error('Error deleting listing:', err);
-        showToast('Failed to delete listing', 'error');
-    }
-}
+    const sx = e.clientX;
+    const sy = e.clientY;
+    const ox = el.offsetLeft;
+    const oy = el.offsetTop;
 
-// ============================================
-// CHAT SYSTEM
-// ============================================
-
-// Handle contact seller
-async function handleContactSeller(listingId, sellerId) {
-    if (!currentUser) {
-        showToast('Please sign in to contact sellers', 'error');
-        openModal('authModal');
-        return;
-    }
-    
-    if (currentUser.id === sellerId) {
-        showToast('You cannot message your own listing', 'error');
-        return;
-    }
-    
-    try {
-        // Check if conversation already exists
-        const { data: existing, error: checkError } = await supabase
-            .from('conversations')
-            .select('*')
-            .eq('listing_id', listingId)
-            .eq('buyer_id', currentUser.id)
-            .single();
-        
-        let conversationId;
-        
-        if (existing && !checkError) {
-            conversationId = existing.id;
-        } else {
-            // Create new conversation
-            const { data: newConv, error: createError } = await supabase
-                .from('conversations')
-                .insert([{
-                    listing_id: listingId,
-                    buyer_id: currentUser.id,
-                    seller_id: sellerId
-                }])
-                .select()
-                .single();
-            
-            if (createError) throw createError;
-            conversationId = newConv.id;
-        }
-        
-        // Open chat modal
-        openChatModal(conversationId);
-        
-    } catch (err) {
-        console.error('Error starting conversation:', err);
-        showToast('Failed to start conversation', 'error');
-    }
-}
-
-// Open chat modal
-async function openChatModal(conversationId) {
-    currentConversationId = conversationId;
-    
-    try {
-        // Get conversation details
-        const { data: conv, error: convError } = await supabase
-            .from('conversations')
-            .select(`
-                *,
-                listings(id, title, price, image_url),
-                buyer:buyer_id(name),
-                seller:seller_id(name)
-            `)
-            .eq('id', conversationId)
-            .single();
-        
-        if (convError) throw convError;
-        
-        // Update modal header
-        const otherUser = conv.buyer_id === currentUser.id ? conv.seller.name : conv.buyer.name;
-        document.getElementById('chatModalTitle').textContent = `Chat with ${otherUser}`;
-        
-        // Update listing info
-        document.getElementById('chatListingImage').src = conv.listings.image_url || 'https://via.placeholder.com/60x60';
-        document.getElementById('chatListingTitle').textContent = conv.listings.title;
-        document.getElementById('chatListingPrice').textContent = `$${conv.listings.price.toFixed(2)}`;
-        document.getElementById('chatParticipant').textContent = `Chatting with ${otherUser}`;
-        
-        // Load messages
-        await loadMessages(conversationId);
-        
-        // Open modal
-        openModal('chatModal');
-        
-        // Start polling for new messages
-        startMessagePolling();
-        
-    } catch (err) {
-        console.error('Error opening chat:', err);
-        showToast('Failed to open chat', 'error');
-    }
-}
-
-// Load messages
-async function loadMessages(conversationId) {
-    const messagesContainer = document.getElementById('chatMessages');
-    
-    try {
-        const { data, error } = await supabase
-            .from('messages')
-            .select(`
-                *,
-                sender:sender_id(name)
-            `)
-            .eq('conversation_id', conversationId)
-            .order('created_at', { ascending: true });
-        
-        if (error) throw error;
-        
-        if (!data || data.length === 0) {
-            messagesContainer.innerHTML = '<div class="empty-state"><p>No messages yet. Start the conversation!</p></div>';
-            return;
-        }
-        
-        messagesContainer.innerHTML = data.map(msg => {
-            const isOwn = msg.sender_id === currentUser.id;
-            return `
-                <div class="chat-message ${isOwn ? 'chat-message--own' : ''}">
-                    <div class="chat-message-sender">${escapeHtml(msg.sender.name)}</div>
-                    <div class="chat-message-text">${escapeHtml(msg.message)}</div>
-                    <div class="chat-message-time">${formatTime(msg.created_at)}</div>
-                </div>
-            `;
-        }).join('');
-        
-        // Scroll to bottom
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
-        // Mark messages as read
-        await markMessagesAsRead(conversationId);
-        
-    } catch (err) {
-        console.error('Error loading messages:', err);
-        messagesContainer.innerHTML = '<div class="error-state"><p>Failed to load messages</p></div>';
-    }
-}
-
-// Send message
-async function sendMessage(conversationId, messageText) {
-    try {
-        const { data, error } = await supabase
-            .from('messages')
-            .insert([{
-                conversation_id: conversationId,
-                sender_id: currentUser.id,
-                message: messageText
-            }])
-            .select()
-            .single();
-        
-        if (error) throw error;
-        
-        // Reload messages
-        await loadMessages(conversationId);
-        
-    } catch (err) {
-        console.error('Error sending message:', err);
-        showToast('Failed to send message', 'error');
-    }
-}
-
-// Mark messages as read
-async function markMessagesAsRead(conversationId) {
-    try {
-        await supabase
-            .from('messages')
-            .update({ read: true })
-            .eq('conversation_id', conversationId)
-            .neq('sender_id', currentUser.id)
-            .eq('read', false);
-    } catch (err) {
-        console.error('Error marking messages as read:', err);
-    }
-}
-
-// Start polling for new messages
-function startMessagePolling() {
-    // Clear any existing interval
-    if (messagePollingInterval) {
-        clearInterval(messagePollingInterval);
-    }
-    
-    // Poll every 3 seconds
-    messagePollingInterval = setInterval(() => {
-        if (currentConversationId) {
-            loadMessages(currentConversationId);
-        }
-    }, 3000);
-}
-
-// Stop polling
-function stopMessagePolling() {
-    if (messagePollingInterval) {
-        clearInterval(messagePollingInterval);
-        messagePollingInterval = null;
-    }
-}
-
-// Load user's conversations
-async function loadMyChats() {
-    if (!currentUser) {
-        showToast('Please sign in first', 'error');
-        return;
-    }
-    
-    const container = document.getElementById('myChatsContainer');
-    container.innerHTML = '<div class="loading-state"><p>Loading conversations...</p></div>';
-    
-    try {
-        const { data, error } = await supabase
-            .from('conversations')
-            .select(`
-                *,
-                listings(id, title, price, image_url),
-                buyer:buyer_id(name),
-                seller:seller_id(name),
-                messages(message, created_at)
-            `)
-            .or(`buyer_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`)
-            .order('updated_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>No conversations yet</p></div>';
-            return;
-        }
-        
-        container.innerHTML = data.map(conv => {
-            const otherUser = conv.buyer_id === currentUser.id ? conv.seller.name : conv.buyer.name;
-            const lastMsg = conv.messages.length > 0 ? conv.messages[conv.messages.length - 1] : null;
-            
-            return `
-                <div class="chat-list-item" data-conversation-id="${conv.id}">
-                    <img src="${conv.listings.image_url || 'https://via.placeholder.com/60x60'}" alt="" class="chat-list-thumb">
-                    <div class="chat-list-info">
-                        <div class="chat-list-title">${escapeHtml(conv.listings.title)}</div>
-                        <div class="chat-list-participant">${escapeHtml(otherUser)}</div>
-                        ${lastMsg ? `<div class="chat-list-last-msg">${escapeHtml(lastMsg.message.substring(0, 50))}${lastMsg.message.length > 50 ? '...' : ''}</div>` : ''}
-                    </div>
-                    <div class="chat-list-action">
-                        <button class="action-btn action-btn--small">Open</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        
-        // Add click handlers
-        container.querySelectorAll('.chat-list-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const convId = this.dataset.conversationId;
-                closeModal('myChatsModal');
-                openChatModal(convId);
-            });
-        });
-        
-    } catch (err) {
-        console.error('Error loading chats:', err);
-        container.innerHTML = '<div class="error-state"><p>Failed to load conversations</p></div>';
-    }
-}
-
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
-
-// Escape HTML
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Format condition
-function formatCondition(condition) {
-    const conditions = {
-        'new': 'New',
-        'like-new': 'Like New',
-        'good': 'Good',
-        'fair': 'Fair',
-        'used': 'Used'
+    document.onmousemove = (ev) => {
+      setPosition(el, ox + ev.clientX - sx, oy + ev.clientY - sy);
     };
-    return conditions[condition] || condition;
-}
-
-// Format status
-function formatStatus(status) {
-    const statuses = {
-        'active': 'Active',
-        'pending': 'Pending Sale',
-        'sold': 'Sold',
-        'inactive': 'Inactive'
+    document.onmouseup = () => {
+      document.onmousemove = null;
     };
-    return statuses[status] || status;
+  };
 }
 
-// Format time
-function formatTime(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now - date;
-    
-    // Less than 1 minute
-    if (diff < 60000) return 'Just now';
-    
-    // Less than 1 hour
-    if (diff < 3600000) {
-        const minutes = Math.floor(diff / 60000);
-        return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+function enableRotate(el) {
+  const handle = el.querySelector(".rotate");
+  handle.onmousedown = (e) => {
+    e.stopPropagation();
+    if (el.dataset.locked === "true") return;
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const snapStep = 45;
+    const snapThreshold = 8;
+
+    document.onmousemove = (ev) => {
+      let angle = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
+      if (angle < 0) angle += 360;
+      const snapped = Math.round(angle / snapStep) * snapStep;
+      if (Math.abs(angle - snapped) <= snapThreshold) {
+        angle = snapped;
+      }
+      el.style.transform = `rotate(${angle}deg)`;
+      clamp(el);
+    };
+    document.onmouseup = () => {
+      document.onmousemove = null;
+    };
+  };
+}
+
+function enableLock(el) {
+  const lock = el.querySelector(".lock");
+  lock.onmousedown = (e) => {
+    e.stopPropagation();
+    const locked = el.dataset.locked === "true";
+    el.dataset.locked = (!locked).toString();
+    lock.textContent = locked ? "🔓" : "🔒";
+    el.classList.toggle("locked", !locked);
+  };
+}
+
+// ===============================
+// SEARCH
+// ===============================
+equipmentSearch?.addEventListener("input", () => {
+  equipmentResults.innerHTML = "";
+  const q = equipmentSearch.value.trim().toLowerCase();
+  if (!q) return;
+
+  EQUIPMENT.filter(([name]) => name.toLowerCase().includes(q))
+    .forEach(([name, w, h]) => {
+      const layer = FLOORING_NAMES.has(name) ? "flooring" : "equipment";
+      equipmentResults.appendChild(createResult({ name, w, h, layer }));
+    });
+});
+
+structureSearch?.addEventListener("input", () => {
+  structureResults.innerHTML = "";
+  const q = structureSearch.value.trim().toLowerCase();
+  if (!q) return;
+
+  const list = activeStructureCategory === "flooring" ? FLOORING : STRUCTURES;
+  const layer = activeStructureCategory === "flooring" ? "flooring" : "structure";
+
+  list.filter(([name]) => name.toLowerCase().includes(q))
+    .forEach(([name, w, h]) => {
+      structureResults.appendChild(createResult({ name, w, h, layer }));
+    });
+});
+
+// ===============================
+// GRID DROP
+// ===============================
+grid.addEventListener("dragover", (e) => e.preventDefault());
+
+grid.addEventListener("drop", (e) => {
+  e.preventDefault();
+  const raw = e.dataTransfer.getData("item");
+  if (!raw) return;
+  const { name, w, h, layer } = JSON.parse(raw);
+  spawn(name, w, h, e.offsetX, e.offsetY, layer);
+});
+
+// ===============================
+// UI CONTROLS
+// ===============================
+snapToggle.onclick = () => {
+  snapEnabled = !snapEnabled;
+  snapToggle.classList.toggle("active", snapEnabled);
+  showToast(snapEnabled ? "Snap enabled" : "Snap disabled");
+};
+
+applyScaleBtn.onclick = () => {
+  syncGridScale();
+  showToast("Scale updated");
+};
+
+viewButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    viewButtons.forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentView = btn.dataset.view || "all";
+    applyViewFilter();
+  });
+});
+
+// Tool modal
+const toolTabs = document.querySelectorAll(".tool-tab");
+const structurePlaceholder = "Search structures…";
+const flooringPlaceholder = "Search flooring…";
+
+toolTabs.forEach((tab) => {
+  tab.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toolTabs.forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+    activeStructureCategory = tab.dataset.category || "structure";
+    structureSearch.value = "";
+    structureResults.innerHTML = "";
+    structureSearch.placeholder = activeStructureCategory === "flooring"
+      ? flooringPlaceholder
+      : structurePlaceholder;
+  });
+});
+
+toolButton.onclick = (e) => {
+  e.stopPropagation();
+  toolModal.classList.toggle("hidden");
+};
+
+toolModal.onclick = (e) => e.stopPropagation();
+
+// Custom shape panel
+shapeBtn?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  shapePanel.classList.toggle("hidden");
+  setupFreeDraw();
+});
+
+shapePanel?.addEventListener("click", (e) => e.stopPropagation());
+
+document.addEventListener("click", () => {
+  toolModal.classList.add("hidden");
+  shapePanel.classList.add("hidden");
+});
+
+shapeTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    shapeTabs.forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+    const mode = tab.dataset.mode;
+    shapeSections.forEach((section) => {
+      section.classList.toggle("hidden", section.dataset.mode !== mode);
+    });
+    if (mode === "free") {
+      setupFreeDraw();
     }
-    
-    // Less than 1 day
-    if (diff < 86400000) {
-        const hours = Math.floor(diff / 3600000);
-        return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  });
+});
+
+shapeDone?.addEventListener("click", () => {
+  const activeMode = document.querySelector(".shape-tab.active")?.dataset.mode || "dimensions";
+
+  if (activeMode === "dimensions") {
+    const w = Number(shapeWidth.value);
+    const h = Number(shapeLength.value);
+    const name = shapeName.value.trim() || "Custom";
+    if (!w || !h) {
+      showToast("Enter width and length");
+      return;
     }
-    
-    // Format as date
-    return date.toLocaleDateString();
-}
-
-// Show toast notification
-function showToast(message, type = 'info') {
-    const toast = document.getElementById('toast');
-    toast.textContent = message;
-    toast.className = 'toast toast--' + type + ' toast--show';
-    
-    setTimeout(() => {
-        toast.classList.remove('toast--show');
-    }, 3000);
-}
-
-// Modal management
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    modal.setAttribute('aria-hidden', 'false');
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    modal.setAttribute('aria-hidden', 'true');
-    modal.style.display = 'none';
-    document.body.style.overflow = '';
-    
-    // Stop message polling if closing chat modal
-    if (modalId === 'chatModal') {
-        stopMessagePolling();
-        currentConversationId = null;
+    spawn(name, w, h, grid.clientWidth / 2, grid.clientHeight / 2, "structure");
+  } else if (lastShape) {
+    const name = shapeName.value.trim() || "Custom Shape";
+    if (lastShape.type === "circle") {
+      const diameterPx = lastShape.r * 2;
+      const w = diameterPx * metersPerPixelX;
+      const h = diameterPx * metersPerPixelY;
+      const el = spawn(
+        name,
+        w,
+        h,
+        lastShape.cx,
+        lastShape.cy,
+        "structure"
+      );
+      if (el) el.style.borderRadius = "50%";
+    } else {
+      const w = lastShape.w * metersPerPixelX;
+      const h = lastShape.h * metersPerPixelY;
+      spawn(
+        name,
+        w,
+        h,
+        lastShape.x + lastShape.w / 2,
+        lastShape.y + lastShape.h / 2,
+        "structure"
+      );
     }
+  }
+
+  shapeName.value = "";
+  shapeWidth.value = "";
+  shapeLength.value = "";
+  clearFreeDraw();
+  shapePanel.classList.add("hidden");
+});
+
+shapeCancel?.addEventListener("click", () => {
+  shapeName.value = "";
+  shapeWidth.value = "";
+  shapeLength.value = "";
+  clearFreeDraw();
+  shapePanel.classList.add("hidden");
+});
+
+// Free draw (simple rectangle)
+function setupFreeDraw() {
+  if (!freeDrawCanvas || !freeDrawArea) return;
+  freeDrawCanvas.width = freeDrawArea.clientWidth;
+  freeDrawCanvas.height = freeDrawArea.clientHeight;
+  drawCtx = freeDrawCanvas.getContext("2d");
 }
 
-// ============================================
-// EVENT LISTENERS
-// ============================================
+function clearFreeDraw() {
+  lastShape = null;
+  drawPoints = [];
+  if (drawCtx) drawCtx.clearRect(0, 0, freeDrawCanvas.width, freeDrawCanvas.height);
+}
 
-document.addEventListener('DOMContentLoaded', async () => {
-    // Check authentication
-    await checkAuth();
-    
-    // Load listings
-    await loadListings();
-    
-    // Filter chips
-    document.querySelectorAll('.filter-chip').forEach(chip => {
-        chip.addEventListener('click', function() {
-            filterListings(this.dataset.filter);
-        });
+freeDrawCanvas?.addEventListener("mousedown", (e) => {
+  drawing = true;
+  const rect = freeDrawCanvas.getBoundingClientRect();
+  drawStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  drawPoints = [drawStart];
+});
+
+freeDrawCanvas?.addEventListener("mousemove", (e) => {
+  if (!drawing || !drawCtx) return;
+  const rect = freeDrawCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  drawPoints.push({ x, y });
+
+  drawCtx.clearRect(0, 0, freeDrawCanvas.width, freeDrawCanvas.height);
+  drawCtx.strokeStyle = "#ffffff";
+  drawCtx.lineWidth = 2;
+  drawCtx.setLineDash([]);
+  drawCtx.beginPath();
+  drawCtx.moveTo(drawPoints[0].x, drawPoints[0].y);
+  drawPoints.forEach((p) => drawCtx.lineTo(p.x, p.y));
+  drawCtx.stroke();
+});
+
+freeDrawCanvas?.addEventListener("mouseup", () => {
+  drawing = false;
+  if (!drawCtx || drawPoints.length < 6) return;
+  lastShape = snapFreeDraw(drawPoints);
+  drawCtx.clearRect(0, 0, freeDrawCanvas.width, freeDrawCanvas.height);
+  if (lastShape) {
+    drawCtx.strokeStyle = "#ffffff";
+    drawCtx.lineWidth = 2;
+    drawCtx.setLineDash([6, 4]);
+    if (lastShape.type === "circle") {
+      drawCtx.beginPath();
+      drawCtx.arc(lastShape.cx, lastShape.cy, lastShape.r, 0, Math.PI * 2);
+      drawCtx.stroke();
+    } else {
+      drawCtx.strokeRect(lastShape.x, lastShape.y, lastShape.w, lastShape.h);
+    }
+    drawCtx.setLineDash([]);
+  }
+});
+
+freeDrawCanvas?.addEventListener("mouseleave", () => {
+  drawing = false;
+});
+
+function snapFreeDraw(points) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  points.forEach((p) => {
+    minX = Math.min(minX, p.x);
+    minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x);
+    maxY = Math.max(maxY, p.y);
+  });
+  const w = maxX - minX;
+  const h = maxY - minY;
+  if (w < 6 || h < 6) return null;
+
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  const aspect = w / h;
+  const nearSquare = aspect > 0.85 && aspect < 1.15;
+
+  // Circle score (lower is better)
+  const radii = points.map((p) => Math.hypot(p.x - cx, p.y - cy));
+  const rAvg = radii.reduce((a, b) => a + b, 0) / radii.length;
+  const rVar = Math.sqrt(
+    radii.reduce((a, b) => a + Math.pow(b - rAvg, 2), 0) / radii.length
+  );
+  const rScore = (rVar / rAvg) + (nearSquare ? 0 : 0.15);
+
+  // Rectangle score
+  const rectEdgeRatio = edgeHitRatio(points, minX, minY, maxX, maxY);
+  const rectScore = 1 - rectEdgeRatio;
+
+  // Triangle score (check two orientations)
+  const candidates = [
+    { type: "circle", score: rScore, data: { type: "circle", cx, cy, r: rAvg } },
+    { type: "rect", score: rectScore, data: { type: "rect", x: minX, y: minY, w, h } }
+  ];
+
+  candidates.sort((a, b) => a.score - b.score);
+  const best = candidates[0];
+
+  // Confidence thresholds
+  if (best.type === "circle" && best.score <= 0.12 && nearSquare) return best.data;
+  if (best.type === "rect" && best.score <= 0.45) {
+    if (nearSquare) {
+      const size = Math.max(w, h);
+      const sx = cx - size / 2;
+      const sy = cy - size / 2;
+      return { type: "rect", x: sx, y: sy, w: size, h: size };
+    }
+    return best.data;
+  }
+
+  // Fallback rectangle
+  return { type: "rect", x: minX, y: minY, w, h };
+}
+
+function edgeHitRatio(points, minX, minY, maxX, maxY) {
+  const w = maxX - minX;
+  const h = maxY - minY;
+  const edgeTol = Math.max(6, Math.min(w, h) * 0.1);
+  let edgeHits = 0;
+  points.forEach((p) => {
+    const distLeft = Math.abs(p.x - minX);
+    const distRight = Math.abs(p.x - maxX);
+    const distTop = Math.abs(p.y - minY);
+    const distBottom = Math.abs(p.y - maxY);
+    const nearEdge = Math.min(distLeft, distRight, distTop, distBottom) <= edgeTol;
+    if (nearEdge) edgeHits += 1;
+  });
+  return edgeHits / points.length;
+}
+
+
+function pointLineDistance(p, a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.hypot(p.x - a.x, p.y - a.y);
+  let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+  const projX = a.x + t * dx;
+  const projY = a.y + t * dy;
+  return Math.hypot(p.x - projX, p.y - projY);
+}
+
+// Clear all
+clearAllBtn?.addEventListener("click", () => {
+  confirmToast.classList.remove("hidden");
+});
+
+confirmYes?.addEventListener("click", () => {
+  grid.innerHTML = "";
+  confirmToast.classList.add("hidden");
+});
+
+confirmNo?.addEventListener("click", () => {
+  confirmToast.classList.add("hidden");
+});
+
+// Export
+exportBtn?.addEventListener("click", () => {
+  exportModal.classList.remove("hidden");
+  exportModal.setAttribute("aria-hidden", "false");
+});
+
+exportCancel?.addEventListener("click", () => {
+  exportModal.classList.add("hidden");
+  exportModal.setAttribute("aria-hidden", "true");
+});
+
+exportConfirm?.addEventListener("click", () => {
+  const selected = new Set();
+  if (exportFlooring?.checked) selected.add("flooring");
+  if (exportStructures?.checked) selected.add("structure");
+  if (exportEquipment?.checked) selected.add("equipment");
+  if (selected.size === 0) {
+    showToast("Select at least one layer");
+    return;
+  }
+  exportModal.classList.add("hidden");
+  exportModal.setAttribute("aria-hidden", "true");
+  runExport(selected);
+});
+
+function runExport(selectedLayers) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2200;
+  canvas.height = 1400;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const margin = 140;
+  const gx = margin;
+  const gy = margin;
+  const gw = canvas.width - margin * 2;
+  const gh = canvas.height - margin * 2;
+
+  ctx.strokeStyle = "#111";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(gx, gy, gw, gh);
+
+  const rect = grid.getBoundingClientRect();
+  const sx = gw / rect.width;
+  const sy = gh / rect.height;
+
+  const items = [];
+  document.querySelectorAll(".equipment").forEach((el) => {
+    const layer = el.dataset.layer || "equipment";
+    if (!selectedLayers.has(layer)) return;
+    const r = el.getBoundingClientRect();
+    items.push({
+      name: el.dataset.name || "Item",
+      x: gx + (r.left - rect.left) * sx,
+      y: gy + (r.top - rect.top) * sy,
+      w: r.width * sx,
+      h: r.height * sy
     });
-    
-    // Login button
-    document.getElementById('loginBtn').addEventListener('click', () => {
-        openModal('authModal');
-    });
-    
-    // List gear button
-    document.getElementById('listGearBtn').addEventListener('click', () => {
-        if (!currentUser) {
-            showToast('Please sign in first', 'error');
-            openModal('authModal');
-            return;
-        }
-        openModal('listGearModal');
-    });
-    
-    // My listings nav
-    document.getElementById('myListingsNav').addEventListener('click', (e) => {
-        e.preventDefault();
-        if (!currentUser) {
-            showToast('Please sign in first', 'error');
-            openModal('authModal');
-            return;
-        }
-        openModal('myListingsModal');
-        loadMyListings();
-    });
-    
-    // My chats nav
-    document.getElementById('myChatsNav').addEventListener('click', (e) => {
-        e.preventDefault();
-        if (!currentUser) {
-            showToast('Please sign in first', 'error');
-            openModal('authModal');
-            return;
-        }
-        openModal('myChatsModal');
-        loadMyChats();
-    });
-    
-    // User menu
-    document.getElementById('userMenuBtn').addEventListener('click', () => {
-        document.getElementById('userDropdown').classList.toggle('show');
-    });
-    
-    // Logout button
-    document.getElementById('logoutBtn').addEventListener('click', logout);
-    
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.user-menu')) {
-            document.getElementById('userDropdown').classList.remove('show');
-        }
-    });
-    
-    // Auth modal - switch between login/register
-    document.getElementById('showRegister').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('loginForm').style.display = 'none';
-        document.getElementById('registerForm').style.display = 'block';
-        document.getElementById('authModalTitle').textContent = 'Create Account';
-    });
-    
-    document.getElementById('showLogin').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('registerForm').style.display = 'none';
-        document.getElementById('loginForm').style.display = 'block';
-        document.getElementById('authModalTitle').textContent = 'Sign In';
-    });
-    
-    // Login form
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        await login(email, password);
-    });
-    
-    // Register form
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('registerName').value;
-        const email = document.getElementById('registerEmail').value;
-        const password = document.getElementById('registerPassword').value;
-        const confirmPassword = document.getElementById('registerConfirmPassword').value;
-        
-        if (password !== confirmPassword) {
-            showToast('Passwords do not match', 'error');
-            return;
-        }
-        
-        await register(name, email, password);
-    });
-    
-    // List gear form
-    document.getElementById('listGearForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const formData = {
-            title: document.getElementById('listingTitle').value,
-            description: document.getElementById('listingDescription').value,
-            category: document.getElementById('listingCategory').value,
-            condition: document.getElementById('listingCondition').value,
-            price: document.getElementById('listingPrice').value,
-            negotiable: document.getElementById('listingNegotiable').checked,
-            city: document.getElementById('listingCity').value,
-            state: document.getElementById('listingState').value,
-            postal_code: document.getElementById('listingPostal').value,
-            local_pickup: document.getElementById('listingLocalPickup').checked,
-            shipping: document.getElementById('listingShipping').checked,
-            local_delivery: document.getElementById('listingDelivery').checked,
-            image_url: document.getElementById('listingImage').value
-        };
-        
-        const success = await createListing(formData);
-        if (success) {
-            e.target.reset();
-        }
-    });
-    
-    // Chat form
-    document.getElementById('chatInputForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const input = document.getElementById('chatInput');
-        const message = input.value.trim();
-        
-        if (message && currentConversationId) {
-            await sendMessage(currentConversationId, message);
-            input.value = '';
-        }
-    });
-    
-    // Modal close buttons
-    document.querySelectorAll('.modal-close, .modal-overlay').forEach(el => {
-        el.addEventListener('click', function(e) {
-            if (e.target === this) {
-                const modal = this.closest('.modal');
-                closeModal(modal.id);
-            }
-        });
-    });
-    
-    // Specific close buttons
-    document.getElementById('closeAuthModal').addEventListener('click', () => closeModal('authModal'));
-    document.getElementById('closeListGearModal').addEventListener('click', () => closeModal('listGearModal'));
-    document.getElementById('closeMyListingsModal').addEventListener('click', () => closeModal('myListingsModal'));
-    document.getElementById('closeChatModal').addEventListener('click', () => closeModal('chatModal'));
-    document.getElementById('closeMyChatsModal').addEventListener('click', () => closeModal('myChatsModal'));
-    
-    // Hero buttons
-    document.getElementById('browseBtn').addEventListener('click', () => {
-        document.querySelector('.products-section').scrollIntoView({ behavior: 'smooth' });
-    });
-    
-    document.getElementById('topRatedBtn').addEventListener('click', () => {
-        showToast('Top rated feature coming soon!', 'info');
-    });
+  });
+
+  items.forEach((it) => {
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(it.x, it.y, it.w, it.h);
+    ctx.font = "12px monospace";
+    ctx.fillStyle = "#000";
+    ctx.fillText(it.name, it.x + 6, it.y + 16);
+  });
+
+  const a = document.createElement("a");
+  a.href = canvas.toDataURL("image/png");
+  a.download = "primal-lab-layout.png";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// Init
+syncGridScale();
+setupFreeDraw();
+window.addEventListener("resize", () => {
+  syncGridScale();
+  setupFreeDraw();
 });

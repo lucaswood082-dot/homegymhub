@@ -1439,58 +1439,51 @@ header {
 .hidden { display: none; }
 
 #confirmToast {
-    position: fixed;
-    bottom: 30px;
-    right: 20px;
-    background: #333;
-    color: white;
-    padding: 20px 30px;
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 1000;
-    font-family: Inter, system-ui, sans-serif;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #fff;
+  color: #1a1a1a;
+  padding: 16px 18px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 300px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+  z-index: 1000;
+}
+
+#confirmToast p {
+  margin: 0;
+  font-size: 13px;
+  color: #334155;
 }
 
 #confirmToast button {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-family: Inter, system-ui, sans-serif;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
 }
 
-#confirmYes { background-color: #4CAF50; color: white; }
-#confirmNo { background-color: #f44336; color: white; }
-
-#confirmToast {
-  width: 315px; /* or auto */
-  height: 200px;
-}
-#confirmToast {
-    background: #fff; /* white background matches your clean UI */
-    color: #333;      /* dark text for readability */
-}
 #confirmYes {
-  background-color: #FF7A00; /* orange to match your accent color */
-  color: white;               /* text stands out */
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
 }
 
 #confirmNo {
-  background-color: rgb(244, 242, 242); /* light neutral to blend with white UI */
-  color: #FF7A00;            /* same accent color for text */
+  background: #f8fafc;
+  color: var(--accent);
 }
-#confirmToast {
-  border-radius: 12px;                  /* soft edges */
-  box-shadow: 0 6px 18px rgba(0,0,0,0.15); /* soft floating shadow */
-}
+
 @keyframes pulse {
-  0% { transform: translateY(-10px) scale(0.95); }
-  50% { transform: translateY(-5px) scale(1.02); }
-  100% { transform: translateY(0) scale(1); }
+  0% { transform: translateY(6px); opacity: 0.5; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 
 #confirmToast.show {
-  animation: pulse 0.3s ease forwards;
+  animation: pulse 0.2s ease forwards;
 }
