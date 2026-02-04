@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Account | HomeGymHub</title>
+  <title>Account | Primal Lab</title>
   <link rel="stylesheet" href="account.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
 
   <nav class="nav">
     <div class="nav-inner">
-      <div class="brand" onclick="window.location.href='index.html'">HomeGymHub</div>
+      <div class="brand" onclick="window.location.href='index.html'">Primal Lab</div>
       <div class="nav-links">
         <a href="index.html">Home</a>
         <a href="builder.html">Planner</a>
@@ -41,9 +41,8 @@
       <p>Equipment you're selling on the marketplace</p>
       
       <div class="listings-list" id="myListings">
-        <div class="empty-state">
-          <p>No listings yet</p>
-          <span class="pill">Coming Soon</span>
+        <div class="loading-state">
+          <p>Loading...</p>
         </div>
       </div>
     </aside>
@@ -99,7 +98,7 @@
   <div id="toast" class="toast"></div>
 
   <footer class="footer">
-    © 2026 HomeGymHub - Building the Future of Home Fitness
+    © 2026 Primal Lab - Building the Future of Primal Training
   </footer>
 
   <script type="module">
@@ -472,6 +471,56 @@
 
     // Load data on page load
     loadUserData();
+    loadMarketplaceListings(); // Load marketplace listings
+
+    // Function to load marketplace listings
+    async function loadMarketplaceListings() {
+      const container = document.getElementById('myListings');
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          container.innerHTML = '<div class="empty-state"><p>Please sign in</p></div>';
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('listings')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (error) {
+          console.error('Error loading listings:', error);
+          container.innerHTML = '<div class="empty-state"><p>Error loading listings</p></div>';
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          container.innerHTML = '<div class="empty-state"><p>No listings yet</p><a href="marketplace.html" class="pill">Create Listing</a></div>';
+          return;
+        }
+
+        container.innerHTML = data.map(listing => `
+          <div class="listing-item" onclick="window.location.href='marketplace.html'">
+            <div class="listing-title">${escapeHTML(listing.title)}</div>
+            <div class="listing-price">$${listing.price.toFixed(2)}</div>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        console.error('Load listings error:', err);
+        container.innerHTML = '<div class="empty-state"><p>Error loading listings</p></div>';
+      }
+    }
+
+    function escapeHTML(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
 
     // Listen for auth state changes
     supabase.auth.onAuthStateChange((event, session) => {

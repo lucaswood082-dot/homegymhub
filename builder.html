@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Home Gym Planner</title>
+  <title>Primal Lab Planner</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="darkmode.css">
 </head>
@@ -16,11 +16,11 @@
 <header class="header">
   <div class="brand">
     <a href="index.html" class="logo-btn" title="Back to home">
-      <span class="logo-h">H</span><span class="logo-g">G</span>
+      <span class="logo-h">P</span><span class="logo-g">L</span>
     </a>
     
     <div>
-      <div class="title">Home Gym Planner</div>
+      <div class="title">Primal Lab Planner</div>
       <div class="subtitle">True-scale • Locked grid</div>
     </div>
   </div>
@@ -68,6 +68,12 @@
       <span>Snap</span>
     </div>
 
+    <div class="view-toggle" aria-label="View options">
+      <button class="view-btn active" data-view="all">View: All</button>
+      <button class="view-btn" data-view="flooring">Flooring</button>
+      <button class="view-btn" data-view="structure">Structures</button>
+      <button class="view-btn" data-view="equipment">Equipment</button>
+    </div>
 
     <button id="applyScale">Update scale</button>
     
@@ -94,6 +100,10 @@
 <!-- TOOL OVERLAY / PANEL -->
 <div id="toolModal" class="tool-modal hidden">
   <h3>Add to layout</h3>
+  <div class="tool-tabs">
+    <button class="tool-tab active" data-category="structure">Structures</button>
+    <button class="tool-tab" data-category="flooring">Flooring</button>
+  </div>
 
   <input
     id="structureSearch"
@@ -169,6 +179,27 @@
   <div><label>Rot <input id="inspectorRot" type="number"></label></div>
 </div>
 <div id="toast" class="toast hidden"></div>
+<div id="exportModal" class="modal hidden" aria-hidden="true">
+  <div class="modal-card">
+    <h3>Export Options</h3>
+    <label class="modal-option">
+      <input type="checkbox" id="exportFlooring" checked>
+      Flooring
+    </label>
+    <label class="modal-option">
+      <input type="checkbox" id="exportStructures" checked>
+      Structures
+    </label>
+    <label class="modal-option">
+      <input type="checkbox" id="exportEquipment" checked>
+      Equipment
+    </label>
+    <div class="modal-actions">
+      <button id="exportConfirm" class="header-btn">Export</button>
+      <button id="exportCancel" class="header-btn">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <script>
   // Apply dark mode on planner page

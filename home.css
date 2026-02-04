@@ -18,8 +18,8 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #fff 0%, #ffe5cc 20%, #ffccaa 40%, #ff9966 60%, #ffccaa 80%, #fff 100%);
-  background-size: 400% 400%;
+  background: linear-gradient(135deg, #f6fff9 0%, #e4fbf0 25%, #bfeedd 50%, #6bd5ab 75%, #1f9d62 100%);
+  background-size: 300% 300%;
   animation: gradientShift 20s ease infinite;
   z-index: -2;
   opacity: 0.7;
@@ -46,7 +46,7 @@ body {
   position: absolute;
   width: 3px;
   height: 3px;
-  background: linear-gradient(135deg, #ff8c42, #ff6b35);
+  background: linear-gradient(135deg, #2fc777, #1f9d62);
   border-radius: 50%;
   animation: float linear infinite;
   box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
@@ -88,7 +88,7 @@ body {
 .brand {
   font-size: 1.5rem;
   font-weight: 900;
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -109,7 +109,7 @@ body {
 }
 
 .nav-links a:hover {
-  color: #ff6b35;
+  color: #1f9d62;
 }
 
 .nav-links a::after {
@@ -119,7 +119,7 @@ body {
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, #ff6b35, #ff8c42);
+  background: linear-gradient(90deg, #1f9d62, #2fc777);
   transition: width 0.3s ease;
 }
 
@@ -145,9 +145,9 @@ body {
 }
 
 .auth-actions button:hover {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   color: #fff;
-  border-color: #ff6b35;
+  border-color: #1f9d62;
   transform: translateY(-2px);
   box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
 }
@@ -172,7 +172,7 @@ body {
   font-size: clamp(3.5rem, 9vw, 6.5rem);
   font-weight: 900;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #1a1a1a 20%, #ff6b35 50%, #ff8c42 80%);
+  background: linear-gradient(135deg, #1a1a1a 20%, #1f9d62 50%, #2fc777 80%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -240,7 +240,7 @@ body {
 }
 
 .btn.primary {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   color: #fff;
   box-shadow: 0 15px 40px rgba(255, 107, 53, 0.3);
 }
@@ -253,7 +253,7 @@ body {
 .btn.ghost {
   background: transparent;
   color: #1a1a1a;
-  border: 2px solid #ff6b35;
+  border: 2px solid #1f9d62;
 }
 
 .btn.ghost:hover {
@@ -282,7 +282,7 @@ body {
   font-size: clamp(2.5rem, 6vw, 4.5rem);
   font-weight: 900;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #1a1a1a, #ff6b35);
+  background: linear-gradient(135deg, #1a1a1a, #1f9d62);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -319,7 +319,7 @@ model-viewer {
   height: 650px;
   background: transparent;
   border-radius: 20px;
-  --progress-bar-color: #ff6b35;
+  --progress-bar-color: #1f9d62;
 }
 
 .model-controls {
@@ -343,17 +343,17 @@ model-viewer {
 }
 
 .control-btn:hover {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   color: #fff;
-  border-color: #ff6b35;
+  border-color: #1f9d62;
   transform: translateY(-3px);
   box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
 }
 
 .control-btn.active {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   color: #fff;
-  border-color: #ff6b35;
+  border-color: #1f9d62;
 }
 
 /* Floating orbs */
@@ -369,7 +369,7 @@ model-viewer {
 .orb1 {
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, #ff8c42, transparent);
+  background: radial-gradient(circle, #2fc777, transparent);
   top: 10%;
   left: -10%;
   animation-delay: 0s;
@@ -378,7 +378,7 @@ model-viewer {
 .orb2 {
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, #ff6b35, transparent);
+  background: radial-gradient(circle, #1f9d62, transparent);
   bottom: 15%;
   right: -5%;
   animation-delay: 7s;
@@ -387,7 +387,7 @@ model-viewer {
 .orb3 {
   width: 450px;
   height: 450px;
-  background: radial-gradient(circle, #ffaa80, transparent);
+  background: radial-gradient(circle, #8be8c1, transparent);
   top: 50%;
   right: 10%;
   animation-delay: 14s;
@@ -414,7 +414,7 @@ model-viewer {
   font-size: clamp(2.5rem, 5vw, 4rem);
   text-align: center;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #1a1a1a, #ff6b35);
+  background: linear-gradient(135deg, #1a1a1a, #1f9d62);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -455,7 +455,7 @@ model-viewer {
 
 .module-card:hover {
   transform: translateY(-15px) scale(1.03);
-  border-color: #ff6b35;
+  border-color: #1f9d62;
   box-shadow: 0 30px 80px rgba(255, 107, 53, 0.3);
   background: rgba(255, 255, 255, 0.9);
 }
@@ -476,12 +476,12 @@ model-viewer {
 .btn.subtle {
   background: transparent;
   color: #1a1a1a;
-  border: 2px solid #ff6b35;
+  border: 2px solid #1f9d62;
   padding: 0.8rem 2rem;
 }
 
 .btn.subtle:hover {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   color: #fff;
   box-shadow: 0 10px 40px rgba(255, 107, 53, 0.3);
 }
@@ -497,7 +497,7 @@ model-viewer {
 .home-roadmap-divider {
   width: 100%;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #ff6b35, transparent);
+  background: linear-gradient(90deg, transparent, #1f9d62, transparent);
   margin: 4rem 0;
   box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
 }
@@ -516,7 +516,7 @@ model-viewer {
 .home-roadmap-header h2 {
   font-size: clamp(2.5rem, 5vw, 3.5rem);
   font-weight: 900;
-  background: linear-gradient(135deg, #1a1a1a, #ff6b35);
+  background: linear-gradient(135deg, #1a1a1a, #1f9d62);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -559,7 +559,7 @@ model-viewer {
 .home-roadmap-card:hover {
   transform: scale(1.05) translateY(-10px);
   box-shadow: 0 30px 80px rgba(255, 107, 53, 0.25);
-  border-color: #ff6b35;
+  border-color: #1f9d62;
 }
 
 .home-roadmap-card h3 {
@@ -600,18 +600,18 @@ model-viewer {
 }
 
 .completed .status {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   color: #fff;
 }
 
 .active .status {
-  background: linear-gradient(135deg, #ffaa80, #ffd4b3);
+  background: linear-gradient(135deg, #8be8c1, #c9f6df);
   color: #aa4422;
 }
 
 .upcoming .status {
   background: rgba(255, 107, 53, 0.1);
-  color: #ff6b35;
+  color: #1f9d62;
   border: 2px solid rgba(255, 107, 53, 0.3);
 }
 
@@ -622,15 +622,15 @@ model-viewer {
   font-weight: 700;
   font-size: 1.1rem;
   text-decoration: none;
-  color: #ff6b35;
+  color: #1f9d62;
   padding: 1rem 2.5rem;
-  border: 2px solid #ff6b35;
+  border: 2px solid #1f9d62;
   border-radius: 50px;
   transition: all 0.3s ease;
 }
 
 .home-roadmap-link:hover {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   color: #fff;
   transform: translateY(-3px);
   box-shadow: 0 10px 40px rgba(255, 107, 53, 0.3);
@@ -692,7 +692,7 @@ model-viewer {
 }
 
 .roadmap-modal-close:hover {
-  color: #ff6b35;
+  color: #1f9d62;
   transform: rotate(90deg);
 }
 
@@ -700,7 +700,7 @@ model-viewer {
   margin-bottom: 1.5rem;
   font-size: 2rem;
   font-weight: 900;
-  background: linear-gradient(135deg, #1a1a1a, #ff6b35);
+  background: linear-gradient(135deg, #1a1a1a, #1f9d62);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -732,7 +732,7 @@ model-viewer {
   height: 100%;
   border-radius: 50px;
   transition: width 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  background: linear-gradient(90deg, #ff6b35, #ff8c42);
+  background: linear-gradient(90deg, #1f9d62, #2fc777);
   box-shadow: 0 0 20px rgba(255, 107, 53, 0.4);
 }
 

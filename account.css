@@ -21,7 +21,7 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #fff 0%, #ffe5cc 20%, #ffccaa 40%, #ff9966 60%, #ffccaa 80%, #fff 100%);
+  background: linear-gradient(135deg, #fff 0%, #e9fbf2 20%, #c9f3df 40%, #5ad9a5 60%, #c9f3df 80%, #fff 100%);
   background-size: 400% 400%;
   animation: gradientShift 20s ease infinite;
   z-index: -2;
@@ -49,7 +49,7 @@ html, body {
   position: absolute;
   width: 3px;
   height: 3px;
-  background: linear-gradient(135deg, #ff8c42, #ff6b35);
+  background: linear-gradient(135deg, #2fc777, #1f9d62);
   border-radius: 50%;
   animation: float linear infinite;
   box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
@@ -75,7 +75,7 @@ html, body {
 .orb1 {
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, #ff8c42, transparent);
+  background: radial-gradient(circle, #2fc777, transparent);
   top: 10%;
   left: -10%;
   animation-delay: 0s;
@@ -84,7 +84,7 @@ html, body {
 .orb2 {
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, #ff6b35, transparent);
+  background: radial-gradient(circle, #1f9d62, transparent);
   bottom: 15%;
   right: -5%;
   animation-delay: 7s;
@@ -125,7 +125,7 @@ html, body {
 .brand { 
   font-size: 1.5rem;
   font-weight: 900;
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -147,7 +147,7 @@ html, body {
 }
 
 .nav-links a:hover { 
-  color: #ff6b35; 
+  color: #1f9d62; 
 }
 
 .nav-links a::after {
@@ -157,7 +157,7 @@ html, body {
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, #ff6b35, #ff8c42);
+  background: linear-gradient(90deg, #1f9d62, #2fc777);
   transition: width 0.3s ease;
 }
 
@@ -183,9 +183,9 @@ html, body {
 }
 
 .auth-actions button:hover { 
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   color: #fff;
-  border-color: #ff6b35;
+  border-color: #1f9d62;
   transform: translateY(-2px); 
   box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
 }
@@ -205,7 +205,7 @@ html, body {
   font-size: clamp(3rem, 8vw, 5rem);
   font-weight: 900;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #1a1a1a 20%, #ff6b35 50%, #ff8c42 80%);
+  background: linear-gradient(135deg, #1a1a1a 20%, #1f9d62 50%, #2fc777 80%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -273,7 +273,7 @@ html, body {
   height: 160px;
   margin: 0 auto 1.5rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   padding: 5px;
   box-shadow: 0 15px 50px rgba(255, 107, 53, 0.3);
   position: relative;
@@ -312,7 +312,7 @@ html, body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   color: white;
   border: 3px solid white;
   cursor: pointer;
@@ -383,7 +383,7 @@ html, body {
 }
 
 .form-group input:focus {
-  border-color: #ff6b35;
+  border-color: #1f9d62;
   box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
 }
 
@@ -427,7 +427,7 @@ html, body {
 }
 
 .btn.primary {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   color: white;
   box-shadow: 0 15px 40px rgba(255, 107, 53, 0.3);
 }
@@ -439,13 +439,13 @@ html, body {
 
 .btn.secondary {
   background: rgba(255, 107, 53, 0.1);
-  color: #ff6b35;
+  color: #1f9d62;
   border: 2px solid rgba(255, 107, 53, 0.3);
 }
 
 .btn.secondary:hover {
   background: rgba(255, 107, 53, 0.2);
-  border-color: #ff6b35;
+  border-color: #1f9d62;
   transform: translateY(-3px) scale(1.02);
 }
 
@@ -471,7 +471,7 @@ html, body {
 .side-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 20px 60px rgba(255, 107, 53, 0.2);
-  border-color: #ff6b35;
+  border-color: #1f9d62;
 }
 
 .side-card h3 {
@@ -494,7 +494,7 @@ html, body {
   padding: 0.5rem 1rem;
   border-radius: 999px;
   background: rgba(255, 107, 53, 0.1);
-  color: #ff6b35;
+  color: #1f9d62;
   font-size: 0.85rem;
   font-weight: 700;
   border: 2px solid rgba(255, 107, 53, 0.3);
@@ -522,7 +522,7 @@ html, body {
 .listing-item:hover {
   background: rgba(255, 107, 53, 0.1);
   transform: translateX(5px);
-  border-color: #ff6b35;
+  border-color: #1f9d62;
 }
 
 .listing-title {
@@ -532,7 +532,7 @@ html, body {
 }
 
 .listing-price {
-  color: #ff6b35;
+  color: #1f9d62;
   font-weight: 600;
   font-size: 0.95rem;
 }
@@ -569,7 +569,7 @@ html, body {
   background: rgba(255, 107, 53, 0.1);
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(255, 107, 53, 0.15);
-  border-color: #ff6b35;
+  border-color: #1f9d62;
 }
 
 .wishlist-title {
@@ -605,11 +605,11 @@ html, body {
 }
 
 .toast.success {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+  background: linear-gradient(135deg, #2fc777, #1f9d62);
 }
 
 .toast.error {
-  background: linear-gradient(135deg, #ff6b35, #dc2626);
+  background: linear-gradient(135deg, #1f9d62, #0f7a45);
 }
 
 /* FOOTER */

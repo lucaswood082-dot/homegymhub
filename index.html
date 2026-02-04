@@ -3,16 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HomeGymHub</title>
+  <title>Primal Lab</title>
   <link rel="stylesheet" href="home.css">
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <style>
-    html {
-      background: linear-gradient(135deg, #fff 0%, #ffe5cc 20%, #ffccaa 40%, #ff9966 60%, #ffccaa 80%, #fff 100%);
-      background-size: 400% 400%;
-      background-attachment: fixed;
-    }
-    body {
+    html, body {
+      height: 100%;
       background: transparent;
     }
   </style>
@@ -23,7 +19,7 @@
 
   <header class="nav">
     <div class="nav-inner">
-      <div class="brand">HomeGymHub</div>
+      <div class="brand">Primal Lab</div>
       <nav class="nav-links">
         <a href="#modules">Modules</a>
         <a href="#about">About</a>
@@ -40,9 +36,9 @@
     <div class="orb orb1"></div>
     <div class="orb orb2"></div>
     <div class="hero-content">
-      <h1 class="hero-title">Your Home Gym, Connected</h1>
+      <h1 class="hero-title">Train in the Primal Lab</h1>
       <p class="hero-subtitle">
-        Plan, explore, and share your home gym setups seamlessly in stunning 3D.
+        Plan, build, and share your Primal Lab layout in immersive 3D.
       </p>
       <div class="hero-actions">
         <button class="btn primary" data-target="builder.html">Launch Planner</button>
@@ -55,16 +51,16 @@
   <section class="model-showcase">
     <div class="orb orb3"></div>
     <div class="model-container">
-      <h2 class="model-title">Experience Your Gym in 3D</h2>
+      <h2 class="model-title">Experience Primal Lab in 3D</h2>
       <p class="model-subtitle">
-        Rotate, zoom, and explore every angle of a professional home gym setup. 
+        Rotate, zoom, and explore every angle of a complete Primal Lab setup.
         See how equipment fits together in real space.
       </p>
       <div class="model-viewer-wrapper">
         <model-viewer
           id="gymModel"
           src="home-gym.glb"
-          alt="3D Home Gym Model"
+          alt="3D Primal Lab Model"
           camera-controls
           auto-rotate
           rotation-per-second="20deg"
@@ -89,11 +85,11 @@
   <section class="section" id="modules">
     <div class="section-inner">
       <h2>Hub Modules</h2>
-      <p class="section-subtitle">Everything you need for your home gym in one centralized hub.</p>
+      <p class="section-subtitle">Everything you need to design, outfit, and share your Primal Lab.</p>
       <div class="module-grid">
         <div class="module-card">
-          <h3>Gym Planner</h3>
-          <p>Design your home gym at scale with precise placement tools.</p>
+          <h3>Primal Lab Planner</h3>
+          <p>Design your Primal Lab at scale with precise placement tools.</p>
           <button class="btn subtle" data-target="builder.html">Launch Planner</button>
         </div>
         <div class="module-card">
@@ -103,7 +99,7 @@
         </div>
         <div class="module-card">
           <h3>Community</h3>
-          <p>Share setups, get feedback, and learn from other fitness enthusiasts.</p>
+          <p>Share layouts, get feedback, and learn from other Primal Lab builders.</p>
           <button class="btn subtle" data-target="threads.html">Open Community</button>
         </div>
       </div>
@@ -121,7 +117,7 @@
       </header>
 
       <div class="home-roadmap-grid">
-        <div class="home-roadmap-card completed" data-title="Core Platform" data-percent="100" data-color="linear-gradient(90deg, #ff6b35, #ff8c42)">
+        <div class="home-roadmap-card completed" data-title="Core Platform" data-percent="100" data-color="linear-gradient(90deg, #1f9d62, #2fc777)">
           <span class="status">Completed</span>
           <h3>Core Platform</h3>
           <p class="short-text">
@@ -133,9 +129,9 @@
           </p>
         </div>
 
-        <div class="home-roadmap-card active" data-title="Home Gym Builder" data-percent="75" data-color="linear-gradient(90deg, #ff8c42, #ffaa80)">
+        <div class="home-roadmap-card active" data-title="Primal Lab Builder" data-percent="75" data-color="linear-gradient(90deg, #2fc777, #8be8c1)">
           <span class="status">In Progress</span>
-          <h3>Home Gym Builder</h3>
+          <h3>Primal Lab Builder</h3>
           <p class="short-text">
             Drag & drop equipment, snapping grid, locking, and mobile-first interactions.
           </p>
@@ -145,7 +141,7 @@
           </p>
         </div>
 
-        <div class="home-roadmap-card upcoming" data-title="Save & Share Layouts" data-percent="50" data-color="linear-gradient(90deg, #ffaa80, #ffd4b3)">
+        <div class="home-roadmap-card upcoming" data-title="Save & Share Layouts" data-percent="50" data-color="linear-gradient(90deg, #8be8c1, #c9f6df)">
           <span class="status">Up Next</span>
           <h3>Save & Share Layouts</h3>
           <p class="short-text">
@@ -174,21 +170,21 @@
 
   <section class="section about" id="about">
     <div class="section-inner narrow">
-      <h2>About HomeGymHub</h2>
+      <h2>About Primal Lab</h2>
       <p>
-        HomeGymHub centralises planning, shopping, and community engagement for home gyms.
-        Everything you need to design, purchase, and discuss your gym setup is in one place.
-        Anything from designing a home gym, to meeting new people, HomeGymHub offers it all.
-        Constantly evolving, ascending, and collaborating on new ideas.
+        Primal Lab centralises planning, gear discovery, and community feedback for performance spaces.
+        Everything you need to design, purchase, and discuss your Primal Lab setup is in one place.
+        From layout planning to connecting with other builders, Primal Lab keeps it all in one flow.
+        Constantly evolving, refining, and collaborating on new ideas.
       </p>
       <p>
-        Professional, clean design with intuitive tools lets you focus on building your ideal home gym.
+        Professional, clean design with intuitive tools lets you focus on building your ideal Primal Lab.
       </p>
     </div>
   </section>
 
   <footer class="footer">
-    © 2026 HomeGymHub - Building the Future of Home Fitness
+    © 2026 Primal Lab - Building the Future of Primal Training
   </footer>
 
   <script type="module">

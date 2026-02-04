@@ -28,8 +28,8 @@ let currentProfile = null;
 function showToast(msg, isError = false) {
   toast.textContent = msg;
   toast.style.background = isError 
-    ? "linear-gradient(135deg, #ef4444, #dc2626)" 
-    : "linear-gradient(135deg, #0f2d57, #f97316)";
+    ? "linear-gradient(135deg, #ef4444, #0f7a45)" 
+    : "linear-gradient(135deg, #0f2d57, #1f9d62)";
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 3000);
 }

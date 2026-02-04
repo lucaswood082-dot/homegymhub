@@ -47,9 +47,9 @@ body {
 }
 
 .back-btn:hover {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   color: #fff;
-  border-color: #ff6b35;
+  border-color: #1f9d62;
   transform: translateY(-2px);
   box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
 }
@@ -73,7 +73,7 @@ body {
   font-size: clamp(2.8rem, 8vw, 5.5rem);
   font-weight: 900;
   margin-bottom: 0.75rem;
-  background: linear-gradient(135deg, #1a1a1a 20%, #ff6b35 50%, #ff8c42 80%);
+  background: linear-gradient(135deg, #1a1a1a 20%, #1f9d62 50%, #2fc777 80%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -143,7 +143,7 @@ body {
 
 .thread-card:hover {
   transform: translateY(-10px) scale(1.01);
-  border-color: #ff6b35;
+  border-color: #1f9d62;
   box-shadow: 0 20px 50px rgba(255, 107, 53, 0.22);
   background: rgba(255, 255, 255, 0.92);
 }
@@ -161,7 +161,7 @@ body {
 }
 
 .thread-card:hover .thread-title {
-  color: #ff6b35;
+  color: #1f9d62;
 }
 
 .thread-body {
@@ -212,7 +212,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
   color: #fff;
   padding: 1rem 1.75rem;
   border-radius: 50px;
@@ -242,7 +242,7 @@ body {
 .orb1 {
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, #ff8c42, transparent);
+  background: radial-gradient(circle, #2fc777, transparent);
   top: 15%;
   left: -8%;
   animation-delay: 0s;
@@ -251,7 +251,7 @@ body {
 .orb2 {
   width: 350px;
   height: 350px;
-  background: radial-gradient(circle, #ff6b35, transparent);
+  background: radial-gradient(circle, #1f9d62, transparent);
   bottom: 20%;
   right: -5%;
   animation-delay: 7s;
@@ -260,7 +260,7 @@ body {
 .orb3 {
   width: 380px;
   height: 380px;
-  background: radial-gradient(circle, #ffaa80, transparent);
+  background: radial-gradient(circle, #8be8c1, transparent);
   top: 45%;
   right: 8%;
   animation-delay: 14s;
