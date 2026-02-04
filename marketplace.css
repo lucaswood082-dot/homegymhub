@@ -1,0 +1,14 @@
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+  .nav-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .nav-links { flex-wrap: wrap; gap: 12px; }
+  .hero { flex-direction: column; align-items: flex-start; }
+  .hero-actions { width: 100%; flex-wrap: wrap; }
+  .btn { width: 100%; justify-content: center; }
+  .filters { justify-content: flex-start; }
+  .row { flex-direction: column; align-items: flex-start; }
+  .row-actions { width: 100%; }
+  .row-actions .btn { width: auto; }
+  .cta { flex-direction: column; align-items: flex-start; }
+}

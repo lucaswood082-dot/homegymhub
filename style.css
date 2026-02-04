@@ -1487,3 +1487,15 @@ header {
 #confirmToast.show {
   animation: pulse 0.2s ease forwards;
 }
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+  .header { flex-wrap: wrap; height: auto; padding: 12px 16px; gap: 12px; }
+  .controls { flex-wrap: wrap; gap: 10px; }
+  .layout { grid-template-columns: 1fr; }
+  .search { border-left: none; border-top: 1px solid var(--border); height: auto; }
+  .canvas-wrap { padding: 16px 0; }
+  #grid { width: min(92vw, var(--grid-w, 900px)); height: auto; aspect-ratio: 3 / 2; }
+  .tool-modal, .custom-shape-panel { left: 50%; right: auto; transform: translateX(-50%); width: min(92vw, 360px); }
+  .view-toggle { flex-wrap: wrap; }
+}

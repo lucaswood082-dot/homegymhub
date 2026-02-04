@@ -346,3 +346,11 @@ body {
     margin-bottom: 3rem;
   }
 }
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+  .timeline-page { padding: 2.5rem 1rem; }
+  .timeline-header { text-align: center; }
+  .timeline-phase { flex-direction: column; gap: 1rem; }
+  .phase-content { padding: 1.25rem; }
+  .back-container { text-align: center; }
+}

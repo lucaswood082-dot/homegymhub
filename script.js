@@ -976,19 +976,37 @@ exportConfirm?.addEventListener("click", () => {
 
 function runExport(selectedLayers) {
   const canvas = document.createElement("canvas");
-  canvas.width = 2200;
-  canvas.height = 1400;
+  canvas.width = 3600;
+  canvas.height = 2400;
   const ctx = canvas.getContext("2d");
 
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const margin = 140;
+  const margin = 220;
+  const titleH = 260;
   const gx = margin;
   const gy = margin;
   const gw = canvas.width - margin * 2;
-  const gh = canvas.height - margin * 2;
+  const gh = canvas.height - margin * 2 - titleH;
 
+  // Grid
+  ctx.strokeStyle = "#e1e1e1";
+  ctx.lineWidth = 1;
+  for (let x = gx; x <= gx + gw; x += 100) {
+    ctx.beginPath();
+    ctx.moveTo(x, gy);
+    ctx.lineTo(x, gy + gh);
+    ctx.stroke();
+  }
+  for (let y = gy; y <= gy + gh; y += 100) {
+    ctx.beginPath();
+    ctx.moveTo(gx, y);
+    ctx.lineTo(gx + gw, y);
+    ctx.stroke();
+  }
+
+  // Room frame
   ctx.strokeStyle = "#111";
   ctx.lineWidth = 3;
   ctx.strokeRect(gx, gy, gw, gh);
@@ -996,6 +1014,8 @@ function runExport(selectedLayers) {
   const rect = grid.getBoundingClientRect();
   const sx = gw / rect.width;
   const sy = gh / rect.height;
+  const pxPerMeterX = gw / roomW.value;
+  const pxPerMeterY = gh / roomL.value;
 
   const items = [];
   document.querySelectorAll(".equipment").forEach((el) => {
@@ -1015,14 +1035,146 @@ function runExport(selectedLayers) {
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
     ctx.strokeRect(it.x, it.y, it.w, it.h);
-    ctx.font = "12px monospace";
+    ctx.font = "14px monospace";
     ctx.fillStyle = "#000";
-    ctx.fillText(it.name, it.x + 6, it.y + 16);
+    ctx.fillText(it.name, it.x + 6, it.y + 18);
   });
+
+  // Dimension helpers
+  function drawDimLine(x1, y1, x2, y2, label) {
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.fillStyle = "#000";
+    ctx.font = "12px monospace";
+    const tx = (x1 + x2) / 2;
+    const ty = (y1 + y2) / 2 - 4;
+    ctx.fillText(label, tx + 4, ty);
+  }
+
+  function fmt(m) {
+    return `${m.toFixed(2)} m`;
+  }
+
+  // Wall distances + nearest neighbor distances
+  items.forEach((it, idx) => {
+    // Wall distances
+    const leftGap = (it.x - gx) / pxPerMeterX;
+    const rightGap = (gx + gw - (it.x + it.w)) / pxPerMeterX;
+    const topGap = (it.y - gy) / pxPerMeterY;
+    const bottomGap = (gy + gh - (it.y + it.h)) / pxPerMeterY;
+
+    // Horizontal wall dims (centered on item height)
+    const cy = it.y + it.h / 2;
+    drawDimLine(gx, cy, it.x, cy, fmt(leftGap));
+    drawDimLine(it.x + it.w, cy, gx + gw, cy, fmt(rightGap));
+
+    // Vertical wall dims (centered on item width)
+    const cx = it.x + it.w / 2;
+    drawDimLine(cx, gy, cx, it.y, fmt(topGap));
+    drawDimLine(cx, it.y + it.h, cx, gy + gh, fmt(bottomGap));
+
+    // Nearest neighbors: right + bottom to avoid duplicates
+    let nearestRight = null;
+    let nearestRightGap = Infinity;
+    let nearestBottom = null;
+    let nearestBottomGap = Infinity;
+
+    items.forEach((other, j) => {
+      if (j === idx) return;
+      const gapRight = other.x - (it.x + it.w);
+      if (gapRight >= 0 && gapRight < nearestRightGap) {
+        nearestRightGap = gapRight;
+        nearestRight = other;
+      }
+      const gapBottom = other.y - (it.y + it.h);
+      if (gapBottom >= 0 && gapBottom < nearestBottomGap) {
+        nearestBottomGap = gapBottom;
+        nearestBottom = other;
+      }
+    });
+
+    if (nearestRight && nearestRightGap < Infinity) {
+      const y = it.y + it.h + 18;
+      drawDimLine(it.x + it.w, y, nearestRight.x, y, fmt(nearestRightGap / pxPerMeterX));
+    }
+
+    if (nearestBottom && nearestBottomGap < Infinity) {
+      const x = it.x + it.w + 18;
+      drawDimLine(x, it.y + it.h, x, nearestBottom.y, fmt(nearestBottomGap / pxPerMeterY));
+    }
+  });
+
+  // Dimension lines
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 1;
+
+  // Width dimension
+  ctx.beginPath();
+  ctx.moveTo(gx, gy - 40);
+  ctx.lineTo(gx + gw, gy - 40);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(gx, gy - 50);
+  ctx.lineTo(gx, gy - 30);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(gx + gw, gy - 50);
+  ctx.lineTo(gx + gw, gy - 30);
+  ctx.stroke();
+
+  // Height dimension
+  ctx.beginPath();
+  ctx.moveTo(gx - 40, gy);
+  ctx.lineTo(gx - 40, gy + gh);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(gx - 50, gy);
+  ctx.lineTo(gx - 30, gy);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(gx - 50, gy + gh);
+  ctx.lineTo(gx - 30, gy + gh);
+  ctx.stroke();
+
+  ctx.font = "14px monospace";
+  ctx.fillStyle = "#000";
+  ctx.fillText(`${roomW.value} m`, gx + gw / 2 - 20, gy - 55);
+  ctx.save();
+  ctx.translate(gx - 65, gy + gh / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText(`${roomL.value} m`, 0, 0);
+  ctx.restore();
+
+  // Title block
+  const tx = gx;
+  const ty = gy + gh + 40;
+  ctx.strokeStyle = "#111";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(tx, ty, gw, titleH);
+  ctx.font = "16px monospace";
+  ctx.fillText("Primal Lab Planner – Technical Layout", tx + 20, ty + 35);
+  ctx.font = "14px monospace";
+  ctx.fillText(`Room Size: ${roomW.value} m × ${roomL.value} m`, tx + 20, ty + 65);
+  ctx.fillText(`Scale: 1 unit = 1 m`, tx + 20, ty + 90);
+  ctx.fillText(`Exported: ${new Date().toLocaleString()}`, tx + 20, ty + 115);
+
+  // Scale bar
+  const scaleMeters = 1;
+  const pixelsPerMeter = gw / roomW.value;
+  const barPx = scaleMeters * pixelsPerMeter;
+  ctx.beginPath();
+  ctx.moveTo(tx + 20, ty + 145);
+  ctx.lineTo(tx + 20 + barPx, ty + 145);
+  ctx.stroke();
+  ctx.fillText("1 m", tx + 20 + barPx + 8, ty + 150);
 
   const a = document.createElement("a");
   a.href = canvas.toDataURL("image/png");
-  a.download = "primal-lab-layout.png";
+  a.download = "primal-lab-technical-layout.png";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

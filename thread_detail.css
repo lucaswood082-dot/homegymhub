@@ -462,3 +462,10 @@ body {
   .toast.show { top: 20px; }
   .toast-content { padding: 0.85rem 1.5rem; }
 }
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+  .thread-detail-container { padding: 1.5rem 1rem; }
+  .thread-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .comment { padding: 1rem; }
+  .back-btn { left: 1rem; top: 1rem; }
+}

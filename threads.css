@@ -282,3 +282,11 @@ body {
   .toast.show { top: 20px; }
   .toast-content { padding: 0.85rem 1.5rem; }
 }
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+  .threads-container { padding: 0 1rem; }
+  .threads-hero { padding: 4rem 1rem 2rem; text-align: center; }
+  .threads-list { gap: 1rem; }
+  .thread-card { padding: 1rem; }
+  .back-btn { left: 1rem; top: 1rem; }
+}
