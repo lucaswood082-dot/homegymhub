@@ -1,0 +1,252 @@
+/* Global Dark Mode */
+
+html.dark-mode,
+body.dark-mode {
+  background: radial-gradient(1200px 800px at 10% -10%, rgba(47, 199, 119, 0.12), transparent 60%),
+              radial-gradient(900px 600px at 90% -20%, rgba(31, 157, 98, 0.10), transparent 55%),
+              #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark-mode .bg-gradient {
+  opacity: 1;
+  background: linear-gradient(135deg, #0b1220 0%, #0f172a 25%, #0b1b2e 50%, #0f2a2a 75%, #0b1220 100%);
+  background-size: 300% 300%;
+}
+
+body.dark-mode .orb {
+  opacity: 0.12;
+}
+
+body.dark-mode a {
+  color: #93c5fd;
+}
+
+body.dark-mode .nav,
+body.dark-mode .header,
+body.dark-mode .footer {
+  background: rgba(15, 23, 42, 0.78);
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+body.dark-mode .nav-links a {
+  color: #e5e7eb;
+}
+
+body.dark-mode .nav-links a:hover {
+  color: #a7f3d0;
+}
+
+body.dark-mode .brand {
+  filter: brightness(1.1);
+}
+
+body.dark-mode .card,
+body.dark-mode .module-card,
+body.dark-mode .home-roadmap-card,
+body.dark-mode .side-card,
+body.dark-mode .profile-card,
+body.dark-mode .thread-card,
+body.dark-mode .reply-card,
+body.dark-mode .modal-card,
+body.dark-mode .library-card,
+body.dark-mode .panel,
+body.dark-mode .search,
+body.dark-mode .sidebar-left,
+body.dark-mode .sidebar-right {
+  background: rgba(17, 24, 39, 0.72);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #e5e7eb;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .section,
+body.dark-mode .home-roadmap,
+body.dark-mode .about {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+body.dark-mode .phase-content,
+body.dark-mode .timeline-header,
+body.dark-mode .timeline-container,
+body.dark-mode .timeline-phase {
+  color: #e5e7eb;
+}
+
+body.dark-mode .phase-content {
+  background: rgba(17, 24, 39, 0.72);
+  border-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .timeline-header p,
+body.dark-mode .phase-label,
+body.dark-mode .phase-description,
+body.dark-mode .phase-meta {
+  color: #cbd5e1;
+}
+
+body.dark-mode .timeline-container::before {
+  background: linear-gradient(to bottom,
+    rgba(31, 157, 98, 0.25) 0%,
+    rgba(31, 157, 98, 0.55) 50%,
+    rgba(31, 157, 98, 0.25) 100%);
+}
+
+body.dark-mode .marker-dot {
+  background: #0f172a;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+body.dark-mode .thread-body,
+body.dark-mode .reply-body,
+body.dark-mode .section-subtitle,
+body.dark-mode .model-subtitle,
+body.dark-mode .library-meta,
+body.dark-mode .email {
+  color: #d1d5db;
+}
+
+body.dark-mode .module-card h3,
+body.dark-mode .section h2,
+body.dark-mode .model-title,
+body.dark-mode .hero-title,
+body.dark-mode .home-roadmap-header h2 {
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.dark-mode .thread-title {
+  color: #2fc777;
+}
+
+body.dark-mode input,
+body.dark-mode textarea,
+body.dark-mode select {
+  background: #0b1220;
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+body.dark-mode .header-btn,
+body.dark-mode .btn,
+body.dark-mode .view-btn,
+body.dark-mode .tool-tab,
+body.dark-mode .auth-actions button {
+  background: rgba(15, 23, 42, 0.8);
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+body.dark-mode .canvas-wrap {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+body.dark-mode #grid {
+  background-color: #0b1220;
+  background-image:
+    linear-gradient(to right, rgba(148, 163, 184, 0.18) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.18) 1px, transparent 1px);
+  border-color: rgba(226, 232, 240, 0.7);
+}
+
+body.dark-mode .snap,
+body.dark-mode .view-toggle,
+body.dark-mode .design-tabs {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+body.dark-mode .design-tab.active {
+  background: linear-gradient(135deg, rgba(31, 157, 98, 0.3), rgba(47, 199, 119, 0.25));
+}
+
+body.dark-mode .tool-modal,
+body.dark-mode .custom-shape-panel,
+body.dark-mode .modal,
+body.dark-mode .modal-card {
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+body.dark-mode .tool-modal input,
+body.dark-mode .custom-shape-panel input,
+body.dark-mode .custom-shape-panel textarea,
+body.dark-mode .modal-card input,
+body.dark-mode .modal-card textarea,
+body.dark-mode .modal-card select {
+  background: #0b1220;
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+body.dark-mode .search input,
+body.dark-mode #structureSearch {
+  background: #0b1220;
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+body.dark-mode .result,
+body.dark-mode #structureResults .result {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #e5e7eb;
+}
+
+body.dark-mode .tool-tab,
+body.dark-mode .shape-tab,
+body.dark-mode .header-btn,
+body.dark-mode .tool-action,
+body.dark-mode .done-btn,
+body.dark-mode .cancel-btn {
+  background: rgba(15, 23, 42, 0.8);
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+body.dark-mode .tool-tab.active,
+body.dark-mode .shape-tab.active {
+  background: linear-gradient(135deg, rgba(31, 157, 98, 0.3), rgba(47, 199, 119, 0.25));
+  border-color: rgba(47, 199, 119, 0.6);
+}
+
+body.dark-mode .selection-box {
+  border-color: rgba(47, 199, 119, 0.7);
+  background: rgba(47, 199, 119, 0.08);
+}
+
+body.dark-mode #confirmToast {
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode #confirmToast p {
+  color: #cbd5e1;
+}
+
+body.dark-mode #confirmToast button {
+  background: rgba(15, 23, 42, 0.8);
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.25);
+}
+body.dark-mode .dark-toggle {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(148, 163, 184, 0.25);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .slider {
+  background: rgba(148, 163, 184, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.3);
+}
+
+body.dark-mode .slider::before {
+  background: #0b1220;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+}

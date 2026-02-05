@@ -36,6 +36,7 @@
 </style>
 
 <link rel="stylesheet" href="thread_detail.css">
+<link rel="stylesheet" href="darkmode.css">
 </head>
 <body>
 
@@ -61,19 +62,17 @@
         
         <div class="image-upload-section">
           <label for="imageUpload" class="image-upload-label">
-            📷 Add Image (Optional)
+            📷 Add Images (up to 5)
           </label>
           <input 
             type="file" 
             id="imageUpload" 
             class="image-upload-input"
             accept="image/*"
+            multiple
           >
           
-          <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
-            <img id="imagePreview" class="image-preview" src="" alt="Preview">
-            <button type="button" class="remove-image-btn" id="removeImageBtn">×</button>
-          </div>
+          <div id="imagePreviewContainer" class="image-preview-container" style="display: none;"></div>
         </div>
 
         <button type="submit" class="btn primary" id="submitBtn">Post Reply</button>
@@ -107,9 +106,7 @@ const threadTitleHeader = document.getElementById("threadTitleHeader");
 const toast = document.getElementById("toast");
 const toastMessage = toast.querySelector(".toast-message");
 const imageUpload = document.getElementById("imageUpload");
-const imagePreview = document.getElementById("imagePreview");
 const imagePreviewContainer = document.getElementById("imagePreviewContainer");
-const removeImageBtn = document.getElementById("removeImageBtn");
 const submitBtn = document.getElementById("submitBtn");
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -117,37 +114,59 @@ const thread_id = urlParams.get("thread_id");
 
 const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'><path d='M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z'/></svg>";
 
-let selectedImage = null;
+let selectedImages = [];
 
 if (!thread_id) {
   repliesFeed.innerHTML = "<p class='error-msg'>No thread selected.</p>";
 }
 
 imageUpload.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (file) {
+  const files = Array.from(e.target.files || []).slice(0, 5);
+  if (!files.length) return;
+
+  const valid = [];
+  for (const file of files) {
     if (file.size > 5 * 1024 * 1024) {
-      showToast("Image must be less than 5MB");
-      imageUpload.value = "";
-      return;
+      showToast("Each image must be less than 5MB");
+      continue;
     }
-    
-    selectedImage = file;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      imagePreview.src = e.target.result;
-      imagePreviewContainer.style.display = "block";
-    };
-    reader.readAsDataURL(file);
+    valid.push(file);
   }
+  selectedImages = valid.slice(0, 5);
+  renderImagePreviews();
 });
 
-removeImageBtn.addEventListener("click", () => {
-  selectedImage = null;
-  imageUpload.value = "";
-  imagePreviewContainer.style.display = "none";
-  imagePreview.src = "";
-});
+function renderImagePreviews() {
+  imagePreviewContainer.innerHTML = "";
+  if (!selectedImages.length) {
+    imagePreviewContainer.style.display = "none";
+    return;
+  }
+  imagePreviewContainer.style.display = "grid";
+  selectedImages.forEach((file, idx) => {
+    const item = document.createElement("div");
+    item.className = "image-preview-item";
+    const img = document.createElement("img");
+    img.className = "image-preview";
+    img.alt = "Preview";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "remove-image-btn";
+    btn.textContent = "×";
+    btn.addEventListener("click", () => {
+      selectedImages.splice(idx, 1);
+      renderImagePreviews();
+    });
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+    item.appendChild(img);
+    item.appendChild(btn);
+    imagePreviewContainer.appendChild(item);
+  });
+}
 
 function getPublicImageUrl(path) {
   if (!path) return defaultAvatar;
@@ -212,13 +231,17 @@ async function loadThread() {
 }
 
 async function loadReplies() {
+  const { data: { user } } = await supabase.auth.getUser();
+  const currentUserId = user?.id || null;
+
   const { data, error } = await supabase
     .from("replies")
     .select(`
+      id,
       body,
       created_at,
       author_id,
-      image_url,
+      image_urls,
       profiles!inner(display_name)
     `)
     .eq("main_thread_id", thread_id)
@@ -240,19 +263,27 @@ async function loadReplies() {
 
   repliesFeed.innerHTML = data.map((r, index) => {
     const profileImg = profileImages[index];
-    const replyImageUrl = r.image_url ? getReplyImageUrl(r.image_url) : null;
+    const replyImageUrls = Array.isArray(r.image_urls) ? r.image_urls.map(getReplyImageUrl).filter(Boolean) : [];
+    const canDelete = currentUserId && r.author_id === currentUserId;
     
     return `
-    <div class="reply-card" style="animation-delay: ${index * 0.08}s">
+    <div class="reply-card" data-reply-id="${r.id}" style="animation-delay: ${index * 0.08}s">
       <div class="reply-header">
         <div class="reply-author-section">
           <img src="${profileImg}" alt="Profile" class="reply-avatar">
           <strong class="reply-author">${r.profiles.display_name}</strong>
         </div>
-        <span class="reply-date">${new Date(r.created_at).toLocaleString()}</span>
+        <div class="reply-actions">
+          <span class="reply-date">${new Date(r.created_at).toLocaleString()}</span>
+          ${canDelete ? `<button class="reply-delete" data-reply-id="${r.id}">Delete</button>` : ""}
+        </div>
       </div>
       <p class="reply-body">${r.body}</p>
-      ${replyImageUrl ? `<img src="${replyImageUrl}" alt="Reply image" class="reply-image">` : ''}
+      ${replyImageUrls.length ? `
+        <div class="reply-images">
+          ${replyImageUrls.map(url => `<img src="${url}" alt="Reply image" class="reply-image">`).join("")}
+        </div>
+      ` : ''}
     </div>
   `;
   }).join("");
@@ -262,11 +293,27 @@ async function loadReplies() {
       card.classList.add('animate-card');
     });
   }, 50);
+
+  document.querySelectorAll(".reply-delete").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const replyId = btn.dataset.replyId;
+      if (!replyId) return;
+      const { error: delError } = await supabase.from("replies").delete().eq("id", replyId);
+      if (delError) {
+        showToast("Delete failed");
+        return;
+      }
+      showToast("Reply deleted");
+      await loadReplies();
+    });
+  });
 }
 
 async function uploadImage(file, userId) {
   const fileExt = file.name.split('.').pop();
-  const fileName = `${userId}/${Date.now()}.${fileExt}`;
+  const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const fileName = `${userId}/${unique}.${fileExt}`;
   
   const { data, error } = await supabase.storage
     .from('reply-images')
@@ -318,13 +365,14 @@ newReplyForm.addEventListener("submit", async (e) => {
       }
     }
 
-    let imageUrl = null;
-    if (selectedImage) {
+    let imageUrls = [];
+    if (selectedImages.length) {
       try {
-        imageUrl = await uploadImage(selectedImage, userId);
+        const uploads = await Promise.all(selectedImages.map(f => uploadImage(f, userId)));
+        imageUrls = uploads.filter(Boolean);
       } catch (uploadError) {
         console.error("Image upload failed:", uploadError);
-        showToast("Image upload failed, posting without image");
+        showToast("Image upload failed, posting without images");
       }
     }
 
@@ -334,7 +382,7 @@ newReplyForm.addEventListener("submit", async (e) => {
         body, 
         main_thread_id: thread_id, 
         author_id: userId,
-        image_url: imageUrl 
+        image_urls: imageUrls 
       }])
       .select();
 
@@ -347,10 +395,10 @@ newReplyForm.addEventListener("submit", async (e) => {
     }
 
     replyBody.value = "";
-    selectedImage = null;
+    selectedImages = [];
     imageUpload.value = "";
     imagePreviewContainer.style.display = "none";
-    imagePreview.src = "";
+    imagePreviewContainer.innerHTML = "";
     
     showToast("Reply posted!");
     await loadReplies();
@@ -366,6 +414,7 @@ newReplyForm.addEventListener("submit", async (e) => {
 loadThread();
 loadReplies();
 </script>
+<script src="darkmode.js"></script>
 
 </body>
 </html>

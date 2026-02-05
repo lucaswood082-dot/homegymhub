@@ -702,7 +702,7 @@ body.planner-page .title {
 
 .result:hover {
   background: linear-gradient(135deg, rgba(31, 157, 98, 0.12), rgba(47, 199, 119, 0.12));
-  border-color: var(--accent);
+  border-color: #2fc777;
   transform: translateY(-1px);
   box-shadow: 0 12px 24px rgba(31, 157, 98, 0.12);
 }
@@ -1172,6 +1172,11 @@ body.planner-page .title {
   max-height: 300px;
   overflow-y: auto;
   padding-right: 4px;
+}
+
+#structureResults .result:hover {
+  border-color: #2fc777;
+  box-shadow: 0 12px 24px rgba(31, 157, 98, 0.12);
 }
 
 .grid-item {
