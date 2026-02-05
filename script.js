@@ -44,6 +44,48 @@ const exportStructures = document.getElementById("exportStructures");
 const exportEquipment = document.getElementById("exportEquipment");
 
 const toast = document.getElementById("toast");
+const designTabs = document.getElementById("designTabs");
+const addDesignBtn = document.getElementById("addDesign");
+const designModal = document.getElementById("designModal");
+const designList = document.getElementById("designList");
+const designRenameBtn = document.getElementById("designRename");
+const designDeleteBtn = document.getElementById("designDelete");
+const designCreateBtn = document.getElementById("designCreate");
+const designEditor = document.getElementById("designEditor");
+const designNameInput = document.getElementById("designNameInput");
+const designSaveName = document.getElementById("designSaveName");
+const designCancelName = document.getElementById("designCancelName");
+const designExportBox = document.getElementById("designExportBox");
+const designExportText = document.getElementById("designExportText");
+const designDownload = document.getElementById("designDownload");
+const designCopy = document.getElementById("designCopy");
+const designCloseExport = document.getElementById("designCloseExport");
+const designImportBox = document.getElementById("designImportBox");
+const designImportText = document.getElementById("designImportText");
+const designImportFile = document.getElementById("designImportFile");
+const designDoImport = document.getElementById("designDoImport");
+const designCloseImport = document.getElementById("designCloseImport");
+const designDeleteConfirm = document.getElementById("designDeleteConfirm");
+const designConfirmDelete = document.getElementById("designConfirmDelete");
+const designCancelDelete = document.getElementById("designCancelDelete");
+const designExportOpen = document.getElementById("designExportOpen");
+const designImportOpen = document.getElementById("designImportOpen");
+const designExportSelect = document.getElementById("designExportSelect");
+const designPublishBtn = document.getElementById("designPublish");
+const designPublishBox = document.getElementById("designPublishBox");
+const designPublishTitle = document.getElementById("designPublishTitle");
+const designPublishDesc = document.getElementById("designPublishDesc");
+const designConfirmPublish = document.getElementById("designConfirmPublish");
+const designCancelPublish = document.getElementById("designCancelPublish");
+const libraryBtn = document.getElementById("libraryBtn");
+const libraryModal = document.getElementById("libraryModal");
+const libraryTabs = document.querySelectorAll(".library-tab");
+const libraryPresets = document.getElementById("libraryPresets");
+const libraryCommunity = document.getElementById("libraryCommunity");
+const libraryMine = document.getElementById("libraryMine");
+const librarySearch = document.getElementById("librarySearch");
+const libraryMinW = document.getElementById("libraryMinW");
+const libraryMinL = document.getElementById("libraryMinL");
 
 // ===============================
 // STATE
@@ -60,6 +102,21 @@ let drawing = false;
 let drawStart = null;
 let drawPoints = [];
 let lastShape = null;
+
+let designs = [];
+let activeDesignId = null;
+let loadingDesign = false;
+let pendingDeleteId = null;
+let useSupabaseDesigns = false;
+let currentUserId = null;
+
+let selectedItems = new Set();
+let selectionBox = null;
+let selectionStart = null;
+let isSelecting = false;
+
+const DESIGN_STORAGE_KEY = "pl_planner_designs_v1";
+const DESIGN_ACTIVE_KEY = "pl_planner_design_active_v1";
 
 // ===============================
 // DATA
@@ -350,6 +407,135 @@ const EQUIPMENT = [
   ["Backdrop wall", 3.0, 0.2]
 ];
 
+const PRESET_DESIGNS = [
+  {
+    id: "preset_garage_small",
+    name: "Small Garage Setup",
+    description: "Compact layout with rack, bench, and storage.",
+    roomW: 5,
+    roomL: 4,
+    items: [
+      { name: "Power rack", w: 1.5, h: 1.5, x: 120, y: 80, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Flat bench", w: 1.2, h: 0.6, x: 340, y: 120, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Dumbbell rack", w: 2.0, h: 0.6, x: 180, y: 260, rot: 0, layer: "equipment", locked: false, circle: false }
+    ]
+  },
+  {
+    id: "preset_strength_zone",
+    name: "Strength Zone",
+    description: "Rack + platform + plate storage.",
+    roomW: 6,
+    roomL: 5,
+    items: [
+      { name: "6-post power rack", w: 1.5, h: 2.4, x: 160, y: 80, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Platform", w: 2.4, h: 2.4, x: 320, y: 200, rot: 0, layer: "structure", locked: false, circle: false },
+      { name: "Plate tree", w: 1.0, h: 1.0, x: 100, y: 300, rot: 0, layer: "equipment", locked: false, circle: false }
+    ]
+  },
+  {
+    id: "preset_cardio_corner",
+    name: "Cardio Corner",
+    description: "Treadmill + rower + bike.",
+    roomW: 4,
+    roomL: 4,
+    items: [
+      { name: "Treadmill", w: 2.0, h: 1.0, x: 120, y: 80, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Rowing machine", w: 2.4, h: 0.6, x: 140, y: 210, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Air bike", w: 1.2, h: 0.6, x: 260, y: 120, rot: 0, layer: "equipment", locked: false, circle: false }
+    ]
+  },
+  {
+    id: "preset_large_garage",
+    name: "Large Garage",
+    description: "Full strength + cardio in a 7x6 space.",
+    roomW: 7,
+    roomL: 6,
+    items: [
+      { name: "6-post power rack", w: 1.5, h: 2.4, x: 140, y: 80, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Flat bench", w: 1.2, h: 0.6, x: 360, y: 140, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Dumbbell rack", w: 2.0, h: 0.6, x: 180, y: 300, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Treadmill", w: 2.0, h: 1.0, x: 420, y: 320, rot: 0, layer: "equipment", locked: false, circle: false }
+    ]
+  },
+  {
+    id: "preset_powerlifting",
+    name: "Powerlifting Room",
+    description: "Rack, platform, and competition bench.",
+    roomW: 8,
+    roomL: 6,
+    items: [
+      { name: "Power rack", w: 1.5, h: 1.5, x: 140, y: 120, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Platform", w: 2.4, h: 2.4, x: 320, y: 220, rot: 0, layer: "structure", locked: false, circle: false },
+      { name: "Competition bench", w: 1.4, h: 0.6, x: 520, y: 140, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Plate tree", w: 1.0, h: 1.0, x: 120, y: 360, rot: 0, layer: "equipment", locked: false, circle: false }
+    ]
+  },
+  {
+    id: "preset_commercial",
+    name: "Commercial Floor",
+    description: "Multi‑zone commercial layout.",
+    roomW: 12,
+    roomL: 9,
+    items: [
+      { name: "Cable crossover", w: 3.5, h: 1.0, x: 180, y: 90, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Smith machine", w: 2.2, h: 1.5, x: 520, y: 120, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Rowing machine", w: 2.4, h: 0.6, x: 220, y: 340, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Air bike", w: 1.2, h: 0.6, x: 420, y: 360, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Leg press", w: 2.3, h: 1.6, x: 760, y: 260, rot: 0, layer: "equipment", locked: false, circle: false }
+    ]
+  },
+  {
+    id: "preset_functional",
+    name: "Functional Zone",
+    description: "Open training area + storage.",
+    roomW: 10,
+    roomL: 7,
+    items: [
+      { name: "Half rack", w: 1.4, h: 1.3, x: 140, y: 120, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Kettlebell rack", w: 1.2, h: 0.6, x: 320, y: 120, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Sled", w: 1.5, h: 0.8, x: 520, y: 260, rot: 0, layer: "equipment", locked: false, circle: false }
+    ]
+  },
+  {
+    id: "preset_boxing_compact",
+    name: "Boxing Compact",
+    description: "Bag + floor space + storage.",
+    roomW: 5,
+    roomL: 4,
+    items: [
+      { name: "Heavy bag", w: 1.0, h: 1.0, x: 140, y: 100, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Double-end bag", w: 0.8, h: 0.8, x: 260, y: 120, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Glove storage", w: 1.2, h: 0.5, x: 140, y: 260, rot: 0, layer: "equipment", locked: false, circle: false }
+    ]
+  },
+  {
+    id: "preset_boxing_studio",
+    name: "Boxing Studio",
+    description: "Bag line + open sparring zone.",
+    roomW: 10,
+    roomL: 6,
+    items: [
+      { name: "Heavy bag", w: 1.0, h: 1.0, x: 120, y: 120, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Heavy bag", w: 1.0, h: 1.0, x: 240, y: 120, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Heavy bag", w: 1.0, h: 1.0, x: 360, y: 120, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Speed bag platform", w: 1.2, h: 1.0, x: 520, y: 120, rot: 0, layer: "equipment", locked: false, circle: false }
+    ]
+  },
+  {
+    id: "preset_boxing_power",
+    name: "Boxing + Strength",
+    description: "Boxing zone plus rack and bench.",
+    roomW: 8,
+    roomL: 6,
+    items: [
+      { name: "Heavy bag", w: 1.0, h: 1.0, x: 140, y: 120, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Speed bag platform", w: 1.2, h: 1.0, x: 320, y: 120, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Power rack", w: 1.5, h: 1.5, x: 520, y: 140, rot: 0, layer: "equipment", locked: false, circle: false },
+      { name: "Flat bench", w: 1.2, h: 0.6, x: 520, y: 300, rot: 0, layer: "equipment", locked: false, circle: false }
+    ]
+  }
+];
+
 const FLOORING = [
   ["Rubber floor mats", 2.0, 2.0],
   ["Interlocking tiles", 2.0, 2.0],
@@ -499,6 +685,848 @@ function applyViewFilter() {
 }
 
 // ===============================
+// SELECTION
+// ===============================
+function clearSelection() {
+  selectedItems.forEach((el) => el.classList.remove("selected"));
+  selectedItems.clear();
+}
+
+function addToSelection(el) {
+  selectedItems.add(el);
+  el.classList.add("selected");
+}
+
+function toggleSelection(el) {
+  if (selectedItems.has(el)) {
+    selectedItems.delete(el);
+    el.classList.remove("selected");
+  } else {
+    addToSelection(el);
+  }
+}
+
+function getEquipmentElements() {
+  return Array.from(document.querySelectorAll(".equipment"));
+}
+
+function updateSelectionBox(x1, y1, x2, y2) {
+  if (!selectionBox) return;
+  const left = Math.min(x1, x2);
+  const top = Math.min(y1, y2);
+  const width = Math.abs(x2 - x1);
+  const height = Math.abs(y2 - y1);
+  selectionBox.style.left = `${left}px`;
+  selectionBox.style.top = `${top}px`;
+  selectionBox.style.width = `${width}px`;
+  selectionBox.style.height = `${height}px`;
+}
+
+function createSelectionBox() {
+  if (!grid) return;
+  selectionBox = document.createElement("div");
+  selectionBox.className = "selection-box";
+  grid.appendChild(selectionBox);
+}
+
+function removeSelectionBox() {
+  if (!selectionBox) return;
+  selectionBox.remove();
+  selectionBox = null;
+}
+
+function selectInBox(append) {
+  if (!selectionBox) return;
+  const box = selectionBox.getBoundingClientRect();
+  if (!append) clearSelection();
+  getEquipmentElements().forEach((el) => {
+    const r = el.getBoundingClientRect();
+    const intersects = !(r.right < box.left || r.left > box.right || r.bottom < box.top || r.top > box.bottom);
+    if (intersects) addToSelection(el);
+  });
+}
+
+function duplicateSelected() {
+  if (!selectedItems.size) return;
+  const offset = gridSizePx || 12;
+  const items = Array.from(selectedItems);
+  clearSelection();
+  items.forEach((el) => {
+    const w = Number(el.dataset.w) || 0;
+    const h = Number(el.dataset.h) || 0;
+    const layer = el.dataset.layer || "equipment";
+    const cx = el.offsetLeft + el.offsetWidth / 2 + offset;
+    const cy = el.offsetTop + el.offsetHeight / 2 + offset;
+    const newEl = spawn(el.dataset.name || "Item", w, h, cx, cy, layer);
+    if (!newEl) return;
+    const rot = el.style.transform || "";
+    if (rot) newEl.style.transform = rot;
+    if (el.style.borderRadius === "50%") newEl.style.borderRadius = "50%";
+    if (el.dataset.locked === "true") {
+      newEl.dataset.locked = "true";
+      newEl.classList.add("locked");
+      const lock = newEl.querySelector(".lock");
+      if (lock) lock.textContent = "🔒";
+    }
+    addToSelection(newEl);
+  });
+  saveCurrentDesign();
+}
+// ===============================
+// DESIGN TABS
+// ===============================
+function generateId() {
+  if (crypto?.randomUUID) return crypto.randomUUID();
+  return `design_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function getRotationDeg(el) {
+  const t = el.style.transform || "";
+  const match = t.match(/rotate\(([-\d.]+)deg\)/);
+  return match ? Number(match[1]) : 0;
+}
+
+function serializeDesign() {
+  const items = Array.from(document.querySelectorAll(".equipment")).map((el) => {
+    const isCircle = el.style.borderRadius === "50%";
+    return {
+      name: el.dataset.name || "",
+      w: Number(el.dataset.w) || 0,
+      h: Number(el.dataset.h) || 0,
+      x: el.offsetLeft,
+      y: el.offsetTop,
+      rot: getRotationDeg(el),
+      layer: el.dataset.layer || "equipment",
+      locked: el.dataset.locked === "true",
+      circle: isCircle
+    };
+  });
+
+  return {
+    roomW: Number(roomW?.value) || 6,
+    roomL: Number(roomL?.value) || 4,
+    items
+  };
+}
+
+function applyDesign(data) {
+  if (!grid) return;
+  loadingDesign = true;
+  grid.innerHTML = "";
+  if (roomW) roomW.value = data.roomW ?? 6;
+  if (roomL) roomL.value = data.roomL ?? 4;
+  syncGridScale();
+
+  (data.items || []).forEach((item) => {
+    const pxW = item.w / metersPerPixelX;
+    const pxH = item.h / metersPerPixelY;
+    const cx = item.x + pxW / 2;
+    const cy = item.y + pxH / 2;
+    const el = spawn(item.name, item.w, item.h, cx, cy, item.layer);
+    if (!el) return;
+    el.style.transform = `rotate(${item.rot || 0}deg)`;
+    if (item.circle) el.style.borderRadius = "50%";
+    if (item.locked) {
+      el.dataset.locked = "true";
+      el.classList.add("locked");
+      const lock = el.querySelector(".lock");
+      if (lock) lock.textContent = "🔒";
+    }
+  });
+
+  applyViewFilter();
+  loadingDesign = false;
+}
+
+function saveDesigns() {
+  if (!useSupabaseDesigns) return;
+  // Supabase saving happens per-design via saveCurrentDesign
+}
+
+function saveCurrentDesign() {
+  if (loadingDesign || !activeDesignId) return;
+  const idx = designs.findIndex((d) => d.id === activeDesignId);
+  if (idx === -1) return;
+  designs[idx] = { ...designs[idx], ...serializeDesign() };
+  saveDesigns();
+  if (useSupabaseDesigns) {
+    upsertDesignSupabase(designs[idx]);
+  }
+}
+
+function renderTabs() {
+  if (!designTabs) return;
+  designTabs.innerHTML = "";
+  designs.forEach((d) => {
+    const btn = document.createElement("button");
+    btn.className = `design-tab${d.id === activeDesignId ? " active" : ""}`;
+    btn.dataset.id = d.id;
+    btn.onclick = () => {
+      switchDesign(d.id);
+    };
+    btn.ondblclick = () => {
+      switchDesign(d.id);
+      openDesignModal();
+    };
+
+    const label = document.createElement("span");
+    label.className = "design-tab-label";
+    label.textContent = d.name;
+
+    const del = document.createElement("span");
+    del.className = "design-tab-delete";
+    del.textContent = "×";
+    del.title = "Delete design";
+    del.onclick = (e) => {
+      e.stopPropagation();
+      pendingDeleteId = d.id;
+      showDeleteConfirm();
+    };
+
+    btn.appendChild(label);
+    btn.appendChild(del);
+    designTabs.appendChild(btn);
+  });
+
+  if (addDesignBtn) {
+    designTabs.appendChild(addDesignBtn);
+  }
+}
+
+function switchDesign(id) {
+  if (id === activeDesignId) return;
+  saveCurrentDesign();
+  activeDesignId = id;
+  const design = designs.find((d) => d.id === id);
+  if (design) applyDesign(design);
+  renderTabs();
+  saveDesigns();
+}
+
+function addDesign() {
+  openDesignModal("create");
+}
+
+function initDesignTabs() {
+  if (!designTabs) return;
+  initDesignTabsAsync();
+  if (addDesignBtn) {
+    addDesignBtn.onclick = addDesign;
+  }
+}
+
+async function initDesignTabsAsync() {
+  const client = window.supabaseClient;
+  if (client) {
+    const { data: sessionData } = await client.auth.getSession();
+    const session = sessionData?.session;
+    if (session?.user?.id) {
+      useSupabaseDesigns = true;
+      currentUserId = session.user.id;
+      await loadDesignsFromSupabase();
+      return;
+    }
+  }
+  // Not logged in: keep in-memory only
+  useSupabaseDesigns = false;
+  designs = [{ id: generateId(), name: "Design 1", roomW: 6, roomL: 4, items: [] }];
+  activeDesignId = designs[0].id;
+  renderTabs();
+  applyDesign(designs[0]);
+  showToast("Log in to save designs to your account");
+}
+
+async function loadDesignsFromSupabase() {
+  const client = window.supabaseClient;
+  if (!client || !currentUserId) return;
+  const { data, error } = await client
+    .from("user_designs")
+    .select("id, name, room_w, room_l, items")
+    .order("updated_at", { ascending: false });
+  if (error) {
+    showToast("Failed to load your designs");
+    return;
+  }
+  designs = (data || []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    roomW: Number(row.room_w),
+    roomL: Number(row.room_l),
+    items: row.items || []
+  }));
+  if (!designs.length) {
+    const id = generateId();
+    const seed = { id, name: "Design 1", roomW: 6, roomL: 4, items: [] };
+    designs = [seed];
+    activeDesignId = id;
+    renderTabs();
+    applyDesign(seed);
+    await upsertDesignSupabase(seed);
+    return;
+  }
+  activeDesignId = designs[0].id;
+  renderTabs();
+  applyDesign(designs[0]);
+}
+
+async function upsertDesignSupabase(design) {
+  const client = window.supabaseClient;
+  if (!client || !currentUserId || !design) return;
+  await client.from("user_designs").upsert({
+    id: design.id,
+    name: design.name,
+    room_w: Number(design.roomW) || 6,
+    room_l: Number(design.roomL) || 4,
+    items: design.items || []
+  });
+}
+
+async function deleteDesignSupabase(id) {
+  const client = window.supabaseClient;
+  if (!client || !currentUserId || !id) return;
+  await client.from("user_designs").delete().eq("id", id);
+}
+
+function closeDesignModal() {
+  if (!designModal) return;
+  designModal.classList.add("hidden");
+  designModal.setAttribute("aria-hidden", "true");
+  hideDesignEditors();
+}
+
+function openDesignModal(mode) {
+  if (!designModal) return;
+  renderDesignList();
+  updateDesignExportSelect();
+  designModal.classList.remove("hidden");
+  designModal.setAttribute("aria-hidden", "false");
+  if (mode === "create") {
+    showRenameEditor(true);
+  }
+}
+
+function renderDesignList() {
+  if (!designList) return;
+  designList.innerHTML = "";
+  designs.forEach((d) => {
+    const item = document.createElement("div");
+    item.className = `design-item${d.id === activeDesignId ? " active" : ""}`;
+    item.textContent = d.name;
+    item.onclick = () => {
+      switchDesign(d.id);
+      renderDesignList();
+    };
+    designList.appendChild(item);
+  });
+}
+
+function updateDesignExportSelect() {
+  if (!designExportSelect) return;
+  designExportSelect.innerHTML = "";
+  designs.forEach((d) => {
+    const opt = document.createElement("option");
+    opt.value = d.id;
+    opt.textContent = d.name;
+    designExportSelect.appendChild(opt);
+  });
+  if (activeDesignId) {
+    designExportSelect.value = activeDesignId;
+  }
+}
+
+// ===============================
+// DESIGN LIBRARY
+// ===============================
+function openLibraryModal() {
+  if (!libraryModal) return;
+  libraryModal.classList.remove("hidden");
+  libraryModal.setAttribute("aria-hidden", "false");
+  renderPresetLibrary();
+  loadCommunityLibrary();
+  renderMyDesigns();
+}
+
+function closeLibraryModal() {
+  if (!libraryModal) return;
+  libraryModal.classList.add("hidden");
+  libraryModal.setAttribute("aria-hidden", "true");
+}
+
+function renderPresetLibrary() {
+  if (!libraryPresets) return;
+  libraryPresets.innerHTML = "";
+  const query = (librarySearch?.value || "").toLowerCase();
+  const minW = Number(libraryMinW?.value) || 0;
+  const minL = Number(libraryMinL?.value) || 0;
+  PRESET_DESIGNS
+    .filter((d) => d.roomW >= minW && d.roomL >= minL)
+    .filter((d) => !query || `${d.name} ${d.description}`.toLowerCase().includes(query))
+    .forEach((d) => {
+    const card = document.createElement("div");
+    card.className = "library-card";
+    card.innerHTML = `
+      <h4>${d.name}</h4>
+      <div class="library-meta">${d.description || ""}</div>
+      <div class="library-meta">Room: ${d.roomW}m × ${d.roomL}m</div>
+      <button class="header-btn" data-id="${d.id}">Import</button>
+    `;
+    const btn = card.querySelector("button");
+    btn.onclick = () => importDesignData(d);
+    libraryPresets.appendChild(card);
+  });
+}
+
+async function loadCommunityLibrary() {
+  if (!libraryCommunity) return;
+  libraryCommunity.innerHTML = "";
+  const client = window.supabaseClient;
+  if (!client) {
+    libraryCommunity.innerHTML = `<div class="library-meta">Supabase not available.</div>`;
+    return;
+  }
+  const { data: sessionData } = await client.auth.getSession();
+  const session = sessionData?.session;
+  if (!session) {
+    libraryCommunity.innerHTML = `<div class="library-meta">Log in to view community designs.</div>`;
+    return;
+  }
+  const userId = session.user?.id || "";
+  const { data, error } = await client
+    .from("designs")
+    .select("id, name, description, room_w, room_l, items, created_by, display_name, author_email, author_avatar")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) {
+    libraryCommunity.innerHTML = `<div class="library-meta">Failed to load community designs.</div>`;
+    return;
+  }
+  const query = (librarySearch?.value || "").toLowerCase();
+  const minW = Number(libraryMinW?.value) || 0;
+  const minL = Number(libraryMinL?.value) || 0;
+  data
+    .map((row) => {
+      return ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      roomW: Number(row.room_w),
+      roomL: Number(row.room_l),
+      items: row.items || [],
+      createdBy: row.created_by,
+      displayName: row.display_name || "Community",
+      authorEmail: row.author_email || "",
+      authorAvatar: row.author_avatar || ""
+    });
+    })
+    .filter((d) => d.roomW >= minW && d.roomL >= minL)
+    .filter((d) => !query || `${d.name} ${d.description}`.toLowerCase().includes(query))
+    .forEach((d) => {
+      const card = document.createElement("div");
+      card.className = "library-card";
+      card.innerHTML = `
+      <h4>${d.name}</h4>
+      <div class="library-meta">${d.description || ""}</div>
+      <div class="library-author">
+        ${d.authorAvatar ? `<img src="${d.authorAvatar}" alt="${d.displayName}">` : ""}
+        <div>
+          <div>${d.displayName}</div>
+          ${d.authorEmail && d.authorEmail !== d.displayName ? `<div class="library-meta">${d.authorEmail}</div>` : ""}
+        </div>
+      </div>
+      <div class="library-meta">Room: ${d.roomW}m × ${d.roomL}m</div>
+      <div class="library-actions">
+        <button class="header-btn" data-id="${d.id}">Import</button>
+        ${d.createdBy === userId ? `<button class="header-btn" data-delete="${d.id}">Delete</button>` : ""}
+      </div>
+    `;
+    const btn = card.querySelector("button[data-id]");
+    btn.onclick = () => importDesignData(d);
+    const del = card.querySelector("button[data-delete]");
+    if (del) {
+      del.onclick = async () => {
+        const { error: delErr } = await client.from("designs").delete().eq("id", d.id);
+        if (delErr) {
+          showToast("Delete failed");
+          return;
+        }
+        showToast("Design deleted");
+        loadCommunityLibrary();
+      };
+    }
+    libraryCommunity.appendChild(card);
+  });
+}
+
+async function renderMyDesigns() {
+  if (!libraryMine) return;
+  libraryMine.innerHTML = "";
+  const client = window.supabaseClient;
+  if (!client) {
+    libraryMine.innerHTML = `<div class="library-meta">Supabase not available.</div>`;
+    return;
+  }
+  const { data: sessionData } = await client.auth.getSession();
+  const session = sessionData?.session;
+  if (!session) {
+    libraryMine.innerHTML = `<div class="library-meta">Log in to view your designs.</div>`;
+    return;
+  }
+  const query = (librarySearch?.value || "").toLowerCase();
+  const minW = Number(libraryMinW?.value) || 0;
+  const minL = Number(libraryMinL?.value) || 0;
+  const { data, error } = await client
+    .from("designs")
+    .select("id, name, room_w, room_l, items")
+    .eq("created_by", session.user.id)
+    .order("created_at", { ascending: false });
+  if (error) {
+    libraryMine.innerHTML = `<div class="library-meta">Failed to load your published designs.</div>`;
+    return;
+  }
+  const filtered = (data || [])
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      roomW: Number(row.room_w),
+      roomL: Number(row.room_l),
+      items: row.items || []
+    }))
+    .filter((d) => d.roomW >= minW && d.roomL >= minL)
+    .filter((d) => !query || `${d.name}`.toLowerCase().includes(query));
+  if (!filtered.length) {
+    libraryMine.innerHTML = `<div class="library-meta">No published designs match your filters.</div>`;
+    return;
+  }
+  filtered.forEach((d) => {
+    const card = document.createElement("div");
+    card.className = "library-card";
+    card.innerHTML = `
+      <h4>${d.name}</h4>
+      <div class="library-meta">Room: ${d.roomW}m × ${d.roomL}m</div>
+      <div class="library-actions">
+        <button class="header-btn" data-import="${d.id}">Import</button>
+      </div>
+    `;
+    const importBtn = card.querySelector("button[data-import]");
+    importBtn.onclick = () => importDesignData(d);
+    libraryMine.appendChild(card);
+  });
+}
+function importDesignData(data) {
+  if (!data) return;
+  const requiredW = Number(data.roomW) || 6;
+  const requiredL = Number(data.roomL) || 4;
+  if (roomW) roomW.value = requiredW;
+  if (roomL) roomL.value = requiredL;
+  syncGridScale();
+  const id = generateId();
+  const name = data.name ? `${data.name} (Imported)` : `Design ${designs.length + 1}`;
+  const design = {
+    id,
+    name,
+    roomW: requiredW,
+    roomL: requiredL,
+    items: data.items || []
+  };
+  designs.push(design);
+  activeDesignId = id;
+  applyDesign(design);
+  renderTabs();
+  renderDesignList();
+  updateDesignExportSelect();
+  saveDesigns();
+  showToast("Design imported");
+  closeLibraryModal();
+}
+
+function createThumbnailDataURL() {
+  if (!grid) return "";
+  const rect = grid.getBoundingClientRect();
+  const canvas = document.createElement("canvas");
+  canvas.width = 640;
+  canvas.height = 400;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return "";
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const sx = canvas.width / rect.width;
+  const sy = canvas.height / rect.height;
+  const gridStep = Math.max(20, gridSizePx * sx);
+
+  ctx.strokeStyle = "#e5e7eb";
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= canvas.width; x += gridStep) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= canvas.height; y += gridStep) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = "#111";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+  document.querySelectorAll(".equipment").forEach((el) => {
+    const r = el.getBoundingClientRect();
+    const x = (r.left - rect.left) * sx;
+    const y = (r.top - rect.top) * sy;
+    const w = r.width * sx;
+    const h = r.height * sy;
+    const layer = el.dataset.layer || "equipment";
+    if (layer === "flooring") ctx.fillStyle = "rgba(16, 185, 129, 0.2)";
+    else if (layer === "structure") ctx.fillStyle = "rgba(249, 115, 22, 0.18)";
+    else ctx.fillStyle = "rgba(31, 157, 98, 0.18)";
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, w, h);
+  });
+
+  return canvas.toDataURL("image/jpeg", 0.82);
+}
+
+function hideDesignEditors() {
+  designEditor?.classList.add("hidden");
+  designExportBox?.classList.add("hidden");
+  designImportBox?.classList.add("hidden");
+  designDeleteConfirm?.classList.add("hidden");
+  designPublishBox?.classList.add("hidden");
+}
+
+function showRenameEditor(isCreate) {
+  hideDesignEditors();
+  if (!designEditor || !designNameInput) return;
+  const defaultName = `Design ${designs.length + 1}`;
+  designNameInput.value = isCreate ? defaultName : (designs.find((d) => d.id === activeDesignId)?.name || defaultName);
+  designEditor.classList.remove("hidden");
+  designEditor.dataset.create = isCreate ? "true" : "false";
+}
+
+function handleSaveName() {
+  const name = designNameInput?.value?.trim() || `Design ${designs.length + 1}`;
+  const isCreate = designEditor?.dataset.create === "true";
+  if (isCreate) {
+    saveCurrentDesign();
+    const id = generateId();
+    const design = { id, name, roomW: Number(roomW?.value) || 6, roomL: Number(roomL?.value) || 4, items: [] };
+    designs.push(design);
+    activeDesignId = id;
+    applyDesign(design);
+    if (useSupabaseDesigns) upsertDesignSupabase(design);
+  } else {
+    const idx = designs.findIndex((d) => d.id === activeDesignId);
+    if (idx !== -1) designs[idx].name = name;
+    if (useSupabaseDesigns && idx !== -1) upsertDesignSupabase(designs[idx]);
+  }
+  renderTabs();
+  renderDesignList();
+  updateDesignExportSelect();
+  saveDesigns();
+  hideDesignEditors();
+  if (isCreate) closeDesignModal();
+}
+
+function showExportBox() {
+  hideDesignEditors();
+  const targetId = designExportSelect?.value || activeDesignId;
+  const design = designs.find((d) => d.id === targetId);
+  if (!design || !designExportText) return;
+  designExportText.value = JSON.stringify(design, null, 2);
+  designExportBox.classList.remove("hidden");
+}
+
+function showImportBox() {
+  hideDesignEditors();
+  if (designImportText) designImportText.value = "";
+  if (designImportFile) designImportFile.value = "";
+  designImportBox.classList.remove("hidden");
+}
+
+function showDeleteConfirm() {
+  hideDesignEditors();
+  if (designs.length <= 1) {
+    showToast("At least one design is required");
+    return;
+  }
+  if (!pendingDeleteId) pendingDeleteId = activeDesignId;
+  if (designModal && designModal.classList.contains("hidden")) {
+    openDesignModal();
+  }
+  designDeleteConfirm.classList.remove("hidden");
+}
+
+function showPublishBox() {
+  hideDesignEditors();
+  if (designPublishTitle) {
+    const current = designs.find((d) => d.id === activeDesignId);
+    designPublishTitle.value = current?.name || "";
+  }
+  if (designPublishDesc) designPublishDesc.value = "";
+  designPublishBox?.classList.remove("hidden");
+}
+
+function wordCount(text) {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+async function publishDesign() {
+  const title = designPublishTitle?.value?.trim();
+  const desc = designPublishDesc?.value?.trim() || "";
+  if (!title) {
+    showToast("Title is required");
+    return;
+  }
+  if (wordCount(desc) > 30) {
+    showToast("Description must be 30 words or less");
+    return;
+  }
+
+  const client = window.supabaseClient;
+  if (!client) {
+    showToast("Supabase not available");
+    return;
+  }
+  const { data: sessionData } = await client.auth.getSession();
+  if (!sessionData?.session) {
+    showToast("Log in to publish designs");
+    return;
+  }
+
+  const current = designs.find((d) => d.id === activeDesignId);
+  if (!current) {
+    showToast("No design selected");
+    return;
+  }
+
+  const user = sessionData.session.user;
+  const displayName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email ||
+    "Community";
+
+  const payload = {
+    name: title,
+    description: desc,
+    room_w: Number(current.roomW) || Number(roomW?.value) || 6,
+    room_l: Number(current.roomL) || Number(roomL?.value) || 4,
+    items: current.items || [],
+    display_name: displayName,
+    author_email: user?.email || null,
+    author_avatar: user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null
+  };
+
+  const { error } = await client.from("designs").insert(payload);
+  if (error) {
+    showToast("Publish failed");
+    return;
+  }
+
+  showToast("Design published");
+  hideDesignEditors();
+  closeDesignModal();
+}
+
+function doDeleteDesign() {
+  if (designs.length <= 1) return;
+  const targetId = pendingDeleteId || activeDesignId;
+  const idx = designs.findIndex((d) => d.id === targetId);
+  if (idx === -1) return;
+  designs.splice(idx, 1);
+  if (activeDesignId === targetId) {
+    activeDesignId = designs[0].id;
+  }
+  pendingDeleteId = null;
+  applyDesign(designs[0]);
+  renderTabs();
+  renderDesignList();
+  updateDesignExportSelect();
+  saveDesigns();
+  if (useSupabaseDesigns) deleteDesignSupabase(targetId);
+  hideDesignEditors();
+  closeDesignModal();
+}
+
+function downloadDesign() {
+  const design = designs.find((d) => d.id === activeDesignId);
+  if (!design) return;
+  const blob = new Blob([JSON.stringify(design, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${(design.name || "design").replace(/\\s+/g, "-").toLowerCase()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function copyExport() {
+  if (!designExportText) return;
+  try {
+    await navigator.clipboard.writeText(designExportText.value);
+    showToast("Export copied");
+  } catch {
+    showToast("Copy failed");
+  }
+}
+
+function handleImportFile() {
+  const file = designImportFile?.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    if (typeof reader.result === "string" && designImportText) {
+      designImportText.value = reader.result;
+    }
+  };
+  reader.readAsText(file);
+}
+
+function doImportDesign() {
+  const raw = designImportText?.value || "";
+  if (!raw.trim()) {
+    showToast("Paste JSON to import");
+    return;
+  }
+  try {
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.items)) {
+      showToast("Invalid design JSON");
+      return;
+    }
+    const id = generateId();
+    const name = data.name ? `${data.name} (Imported)` : `Design ${designs.length + 1}`;
+    const design = {
+      id,
+      name,
+      roomW: Number(data.roomW) || 6,
+      roomL: Number(data.roomL) || 4,
+      items: data.items
+    };
+    designs.push(design);
+    activeDesignId = id;
+    applyDesign(design);
+    renderTabs();
+    renderDesignList();
+    updateDesignExportSelect();
+    saveDesigns();
+    hideDesignEditors();
+    showToast("Design imported");
+  } catch {
+    showToast("Invalid JSON");
+  }
+}
+
+// ===============================
 // SPAWN + RESULTS
 // ===============================
 function createResult({ name, w, h, layer }) {
@@ -539,6 +1567,7 @@ function spawn(name, w, h, x, y, layer = "equipment") {
   setPosition(el, x - el.offsetWidth / 2, y - el.offsetHeight / 2);
   bind(el);
   applyViewFilter();
+  saveCurrentDesign();
   return el;
 }
 
@@ -554,6 +1583,7 @@ function bind(el) {
     e.preventDefault();
     if (el.dataset.locked === "true") return;
     el.remove();
+    saveCurrentDesign();
   };
 }
 
@@ -563,16 +1593,70 @@ function enableDrag(el) {
     if (e.target.classList.contains("rotate")) return;
     if (e.target.classList.contains("lock")) return;
 
+    if (e.shiftKey) {
+      toggleSelection(el);
+    } else {
+      if (!selectedItems.has(el)) {
+        clearSelection();
+        addToSelection(el);
+      }
+    }
+
     const sx = e.clientX;
     const sy = e.clientY;
-    const ox = el.offsetLeft;
-    const oy = el.offsetTop;
+    const selectedArray = Array.from(selectedItems);
+    const startPositions = selectedArray.map((item) => ({
+      el: item,
+      x: item.offsetLeft,
+      y: item.offsetTop,
+      w: item.offsetWidth,
+      h: item.offsetHeight,
+      locked: item.dataset.locked === "true"
+    }));
+    const ref = startPositions.find((item) => item.el === el) || startPositions[0];
 
     document.onmousemove = (ev) => {
-      setPosition(el, ox + ev.clientX - sx, oy + ev.clientY - sy);
+      let dx = ev.clientX - sx;
+      let dy = ev.clientY - sy;
+
+      if (snapEnabled && ref) {
+        const snappedX = Math.round((ref.x + dx) / gridSizePx) * gridSizePx;
+        const snappedY = Math.round((ref.y + dy) / gridSizePx) * gridSizePx;
+        dx = snappedX - ref.x;
+        dy = snappedY - ref.y;
+      }
+
+      const maxW = grid.clientWidth;
+      const maxH = grid.clientHeight;
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+
+      startPositions.forEach((item) => {
+        if (item.locked) return;
+        const x = item.x + dx;
+        const y = item.y + dy;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x + item.w);
+        maxY = Math.max(maxY, y + item.h);
+      });
+
+      if (minX < 0) dx -= minX;
+      if (minY < 0) dy -= minY;
+      if (maxX > maxW) dx -= (maxX - maxW);
+      if (maxY > maxH) dy -= (maxY - maxH);
+
+      startPositions.forEach((item) => {
+        if (item.locked) return;
+        item.el.style.left = (item.x + dx) + "px";
+        item.el.style.top = (item.y + dy) + "px";
+      });
     };
     document.onmouseup = () => {
       document.onmousemove = null;
+      saveCurrentDesign();
     };
   };
 }
@@ -600,6 +1684,7 @@ function enableRotate(el) {
     };
     document.onmouseup = () => {
       document.onmousemove = null;
+      saveCurrentDesign();
     };
   };
 }
@@ -612,6 +1697,7 @@ function enableLock(el) {
     el.dataset.locked = (!locked).toString();
     lock.textContent = locked ? "🔓" : "🔒";
     el.classList.toggle("locked", !locked);
+    saveCurrentDesign();
   };
 }
 
@@ -657,6 +1743,43 @@ grid.addEventListener("drop", (e) => {
   spawn(name, w, h, e.offsetX, e.offsetY, layer);
 });
 
+grid.addEventListener("mousedown", (e) => {
+  const isGridClick = e.target === grid || e.target === drawLayer;
+  if (!isGridClick) return;
+  isSelecting = true;
+  if (!e.shiftKey) clearSelection();
+  const rect = grid.getBoundingClientRect();
+  selectionStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  createSelectionBox();
+  updateSelectionBox(selectionStart.x, selectionStart.y, selectionStart.x, selectionStart.y);
+
+  const onMove = (ev) => {
+    if (!isSelecting) return;
+    const x = ev.clientX - rect.left;
+    const y = ev.clientY - rect.top;
+    updateSelectionBox(selectionStart.x, selectionStart.y, x, y);
+  };
+
+  const onUp = () => {
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("mouseup", onUp);
+    isSelecting = false;
+    if (selectionBox) {
+      const w = parseFloat(selectionBox.style.width) || 0;
+      const h = parseFloat(selectionBox.style.height) || 0;
+      if (w >= 4 && h >= 4) {
+        selectInBox(e.shiftKey);
+      } else if (!e.shiftKey) {
+        clearSelection();
+      }
+    }
+    removeSelectionBox();
+  };
+
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onUp);
+});
+
 // ===============================
 // UI CONTROLS
 // ===============================
@@ -669,6 +1792,7 @@ snapToggle.onclick = () => {
 applyScaleBtn.onclick = () => {
   syncGridScale();
   showToast("Scale updated");
+  saveCurrentDesign();
 };
 
 viewButtons.forEach((btn) => {
@@ -718,6 +1842,84 @@ shapePanel?.addEventListener("click", (e) => e.stopPropagation());
 document.addEventListener("click", () => {
   toolModal.classList.add("hidden");
   shapePanel.classList.add("hidden");
+});
+
+document.addEventListener("keydown", (e) => {
+  const target = e.target;
+  const isTyping = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+  if (isTyping) return;
+  if (e.key.toLowerCase() === "d" && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    duplicateSelected();
+  }
+});
+
+// Design modal interactions
+designRenameBtn?.addEventListener("click", () => showRenameEditor(false));
+designCreateBtn?.addEventListener("click", () => showRenameEditor(true));
+designSaveName?.addEventListener("click", handleSaveName);
+designCancelName?.addEventListener("click", hideDesignEditors);
+designExportOpen?.addEventListener("click", showExportBox);
+designImportOpen?.addEventListener("click", showImportBox);
+designDeleteBtn?.addEventListener("click", showDeleteConfirm);
+designPublishBtn?.addEventListener("click", showPublishBox);
+designConfirmPublish?.addEventListener("click", publishDesign);
+designCancelPublish?.addEventListener("click", hideDesignEditors);
+designConfirmDelete?.addEventListener("click", doDeleteDesign);
+designCancelDelete?.addEventListener("click", hideDesignEditors);
+designDownload?.addEventListener("click", downloadDesign);
+designCopy?.addEventListener("click", copyExport);
+designCloseExport?.addEventListener("click", hideDesignEditors);
+designDoImport?.addEventListener("click", doImportDesign);
+designCloseImport?.addEventListener("click", hideDesignEditors);
+designImportFile?.addEventListener("change", handleImportFile);
+designExportSelect?.addEventListener("change", () => {
+  if (designExportBox && !designExportBox.classList.contains("hidden")) {
+    showExportBox();
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeLibraryModal();
+  }
+});
+designModal?.addEventListener("click", (e) => {
+  if (e.target === designModal) closeDesignModal();
+});
+
+libraryBtn?.addEventListener("click", openLibraryModal);
+libraryModal?.addEventListener("click", (e) => {
+  if (e.target === libraryModal) closeLibraryModal();
+});
+libraryTabs?.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    libraryTabs.forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+    const target = tab.dataset.tab;
+    if (target === "presets") {
+      libraryPresets?.classList.remove("hidden");
+      libraryCommunity?.classList.add("hidden");
+      libraryMine?.classList.add("hidden");
+    } else {
+      libraryPresets?.classList.add("hidden");
+      if (target === "community") {
+        libraryCommunity?.classList.remove("hidden");
+        libraryMine?.classList.add("hidden");
+      } else {
+        libraryMine?.classList.remove("hidden");
+        libraryCommunity?.classList.add("hidden");
+      }
+    }
+  });
+});
+
+[librarySearch, libraryMinW, libraryMinL].forEach((el) => {
+  el?.addEventListener("input", () => {
+    renderPresetLibrary();
+    loadCommunityLibrary();
+    renderMyDesigns();
+  });
 });
 
 shapeTabs.forEach((tab) => {
@@ -943,6 +2145,7 @@ clearAllBtn?.addEventListener("click", () => {
 confirmYes?.addEventListener("click", () => {
   grid.innerHTML = "";
   confirmToast.classList.add("hidden");
+  saveCurrentDesign();
 });
 
 confirmNo?.addEventListener("click", () => {
@@ -953,11 +2156,13 @@ confirmNo?.addEventListener("click", () => {
 exportBtn?.addEventListener("click", () => {
   exportModal.classList.remove("hidden");
   exportModal.setAttribute("aria-hidden", "false");
+  updateDesignExportSelect();
 });
 
 exportCancel?.addEventListener("click", () => {
   exportModal.classList.add("hidden");
   exportModal.setAttribute("aria-hidden", "true");
+  hideDesignEditors();
 });
 
 exportConfirm?.addEventListener("click", () => {
@@ -971,6 +2176,7 @@ exportConfirm?.addEventListener("click", () => {
   }
   exportModal.classList.add("hidden");
   exportModal.setAttribute("aria-hidden", "true");
+  hideDesignEditors();
   runExport(selected);
 });
 
@@ -1182,6 +2388,7 @@ function runExport(selectedLayers) {
 
 // Init
 syncGridScale();
+initDesignTabs();
 setupFreeDraw();
 window.addEventListener("resize", () => {
   syncGridScale();

@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <title>Primal Lab Planner</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="darkmode.css">
 </head>
 
 
 <body class="planner-page">
+  <div id="particles"></div>
 
 
 
@@ -19,80 +19,81 @@
       <span class="logo-h">P</span><span class="logo-g">L</span>
     </a>
     
-    <div>
+    <div class="brand-text">
       <div class="title">Primal Lab Planner</div>
       <div class="subtitle">True-scale • Locked grid</div>
     </div>
   </div>
 
-  <div class="controls">
-    <div class="header-tool">
-      <button id="toolButton" class="header-btn" title="Tools">
-       🛌 Structures
-      </button>
-    </div>
-    
-    
-  
-    <button id="customShapeToggle" class="header-btn">
-      ✏️ Shape
-    </button>
-
-    <button id="clearAllBtn" class="header-btn">❌ Clear All</button>
-
-    <div id="confirmToast" class="hidden">
-      <p>Are you sure you want to remove all equipment?</p>
-      <button id="confirmYes">Yes</button>
-      <button id="confirmNo">No</button>
-    </div>
-    
-    
-    
-    <!-- EXPORT STUFF -->
-    <button id="exportBtn" class="header-btn" type="button">⬇ Export</button>
-
-  
-    <div class="field">
-      <label>Width (m)</label>
-      <input id="roomW" type="number" value="6" step="0.5">
-    </div>
-  
-
-    <div class="field">
-      <label>Length (m)</label>
-      <input id="roomL" type="number" value="4" step="0.5">
-    </div>
-
-    <div id="snapToggle" class="snap active">
-      <div class="knob"></div>
-      <span>Snap</span>
-    </div>
-
-    <div class="view-toggle" aria-label="View options">
-      <button class="view-btn active" data-view="all">View: All</button>
-      <button class="view-btn" data-view="flooring">Flooring</button>
-      <button class="view-btn" data-view="structure">Structures</button>
-      <button class="view-btn" data-view="equipment">Equipment</button>
-    </div>
-
-    <button id="applyScale">Update scale</button>
-    
-  </div>
+  <div class="controls"></div>
 </header>
 
 <main class="layout">
-  <div class="canvas-wrap">
-    <div id="grid">
-      <canvas id="drawLayer"></canvas>
+  <aside class="sidebar-left">
+    <div class="panel">
+      <div class="panel-title">Actions</div>
+      <div class="panel-grid">
+        <button id="toolButton" class="header-btn" title="Tools">🧱 Structures</button>
+        <button id="customShapeToggle" class="header-btn">✏️ Shape Builder</button>
+        <button id="clearAllBtn" class="header-btn">🧹 Clear All</button>
+        <button id="exportBtn" class="header-btn" type="button">⬇️ Export</button>
+        <button id="libraryBtn" class="header-btn library-btn" type="button">📚 Design Library</button>
+      </div>
     </div>
-    
-  </div>
 
-  <aside class="search">
+    <div class="panel">
+      <div class="panel-title">Room Size</div>
+      <div class="panel-row">
+        <div class="field">
+          <label>Width (m)</label>
+          <input id="roomW" type="number" value="6" step="0.5">
+        </div>
+        <div class="field">
+          <label>Length (m)</label>
+          <input id="roomL" type="number" value="4" step="0.5">
+        </div>
+      </div>
+      <button id="applyScale" class="apply-scale">Update scale</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">View</div>
+      <div id="snapToggle" class="snap active">
+        <div class="knob"></div>
+        <span>Snap</span>
+      </div>
+      <div class="view-toggle" aria-label="View options">
+        <button class="view-btn active" data-view="all">All</button>
+        <button class="view-btn" data-view="flooring">Flooring</button>
+        <button class="view-btn" data-view="structure">Structures</button>
+        <button class="view-btn" data-view="equipment">Equipment</button>
+      </div>
+    </div>
+  </aside>
+
+  <section class="center-panel">
+    <div class="design-tabs" id="designTabs" aria-label="Design tabs">
+      <button class="design-tab active" data-id="default">Design 1</button>
+      <button class="design-tab add" id="addDesign" title="Add design">＋</button>
+    </div>
+    <div class="canvas-wrap">
+      <div id="grid">
+        <canvas id="drawLayer"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <aside class="search sidebar-right">
     <input id="search" placeholder="Search equipment…" />
     <div id="results"></div>
   </aside>
 </main>
+
+<div id="confirmToast" class="hidden">
+  <p>Are you sure you want to remove all equipment?</p>
+  <button id="confirmYes">Yes</button>
+  <button id="confirmNo">No</button>
+</div>
 
 
 
@@ -148,26 +149,7 @@
     <button id="shapeCancel" class="cancel-btn">Cancel</button>
     <button id="shapeDone" class="done-btn">Done</button>
   </div>
-</div>
-
-
-  </div>
-</div>
-
-
-</div>
-
-</div>
-
-
-
-
-  <div class="tool-actions">
-    <button class="tool-action">🏋️ Equipment</button>
-    <button class="tool-action">🚪 Door</button>
-    <button class="tool-action">🪟 Window</button>
-    <button class="tool-action">📐 Wall</button>
-  </div>
+ 
 </div>
 
 
@@ -196,31 +178,128 @@
       <button id="exportConfirm" class="header-btn">Export</button>
       <button id="exportCancel" class="header-btn">Cancel</button>
     </div>
+
+    <div class="modal-divider"></div>
+
+    <h4 class="modal-subtitle">Design Export / Import</h4>
+    <label class="modal-option">
+      <span>Design</span>
+      <select id="designExportSelect"></select>
+    </label>
+    <div class="modal-actions">
+      <button id="designExportOpen" class="header-btn">Export Design</button>
+      <button id="designImportOpen" class="header-btn">Import Design</button>
+    </div>
+
+    <div id="designExportBox" class="design-editor hidden">
+      <label>Export JSON</label>
+      <textarea id="designExportText" rows="6"></textarea>
+      <div class="modal-actions">
+        <button id="designDownload" class="header-btn">Download</button>
+        <button id="designCopy" class="header-btn">Copy</button>
+        <button id="designCloseExport" class="header-btn">Close</button>
+      </div>
+    </div>
+
+    <div id="designImportBox" class="design-editor hidden">
+      <label>Import JSON</label>
+      <textarea id="designImportText" rows="6" placeholder="Paste exported JSON here"></textarea>
+      <input id="designImportFile" type="file" accept=".json" />
+      <div class="modal-actions">
+        <button id="designDoImport" class="header-btn">Import</button>
+        <button id="designCloseImport" class="header-btn">Cancel</button>
+      </div>
+    </div>
   </div>
 </div>
 
-<script>
-  // Apply dark mode on planner page
-  const isDark = localStorage.getItem("darkMode") === "true";
+<div id="libraryModal" class="modal hidden" aria-hidden="true">
+  <div class="modal-card library-modal-card">
+    <h3>Design Library</h3>
+    <div class="library-tabs">
+      <button class="library-tab active" data-tab="presets">Pre‑made</button>
+      <button class="library-tab" data-tab="community">Community</button>
+      <button class="library-tab" data-tab="mine">My Designs</button>
+    </div>
+    <div class="library-filters">
+      <input id="librarySearch" type="text" placeholder="Search designs…">
+      <input id="libraryMinW" type="number" step="0.5" placeholder="Min W (m)">
+      <input id="libraryMinL" type="number" step="0.5" placeholder="Min L (m)">
+    </div>
+    <div id="libraryPresets" class="library-list"></div>
+    <div id="libraryCommunity" class="library-list hidden"></div>
+    <div id="libraryMine" class="library-list hidden"></div>
+  </div>
+</div>
 
-  if (isDark) {
-    document.body.classList.add("planner-dark-mode");
-  } else {
-    document.body.classList.remove("planner-dark-mode");
-  }
+<div id="designModal" class="modal hidden" aria-hidden="true">
+  <div class="modal-card design-modal-card">
+    <h3>Manage Designs</h3>
 
-  // Listen for changes from other pages
-  window.addEventListener("storage", (e) => {
-    if (e.key === "darkMode") {
-      document.body.classList.toggle(
-        "planner-dark-mode",
-        e.newValue === "true"
-      );
-    }
-  });
+    <div id="designList" class="design-list"></div>
+
+    <div class="design-actions">
+      <button id="designRename" class="header-btn">Rename</button>
+      <button id="designDelete" class="header-btn">Delete</button>
+      <button id="designCreate" class="header-btn">New</button>
+      <button id="designPublish" class="header-btn">Publish</button>
+    </div>
+
+    <div id="designEditor" class="design-editor hidden">
+      <label>Design name</label>
+      <input id="designNameInput" type="text" placeholder="Design name">
+      <div class="modal-actions">
+        <button id="designSaveName" class="header-btn">Save</button>
+        <button id="designCancelName" class="header-btn">Cancel</button>
+      </div>
+    </div>
+
+    <div id="designDeleteConfirm" class="design-editor hidden">
+      <p>Delete this design? This cannot be undone.</p>
+      <div class="modal-actions">
+        <button id="designConfirmDelete" class="header-btn">Delete</button>
+        <button id="designCancelDelete" class="header-btn">Cancel</button>
+      </div>
+    </div>
+
+    <div id="designPublishBox" class="design-editor hidden">
+      <label>Title</label>
+      <input id="designPublishTitle" type="text" placeholder="e.g., Compact Garage Layout">
+      <label>Description (max 30 words)</label>
+      <textarea id="designPublishDesc" rows="4" placeholder="Describe this layout in 30 words or less"></textarea>
+      <div class="library-meta" id="designPublishHint">Room size will be saved automatically.</div>
+      <div class="modal-actions">
+        <button id="designConfirmPublish" class="header-btn">Publish</button>
+        <button id="designCancelPublish" class="header-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+  window.supabaseClient = createClient(
+    "https://nqomiajgtmxxsupjgvvu.supabase.co",
+    "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA"
+  );
 </script>
 
 <script src="script.js" defer></script>
+<script>
+  // Particle system (planner)
+  const particlesContainer = document.getElementById('particles');
+  if (particlesContainer) {
+    for (let i = 0; i < 48; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (Math.random() * 22 + 24) + 's';
+      p.style.animationDelay = Math.random() * 8 + 's';
+      p.style.setProperty('--drift', (Math.random() * 160 - 80) + 'px');
+      particlesContainer.appendChild(p);
+    }
+  }
+</script>
 
 
 </body>
