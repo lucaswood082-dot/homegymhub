@@ -26,6 +26,7 @@ const shapeCancel = document.getElementById("shapeCancel");
 const shapeName = document.getElementById("shapeName");
 const shapeWidth = document.getElementById("shapeWidth");
 const shapeLength = document.getElementById("shapeLength");
+const wallModeBtn = document.getElementById("wallModeBtn");
 
 const freeDrawArea = document.getElementById("freeDrawArea");
 const freeDrawCanvas = document.getElementById("freeDrawCanvas");
@@ -39,9 +40,12 @@ const exportBtn = document.getElementById("exportBtn");
 const exportModal = document.getElementById("exportModal");
 const exportConfirm = document.getElementById("exportConfirm");
 const exportCancel = document.getElementById("exportCancel");
-const exportFlooring = document.getElementById("exportFlooring");
-const exportStructures = document.getElementById("exportStructures");
-const exportEquipment = document.getElementById("exportEquipment");
+const exportDesignList = document.getElementById("exportDesignList");
+const exportViewAll = document.getElementById("exportViewAll");
+const exportViewCombined = document.getElementById("exportViewCombined");
+const exportViewSingle = document.getElementById("exportViewSingle");
+const exportViewPicker = document.getElementById("exportViewPicker");
+const exportViewButtons = document.querySelectorAll(".export-view-btn");
 
 const toast = document.getElementById("toast");
 const designTabs = document.getElementById("designTabs");
@@ -50,27 +54,18 @@ const designModal = document.getElementById("designModal");
 const designList = document.getElementById("designList");
 const designRenameBtn = document.getElementById("designRename");
 const designDeleteBtn = document.getElementById("designDelete");
+const designClearAllBtn = document.getElementById("designClearAll");
 const designCreateBtn = document.getElementById("designCreate");
 const designEditor = document.getElementById("designEditor");
 const designNameInput = document.getElementById("designNameInput");
 const designSaveName = document.getElementById("designSaveName");
 const designCancelName = document.getElementById("designCancelName");
-const designExportBox = document.getElementById("designExportBox");
-const designExportText = document.getElementById("designExportText");
-const designDownload = document.getElementById("designDownload");
-const designCopy = document.getElementById("designCopy");
-const designCloseExport = document.getElementById("designCloseExport");
-const designImportBox = document.getElementById("designImportBox");
-const designImportText = document.getElementById("designImportText");
-const designImportFile = document.getElementById("designImportFile");
-const designDoImport = document.getElementById("designDoImport");
-const designCloseImport = document.getElementById("designCloseImport");
 const designDeleteConfirm = document.getElementById("designDeleteConfirm");
 const designConfirmDelete = document.getElementById("designConfirmDelete");
 const designCancelDelete = document.getElementById("designCancelDelete");
-const designExportOpen = document.getElementById("designExportOpen");
-const designImportOpen = document.getElementById("designImportOpen");
-const designExportSelect = document.getElementById("designExportSelect");
+const designClearConfirm = document.getElementById("designClearConfirm");
+const designConfirmClear = document.getElementById("designConfirmClear");
+const designCancelClear = document.getElementById("designCancelClear");
 const designPublishBtn = document.getElementById("designPublish");
 const designPublishBox = document.getElementById("designPublishBox");
 const designPublishTitle = document.getElementById("designPublishTitle");
@@ -114,6 +109,11 @@ let selectedItems = new Set();
 let selectionBox = null;
 let selectionStart = null;
 let isSelecting = false;
+let wallMode = false;
+let wallStart = null;
+let wallPreview = null;
+let wallOrientation = null;
+const WALL_MIN_PX = 14;
 
 const DESIGN_STORAGE_KEY = "pl_planner_designs_v1";
 const DESIGN_ACTIVE_KEY = "pl_planner_design_active_v1";
@@ -639,7 +639,10 @@ function syncGridScale() {
   drawLayer.width = grid.clientWidth;
   drawLayer.height = grid.clientHeight;
 
-  document.querySelectorAll(".equipment").forEach(resize);
+  document.querySelectorAll(".equipment").forEach((el) => {
+    resize(el);
+    clamp(el);
+  });
 }
 
 function resize(el) {
@@ -647,10 +650,31 @@ function resize(el) {
   el.style.height = (el.dataset.h / metersPerPixelY) + "px";
 }
 
+function snapWithinBounds(pos, max) {
+  const maxPos = Math.max(0, max);
+  let snapped = Math.round(pos / gridSizePx) * gridSizePx;
+  if (snapped < 0) snapped = 0;
+  if (snapped > maxPos) {
+    snapped = Math.floor(maxPos / gridSizePx) * gridSizePx;
+  }
+  return snapped;
+}
+
+function snapValueWithin(target, min, max) {
+  let snapped = Math.round(target / gridSizePx) * gridSizePx;
+  if (snapped < min) snapped = Math.ceil(min / gridSizePx) * gridSizePx;
+  if (snapped > max) snapped = Math.floor(max / gridSizePx) * gridSizePx;
+  if (snapped < min) snapped = min;
+  if (snapped > max) snapped = max;
+  return snapped;
+}
+
 function setPosition(el, x, y) {
   if (snapEnabled) {
-    x = Math.round(x / gridSizePx) * gridSizePx;
-    y = Math.round(y / gridSizePx) * gridSizePx;
+    const maxX = grid.clientWidth - el.offsetWidth;
+    const maxY = grid.clientHeight - el.offsetHeight;
+    x = snapWithinBounds(x, maxX);
+    y = snapWithinBounds(y, maxY);
   }
   el.style.left = x + "px";
   el.style.top = y + "px";
@@ -658,15 +682,35 @@ function setPosition(el, x, y) {
 }
 
 function clamp(el) {
+  const maxW = grid.clientWidth;
+  const maxH = grid.clientHeight;
+  let x = el.offsetLeft;
+  let y = el.offsetTop;
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
+
+  if (x < 0) x = 0;
+  if (y < 0) y = 0;
+  if (x + w > maxW) x = Math.max(0, maxW - w);
+  if (y + h > maxH) y = Math.max(0, maxH - h);
+
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+}
+
+function clampByBoundingRect(el) {
   const g = grid.getBoundingClientRect();
   const r = el.getBoundingClientRect();
-  let dx = 0, dy = 0;
+  let dx = 0;
+  let dy = 0;
   if (r.left < g.left) dx = g.left - r.left;
   if (r.right > g.right) dx = g.right - r.right;
   if (r.top < g.top) dy = g.top - r.top;
   if (r.bottom > g.bottom) dy = g.bottom - r.bottom;
-  el.style.left = (el.offsetLeft + dx) + "px";
-  el.style.top = (el.offsetTop + dy) + "px";
+  if (dx || dy) {
+    el.style.left = (el.offsetLeft + dx) + "px";
+    el.style.top = (el.offsetTop + dy) + "px";
+  }
 }
 
 function applyLayerStyles(el) {
@@ -703,6 +747,22 @@ function toggleSelection(el) {
     el.classList.remove("selected");
   } else {
     addToSelection(el);
+  }
+}
+
+function deleteSelected() {
+  if (!selectedItems.size) return;
+  let removed = 0;
+  selectedItems.forEach((el) => {
+    if (el.dataset.locked === "true") return;
+    el.remove();
+    removed += 1;
+  });
+  clearSelection();
+  if (removed) {
+    saveCurrentDesign();
+  } else {
+    showToast("Locked items cannot be deleted");
   }
 }
 
@@ -772,6 +832,94 @@ function duplicateSelected() {
   });
   saveCurrentDesign();
 }
+
+function updateWallPreview(x1, y1, x2, y2) {
+  if (!wallPreview) return;
+  let dx = x2 - x1;
+  let dy = y2 - y1;
+  const distance = Math.hypot(dx, dy);
+  if (!wallOrientation && distance > 6) {
+    wallOrientation = Math.abs(dx) >= Math.abs(dy) ? "h" : "v";
+  }
+  const orientation = wallOrientation || (Math.abs(dx) >= Math.abs(dy) ? "h" : "v");
+  const thicknessMinPx = Math.max(6, 0.1 / Math.min(metersPerPixelX, metersPerPixelY));
+
+  let lengthPx = orientation === "h" ? dx : dy;
+  if (snapEnabled) {
+    lengthPx = Math.round(lengthPx / gridSizePx) * gridSizePx;
+  }
+
+  const rawThickness = Math.abs(orientation === "h" ? dy : dx);
+  const thicknessPx = Math.max(thicknessMinPx, rawThickness);
+
+  let left = x1;
+  let top = y1;
+  let width = 0;
+  let height = 0;
+
+  if (orientation === "h") {
+    left = lengthPx >= 0 ? x1 : x1 + lengthPx;
+    top = (dy < 0) ? (y1 - thicknessPx) : y1;
+    width = Math.abs(lengthPx);
+    height = thicknessPx;
+  } else {
+    left = (dx < 0) ? (x1 - thicknessPx) : x1;
+    top = lengthPx >= 0 ? y1 : y1 + lengthPx;
+    width = thicknessPx;
+    height = Math.abs(lengthPx);
+  }
+
+  wallPreview.style.left = `${left}px`;
+  wallPreview.style.top = `${top}px`;
+  wallPreview.style.width = `${Math.max(width, thicknessMinPx)}px`;
+  wallPreview.style.height = `${Math.max(height, thicknessMinPx)}px`;
+  wallPreview.dataset.orientation = orientation;
+  wallPreview.dataset.thicknessPx = `${thicknessPx}`;
+}
+
+function placeWall(x1, y1, x2, y2) {
+  let dx = x2 - x1;
+  let dy = y2 - y1;
+  const orientation = wallOrientation || (Math.abs(dx) >= Math.abs(dy) ? "h" : "v");
+  let lengthPx = orientation === "h" ? dx : dy;
+  if (snapEnabled) {
+    lengthPx = Math.round(lengthPx / gridSizePx) * gridSizePx;
+  }
+  if (Math.abs(lengthPx) < WALL_MIN_PX) {
+    return;
+  }
+  const rawThickness = Math.abs(orientation === "h" ? dy : dx);
+  const thicknessMinPx = Math.max(6, 0.1 / Math.min(metersPerPixelX, metersPerPixelY));
+  const thicknessPx = Math.max(thicknessMinPx, rawThickness);
+
+  let left = x1;
+  let top = y1;
+  let widthPx = 0;
+  let heightPx = 0;
+
+  if (orientation === "h") {
+    left = lengthPx >= 0 ? x1 : x1 + lengthPx;
+    top = (dy < 0) ? (y1 - thicknessPx) : y1;
+    widthPx = Math.abs(lengthPx);
+    heightPx = thicknessPx;
+  } else {
+    left = (dx < 0) ? (x1 - thicknessPx) : x1;
+    top = lengthPx >= 0 ? y1 : y1 + lengthPx;
+    widthPx = thicknessPx;
+    heightPx = Math.abs(lengthPx);
+  }
+
+  const thicknessMeters = thicknessPx * (orientation === "h" ? metersPerPixelY : metersPerPixelX);
+  const lengthMeters = Math.max(0.2, Math.abs(lengthPx) * (orientation === "h" ? metersPerPixelX : metersPerPixelY));
+  const w = orientation === "h" ? lengthMeters : thicknessMeters;
+  const h = orientation === "h" ? thicknessMeters : lengthMeters;
+  const centerX = left + widthPx / 2;
+  const centerY = top + heightPx / 2;
+  const el = spawn("Wall", w, h, centerX, centerY, "structure");
+  if (el) {
+    el.dataset.wall = "true";
+  }
+}
 // ===============================
 // DESIGN TABS
 // ===============================
@@ -793,8 +941,8 @@ function serializeDesign() {
       name: el.dataset.name || "",
       w: Number(el.dataset.w) || 0,
       h: Number(el.dataset.h) || 0,
-      x: el.offsetLeft,
-      y: el.offsetTop,
+      x: parseFloat(el.style.left) || 0,
+      y: parseFloat(el.style.top) || 0,
       rot: getRotationDeg(el),
       layer: el.dataset.layer || "equipment",
       locked: el.dataset.locked === "true",
@@ -812,7 +960,10 @@ function serializeDesign() {
 function applyDesign(data) {
   if (!grid) return;
   loadingDesign = true;
-  grid.innerHTML = "";
+  grid.querySelectorAll(".equipment, .selection-box, .wall-preview").forEach((el) => el.remove());
+  if (drawLayer && !grid.contains(drawLayer)) {
+    grid.appendChild(drawLayer);
+  }
   if (roomW) roomW.value = data.roomW ?? 6;
   if (roomL) roomL.value = data.roomL ?? 4;
   syncGridScale();
@@ -997,7 +1148,7 @@ function closeDesignModal() {
 function openDesignModal(mode) {
   if (!designModal) return;
   renderDesignList();
-  updateDesignExportSelect();
+  updateExportDesignList();
   designModal.classList.remove("hidden");
   designModal.setAttribute("aria-hidden", "false");
   if (mode === "create") {
@@ -1020,18 +1171,75 @@ function renderDesignList() {
   });
 }
 
-function updateDesignExportSelect() {
-  if (!designExportSelect) return;
-  designExportSelect.innerHTML = "";
+function updateExportDesignList() {
+  if (!exportDesignList) return;
+  exportDesignList.innerHTML = "";
   designs.forEach((d) => {
-    const opt = document.createElement("option");
-    opt.value = d.id;
-    opt.textContent = d.name;
-    designExportSelect.appendChild(opt);
+    const label = document.createElement("label");
+    label.className = "export-design-item";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.value = d.id;
+    input.checked = d.id === activeDesignId;
+    const thumb = document.createElement("img");
+    thumb.className = "export-thumb";
+    thumb.alt = `${d.name} preview`;
+    const thumbUrl = buildExportThumbnail(d);
+    if (thumbUrl) thumb.src = thumbUrl;
+    const name = document.createElement("span");
+    name.textContent = d.name;
+    label.appendChild(input);
+    label.appendChild(thumb);
+    label.appendChild(name);
+    exportDesignList.appendChild(label);
   });
-  if (activeDesignId) {
-    designExportSelect.value = activeDesignId;
-  }
+}
+
+function buildExportThumbnail(design) {
+  if (!design) return "";
+  const canvas = document.createElement("canvas");
+  const w = 160;
+  const h = 110;
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return "";
+  ctx.fillStyle = "#f8fafc";
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = "rgba(15, 23, 42, 0.2)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(6, 6, w - 12, h - 12);
+
+  const roomWVal = Number(design.roomW) || 6;
+  const roomLVal = Number(design.roomL) || 4;
+  const gridW = grid?.clientWidth || 600;
+  const gridH = grid?.clientHeight || 400;
+  const metersPerPixelXThumb = roomWVal / gridW;
+  const metersPerPixelYThumb = roomLVal / gridH;
+  const innerW = w - 20;
+  const innerH = h - 20;
+  const offsetX = 10;
+  const offsetY = 10;
+
+  (design.items || []).forEach((item) => {
+    const xMeters = (item.x || 0) * metersPerPixelXThumb;
+    const yMeters = (item.y || 0) * metersPerPixelYThumb;
+    const wMeters = Number(item.w) || 0;
+    const hMeters = Number(item.h) || 0;
+    const x = offsetX + (xMeters / roomWVal) * innerW;
+    const y = offsetY + (yMeters / roomLVal) * innerH;
+    const iw = (wMeters / roomWVal) * innerW;
+    const ih = (hMeters / roomLVal) * innerH;
+    const layer = item.layer || "equipment";
+    if (layer === "flooring") ctx.fillStyle = "rgba(16, 185, 129, 0.25)";
+    else if (layer === "structure") ctx.fillStyle = "rgba(249, 115, 22, 0.22)";
+    else ctx.fillStyle = "rgba(31, 157, 98, 0.25)";
+    ctx.fillRect(x, y, iw, ih);
+    ctx.strokeStyle = "rgba(15, 23, 42, 0.2)";
+    ctx.strokeRect(x, y, iw, ih);
+  });
+
+  return canvas.toDataURL("image/png");
 }
 
 // ===============================
@@ -1233,7 +1441,7 @@ function importDesignData(data) {
   applyDesign(design);
   renderTabs();
   renderDesignList();
-  updateDesignExportSelect();
+  updateExportDesignList();
   saveDesigns();
   showToast("Design imported");
   closeLibraryModal();
@@ -1295,9 +1503,8 @@ function createThumbnailDataURL() {
 
 function hideDesignEditors() {
   designEditor?.classList.add("hidden");
-  designExportBox?.classList.add("hidden");
-  designImportBox?.classList.add("hidden");
   designDeleteConfirm?.classList.add("hidden");
+  designClearConfirm?.classList.add("hidden");
   designPublishBox?.classList.add("hidden");
 }
 
@@ -1328,26 +1535,10 @@ function handleSaveName() {
   }
   renderTabs();
   renderDesignList();
-  updateDesignExportSelect();
+  updateExportDesignList();
   saveDesigns();
   hideDesignEditors();
   if (isCreate) closeDesignModal();
-}
-
-function showExportBox() {
-  hideDesignEditors();
-  const targetId = designExportSelect?.value || activeDesignId;
-  const design = designs.find((d) => d.id === targetId);
-  if (!design || !designExportText) return;
-  designExportText.value = JSON.stringify(design, null, 2);
-  designExportBox.classList.remove("hidden");
-}
-
-function showImportBox() {
-  hideDesignEditors();
-  if (designImportText) designImportText.value = "";
-  if (designImportFile) designImportFile.value = "";
-  designImportBox.classList.remove("hidden");
 }
 
 function showDeleteConfirm() {
@@ -1361,6 +1552,14 @@ function showDeleteConfirm() {
     openDesignModal();
   }
   designDeleteConfirm.classList.remove("hidden");
+}
+
+function showClearAllConfirm() {
+  hideDesignEditors();
+  if (designModal && designModal.classList.contains("hidden")) {
+    openDesignModal();
+  }
+  designClearConfirm?.classList.remove("hidden");
 }
 
 function showPublishBox() {
@@ -1448,82 +1647,36 @@ function doDeleteDesign() {
   applyDesign(designs[0]);
   renderTabs();
   renderDesignList();
-  updateDesignExportSelect();
+  updateExportDesignList();
   saveDesigns();
   if (useSupabaseDesigns) deleteDesignSupabase(targetId);
   hideDesignEditors();
   closeDesignModal();
 }
 
-function downloadDesign() {
-  const design = designs.find((d) => d.id === activeDesignId);
-  if (!design) return;
-  const blob = new Blob([JSON.stringify(design, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${(design.name || "design").replace(/\\s+/g, "-").toLowerCase()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-async function copyExport() {
-  if (!designExportText) return;
-  try {
-    await navigator.clipboard.writeText(designExportText.value);
-    showToast("Export copied");
-  } catch {
-    showToast("Copy failed");
-  }
-}
-
-function handleImportFile() {
-  const file = designImportFile?.files?.[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    if (typeof reader.result === "string" && designImportText) {
-      designImportText.value = reader.result;
-    }
+async function clearAllDesigns() {
+  if (!designs.length) return;
+  const toDelete = designs.map((d) => d.id);
+  const newDesign = {
+    id: generateId(),
+    name: "Design 1",
+    roomW: Number(roomW?.value) || 6,
+    roomL: Number(roomL?.value) || 4,
+    items: []
   };
-  reader.readAsText(file);
-}
-
-function doImportDesign() {
-  const raw = designImportText?.value || "";
-  if (!raw.trim()) {
-    showToast("Paste JSON to import");
-    return;
+  designs = [newDesign];
+  activeDesignId = newDesign.id;
+  applyDesign(newDesign);
+  renderTabs();
+  renderDesignList();
+  updateExportDesignList();
+  saveDesigns();
+  hideDesignEditors();
+  closeDesignModal();
+  if (useSupabaseDesigns) {
+    await Promise.all(toDelete.map((id) => deleteDesignSupabase(id)));
   }
-  try {
-    const data = JSON.parse(raw);
-    if (!data || !Array.isArray(data.items)) {
-      showToast("Invalid design JSON");
-      return;
-    }
-    const id = generateId();
-    const name = data.name ? `${data.name} (Imported)` : `Design ${designs.length + 1}`;
-    const design = {
-      id,
-      name,
-      roomW: Number(data.roomW) || 6,
-      roomL: Number(data.roomL) || 4,
-      items: data.items
-    };
-    designs.push(design);
-    activeDesignId = id;
-    applyDesign(design);
-    renderTabs();
-    renderDesignList();
-    updateDesignExportSelect();
-    saveDesigns();
-    hideDesignEditors();
-    showToast("Design imported");
-  } catch {
-    showToast("Invalid JSON");
-  }
+  showToast("All designs cleared");
 }
 
 // ===============================
@@ -1578,13 +1731,6 @@ function bind(el) {
   enableDrag(el);
   enableRotate(el);
   enableLock(el);
-
-  el.oncontextmenu = (e) => {
-    e.preventDefault();
-    if (el.dataset.locked === "true") return;
-    el.remove();
-    saveCurrentDesign();
-  };
 }
 
 function enableDrag(el) {
@@ -1620,42 +1766,27 @@ function enableDrag(el) {
       let dy = ev.clientY - sy;
 
       if (snapEnabled && ref) {
-        const snappedX = Math.round((ref.x + dx) / gridSizePx) * gridSizePx;
-        const snappedY = Math.round((ref.y + dy) / gridSizePx) * gridSizePx;
-        dx = snappedX - ref.x;
-        dy = snappedY - ref.y;
+        const targetX = Math.round((ref.x + dx) / gridSizePx) * gridSizePx;
+        const targetY = Math.round((ref.y + dy) / gridSizePx) * gridSizePx;
+        dx = targetX - ref.x;
+        dy = targetY - ref.y;
       }
 
-      const maxW = grid.clientWidth;
-      const maxH = grid.clientHeight;
-      let minX = Infinity;
-      let minY = Infinity;
-      let maxX = -Infinity;
-      let maxY = -Infinity;
-
       startPositions.forEach((item) => {
         if (item.locked) return;
-        const x = item.x + dx;
-        const y = item.y + dy;
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x + item.w);
-        maxY = Math.max(maxY, y + item.h);
-      });
-
-      if (minX < 0) dx -= minX;
-      if (minY < 0) dy -= minY;
-      if (maxX > maxW) dx -= (maxX - maxW);
-      if (maxY > maxH) dy -= (maxY - maxH);
-
-      startPositions.forEach((item) => {
-        if (item.locked) return;
-        item.el.style.left = (item.x + dx) + "px";
-        item.el.style.top = (item.y + dy) + "px";
+        let nx = item.x + dx;
+        let ny = item.y + dy;
+        item.el.style.left = nx + "px";
+        item.el.style.top = ny + "px";
+        clampByBoundingRect(item.el);
       });
     };
     document.onmouseup = () => {
       document.onmousemove = null;
+      startPositions.forEach((item) => {
+        if (item.locked) return;
+        clampByBoundingRect(item.el);
+      });
       saveCurrentDesign();
     };
   };
@@ -1684,6 +1815,7 @@ function enableRotate(el) {
     };
     document.onmouseup = () => {
       document.onmousemove = null;
+      clampByBoundingRect(el);
       saveCurrentDesign();
     };
   };
@@ -1746,6 +1878,34 @@ grid.addEventListener("drop", (e) => {
 grid.addEventListener("mousedown", (e) => {
   const isGridClick = e.target === grid || e.target === drawLayer;
   if (!isGridClick) return;
+  if (wallMode) {
+    const rect = grid.getBoundingClientRect();
+    wallStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    wallOrientation = null;
+    wallPreview = document.createElement("div");
+    wallPreview.className = "wall-preview";
+    grid.appendChild(wallPreview);
+    updateWallPreview(wallStart.x, wallStart.y, wallStart.x, wallStart.y);
+    const onMove = (ev) => {
+      const x = ev.clientX - rect.left;
+      const y = ev.clientY - rect.top;
+      updateWallPreview(wallStart.x, wallStart.y, x, y);
+    };
+    const onUp = (ev) => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      const x = ev.clientX - rect.left;
+      const y = ev.clientY - rect.top;
+      placeWall(wallStart.x, wallStart.y, x, y);
+      wallPreview?.remove();
+      wallPreview = null;
+      wallStart = null;
+      wallOrientation = null;
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    return;
+  }
   isSelecting = true;
   if (!e.shiftKey) clearSelection();
   const rect = grid.getBoundingClientRect();
@@ -1839,6 +1999,20 @@ shapeBtn?.addEventListener("click", (e) => {
 
 shapePanel?.addEventListener("click", (e) => e.stopPropagation());
 
+wallModeBtn?.addEventListener("click", () => {
+  wallMode = !wallMode;
+  wallModeBtn.classList.toggle("active", wallMode);
+  showToast(wallMode ? "Wall mode enabled" : "Wall mode disabled");
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && wallMode) {
+    wallMode = false;
+    wallModeBtn?.classList.remove("active");
+    showToast("Wall mode disabled");
+  }
+});
+
 document.addEventListener("click", () => {
   toolModal.classList.add("hidden");
   shapePanel.classList.add("hidden");
@@ -1852,6 +2026,12 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     duplicateSelected();
   }
+  if (e.key.toLowerCase() === "x" || e.key === "Delete" || e.key === "Backspace") {
+    if (selectedItems.size) {
+      e.preventDefault();
+      deleteSelected();
+    }
+  }
 });
 
 // Design modal interactions
@@ -1859,25 +2039,15 @@ designRenameBtn?.addEventListener("click", () => showRenameEditor(false));
 designCreateBtn?.addEventListener("click", () => showRenameEditor(true));
 designSaveName?.addEventListener("click", handleSaveName);
 designCancelName?.addEventListener("click", hideDesignEditors);
-designExportOpen?.addEventListener("click", showExportBox);
-designImportOpen?.addEventListener("click", showImportBox);
 designDeleteBtn?.addEventListener("click", showDeleteConfirm);
+designClearAllBtn?.addEventListener("click", showClearAllConfirm);
 designPublishBtn?.addEventListener("click", showPublishBox);
 designConfirmPublish?.addEventListener("click", publishDesign);
 designCancelPublish?.addEventListener("click", hideDesignEditors);
 designConfirmDelete?.addEventListener("click", doDeleteDesign);
 designCancelDelete?.addEventListener("click", hideDesignEditors);
-designDownload?.addEventListener("click", downloadDesign);
-designCopy?.addEventListener("click", copyExport);
-designCloseExport?.addEventListener("click", hideDesignEditors);
-designDoImport?.addEventListener("click", doImportDesign);
-designCloseImport?.addEventListener("click", hideDesignEditors);
-designImportFile?.addEventListener("change", handleImportFile);
-designExportSelect?.addEventListener("change", () => {
-  if (designExportBox && !designExportBox.classList.contains("hidden")) {
-    showExportBox();
-  }
-});
+designConfirmClear?.addEventListener("click", clearAllDesigns);
+designCancelClear?.addEventListener("click", hideDesignEditors);
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
@@ -2153,10 +2323,35 @@ confirmNo?.addEventListener("click", () => {
 });
 
 // Export
+let exportViewChoice = "equipment";
+
+function setExportViewPickerEnabled(enabled) {
+  if (!exportViewPicker) return;
+  exportViewPicker.classList.toggle("disabled", !enabled);
+  exportViewButtons.forEach((btn) => {
+    btn.disabled = !enabled;
+  });
+}
+
+function setExportViewChoice(view) {
+  exportViewChoice = view;
+  exportViewButtons.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.view === view);
+  });
+}
+
+function getSelectedExportDesignIds() {
+  if (!exportDesignList) return [];
+  return Array.from(exportDesignList.querySelectorAll("input[type=\"checkbox\"]:checked"))
+    .map((input) => input.value);
+}
+
 exportBtn?.addEventListener("click", () => {
   exportModal.classList.remove("hidden");
   exportModal.setAttribute("aria-hidden", "false");
-  updateDesignExportSelect();
+  updateExportDesignList();
+  setExportViewChoice(exportViewChoice || "equipment");
+  setExportViewPickerEnabled(Boolean(exportViewSingle?.checked));
 });
 
 exportCancel?.addEventListener("click", () => {
@@ -2166,21 +2361,107 @@ exportCancel?.addEventListener("click", () => {
 });
 
 exportConfirm?.addEventListener("click", () => {
-  const selected = new Set();
-  if (exportFlooring?.checked) selected.add("flooring");
-  if (exportStructures?.checked) selected.add("structure");
-  if (exportEquipment?.checked) selected.add("equipment");
-  if (selected.size === 0) {
-    showToast("Select at least one layer");
+  const selectedDesigns = getSelectedExportDesignIds();
+  if (!selectedDesigns.length) {
+    showToast("Select at least one design");
     return;
   }
+  const viewMode = exportViewSingle?.checked
+    ? "single"
+    : exportViewCombined?.checked
+      ? "combined"
+      : "all";
+  const viewLayer = exportViewChoice || "equipment";
   exportModal.classList.add("hidden");
   exportModal.setAttribute("aria-hidden", "true");
   hideDesignEditors();
-  runExport(selected);
+  exportSelectedDesigns(selectedDesigns, viewMode, viewLayer);
 });
 
-function runExport(selectedLayers) {
+exportViewAll?.addEventListener("change", () => {
+  if (exportViewAll.checked) setExportViewPickerEnabled(false);
+});
+
+exportViewCombined?.addEventListener("change", () => {
+  if (exportViewCombined.checked) setExportViewPickerEnabled(false);
+});
+
+exportViewSingle?.addEventListener("change", () => {
+  if (exportViewSingle.checked) setExportViewPickerEnabled(true);
+});
+
+exportViewButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    setExportViewChoice(btn.dataset.view || "equipment");
+  });
+});
+
+async function exportSelectedDesigns(selectedIds, viewMode, viewLayer) {
+  const viewLayers = viewMode === "single"
+    ? [viewLayer]
+    : viewMode === "combined"
+      ? ["combined"]
+      : ["flooring", "structure", "equipment"];
+  const originalId = activeDesignId;
+  const targets = selectedIds
+    .map((id) => designs.find((d) => d.id === id))
+    .filter(Boolean);
+
+  const files = [];
+  for (const design of targets) {
+    if (design.id !== activeDesignId) {
+      switchDesign(design.id);
+    }
+    await nextFrame();
+    const safeName = (design.name || "design").trim().replace(/\s+/g, "-").toLowerCase();
+    for (const layer of viewLayers) {
+      const exportLayers = layer === "combined"
+        ? new Set(["flooring", "structure", "equipment"])
+        : new Set([layer]);
+      const blob = await runExportBlob(exportLayers);
+      const suffix = layer === "combined" ? "all" : layer;
+      files.push({ name: `${safeName}-${suffix}.png`, blob });
+    }
+  }
+
+  if (originalId) switchDesign(originalId);
+
+  const shouldZip = files.length > 1;
+  if (shouldZip) {
+    if (window.JSZip) {
+      const zip = new JSZip();
+      files.forEach((file) => zip.file(file.name, file.blob));
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      downloadBlob(zipBlob, `primal-lab-designs-${Date.now()}.zip`);
+      showToast("Zip ready");
+    } else {
+      files.forEach((file) => downloadBlob(file.blob, file.name));
+      showToast("Zip unavailable, downloaded PNGs");
+    }
+  } else if (files.length === 1) {
+    downloadBlob(files[0].blob, files[0].name);
+    showToast("Export ready");
+  }
+}
+
+function nextFrame() {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve));
+  });
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function runExportBlob(selectedLayers) {
   const canvas = document.createElement("canvas");
   canvas.width = 3600;
   canvas.height = 2400;
@@ -2378,12 +2659,11 @@ function runExport(selectedLayers) {
   ctx.stroke();
   ctx.fillText("1 m", tx + 20 + barPx + 8, ty + 150);
 
-  const a = document.createElement("a");
-  a.href = canvas.toDataURL("image/png");
-  a.download = "primal-lab-technical-layout.png";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve(blob || new Blob());
+    }, "image/png");
+  });
 }
 
 // Init

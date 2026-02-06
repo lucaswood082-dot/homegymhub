@@ -122,7 +122,9 @@ body.dark-mode .module-card h3,
 body.dark-mode .section h2,
 body.dark-mode .model-title,
 body.dark-mode .hero-title,
-body.dark-mode .home-roadmap-header h2 {
+body.dark-mode .home-roadmap-header h2,
+body.dark-mode .tool-modal h3,
+body.dark-mode .custom-shape-panel h3 {
   background: linear-gradient(135deg, #1f9d62, #2fc777);
   -webkit-background-clip: text;
   background-clip: text;
@@ -138,6 +140,17 @@ body.dark-mode textarea,
 body.dark-mode select {
   background: #0b1220;
   color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+body.dark-mode .modal-option input[type="radio"],
+body.dark-mode .modal-option input[type="checkbox"] {
+  background: #0b1220;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+body.dark-mode .export-design-item input[type="checkbox"] {
+  background: #0b1220;
   border-color: rgba(148, 163, 184, 0.35);
 }
 
@@ -192,6 +205,29 @@ body.dark-mode .modal-card select {
   background: #0b1220;
   color: #e5e7eb;
   border-color: rgba(148, 163, 184, 0.3);
+}
+
+body.dark-mode .export-design-item {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #e5e7eb;
+}
+
+body.dark-mode .export-thumb {
+  border-color: rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+body.dark-mode .export-view-btn {
+  background: rgba(15, 23, 42, 0.8);
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+body.dark-mode .export-view-btn.active {
+  border-color: #2fc777;
+  color: #2fc777;
+  box-shadow: 0 12px 24px rgba(47, 199, 119, 0.18);
 }
 
 body.dark-mode .search input,

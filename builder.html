@@ -36,6 +36,7 @@
       <div class="panel-grid">
         <button id="toolButton" class="header-btn" title="Tools">🧱 Structures</button>
         <button id="customShapeToggle" class="header-btn">✏️ Shape Builder</button>
+        <button id="wallModeBtn" class="header-btn">🧱 Wall</button>
         <button id="clearAllBtn" class="header-btn">🧹 Clear All</button>
         <button id="exportBtn" class="header-btn" type="button">⬇️ Export</button>
         <button id="libraryBtn" class="header-btn library-btn" type="button">📚 Design Library</button>
@@ -162,55 +163,40 @@
 <div id="toast" class="toast hidden"></div>
 <div id="exportModal" class="modal hidden" aria-hidden="true">
   <div class="modal-card">
-    <h3>Export Options</h3>
-    <label class="modal-option">
-      <input type="checkbox" id="exportFlooring" checked>
-      Flooring
-    </label>
-    <label class="modal-option">
-      <input type="checkbox" id="exportStructures" checked>
-      Structures
-    </label>
-    <label class="modal-option">
-      <input type="checkbox" id="exportEquipment" checked>
-      Equipment
-    </label>
+    <h3>Export Designs</h3>
+
+    <div class="export-section">
+      <div class="modal-subtitle">Designs</div>
+      <div id="exportDesignList" class="export-design-list"></div>
+    </div>
+
+    <div class="export-section">
+      <div class="modal-subtitle">Views</div>
+      <label class="modal-option">
+        <input type="radio" id="exportViewAll" name="exportViewMode" checked>
+        All views (separate PNGs)
+      </label>
+      <label class="modal-option">
+        <input type="radio" id="exportViewCombined" name="exportViewMode">
+        All views together (single PNG)
+      </label>
+      <label class="modal-option">
+        <input type="radio" id="exportViewSingle" name="exportViewMode">
+        Choose view
+      </label>
+      <div id="exportViewPicker" class="export-view-toggle">
+        <button class="export-view-btn active" data-view="equipment" type="button">Equipment</button>
+        <button class="export-view-btn" data-view="structure" type="button">Structures</button>
+        <button class="export-view-btn" data-view="flooring" type="button">Flooring</button>
+      </div>
+    </div>
+
     <div class="modal-actions">
       <button id="exportConfirm" class="header-btn">Export</button>
       <button id="exportCancel" class="header-btn">Cancel</button>
     </div>
 
     <div class="modal-divider"></div>
-
-    <h4 class="modal-subtitle">Design Export / Import</h4>
-    <label class="modal-option">
-      <span>Design</span>
-      <select id="designExportSelect"></select>
-    </label>
-    <div class="modal-actions">
-      <button id="designExportOpen" class="header-btn">Export Design</button>
-      <button id="designImportOpen" class="header-btn">Import Design</button>
-    </div>
-
-    <div id="designExportBox" class="design-editor hidden">
-      <label>Export JSON</label>
-      <textarea id="designExportText" rows="6"></textarea>
-      <div class="modal-actions">
-        <button id="designDownload" class="header-btn">Download</button>
-        <button id="designCopy" class="header-btn">Copy</button>
-        <button id="designCloseExport" class="header-btn">Close</button>
-      </div>
-    </div>
-
-    <div id="designImportBox" class="design-editor hidden">
-      <label>Import JSON</label>
-      <textarea id="designImportText" rows="6" placeholder="Paste exported JSON here"></textarea>
-      <input id="designImportFile" type="file" accept=".json" />
-      <div class="modal-actions">
-        <button id="designDoImport" class="header-btn">Import</button>
-        <button id="designCloseImport" class="header-btn">Cancel</button>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -242,6 +228,7 @@
     <div class="design-actions">
       <button id="designRename" class="header-btn">Rename</button>
       <button id="designDelete" class="header-btn">Delete</button>
+      <button id="designClearAll" class="header-btn">Clear All</button>
       <button id="designCreate" class="header-btn">New</button>
       <button id="designPublish" class="header-btn">Publish</button>
     </div>
@@ -260,6 +247,14 @@
       <div class="modal-actions">
         <button id="designConfirmDelete" class="header-btn">Delete</button>
         <button id="designCancelDelete" class="header-btn">Cancel</button>
+      </div>
+    </div>
+
+    <div id="designClearConfirm" class="design-editor hidden">
+      <p>Clear all designs? This will remove every design and start fresh.</p>
+      <div class="modal-actions">
+        <button id="designConfirmClear" class="header-btn">Clear</button>
+        <button id="designCancelClear" class="header-btn">Cancel</button>
       </div>
     </div>
 
@@ -285,6 +280,7 @@
   );
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="script.js" defer></script>
 <script src="darkmode.js"></script>
 <script>
