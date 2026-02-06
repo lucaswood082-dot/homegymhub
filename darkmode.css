@@ -60,6 +60,17 @@ body.dark-mode .sidebar-right {
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
 }
 
+body.dark-mode .design-item {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #e5e7eb;
+}
+
+body.dark-mode .design-item.active {
+  background: linear-gradient(135deg, rgba(31, 157, 98, 0.3), rgba(47, 199, 119, 0.25));
+  border-color: rgba(47, 199, 119, 0.6);
+}
+
 body.dark-mode .section,
 body.dark-mode .home-roadmap,
 body.dark-mode .about {
