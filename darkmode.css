@@ -66,6 +66,13 @@ body.dark-mode .admin-card p {
   color: #cbd5e1;
 }
 
+body.dark-mode .admin-form-row input,
+body.dark-mode .admin-form-row select {
+  background: rgba(15, 23, 42, 0.85);
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
 body.dark-mode .admin-tile {
   background: rgba(15, 23, 42, 0.6);
   border-color: rgba(148, 163, 184, 0.2);
@@ -73,6 +80,19 @@ body.dark-mode .admin-tile {
 
 body.dark-mode .admin-tile strong {
   color: #e2e8f0;
+}
+
+body.dark-mode .admin-row {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+body.dark-mode .admin-row strong {
+  color: #e5e7eb;
+}
+
+body.dark-mode .admin-row small {
+  color: #94a3b8;
 }
 
 body.dark-mode .admin-status {
@@ -154,6 +174,42 @@ body.dark-mode .custom-shape-panel h3 {
 
 body.dark-mode .thread-title {
   color: #2fc777;
+}
+
+body.dark-mode .detail-meta span {
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.6);
+}
+
+body.dark-mode .detail-pill {
+  color: #86efac;
+  border-color: rgba(47, 199, 119, 0.5);
+  background: rgba(16, 185, 129, 0.18);
+}
+
+body.dark-mode .modal-form label {
+  color: #e2e8f0;
+}
+
+body.dark-mode .listing-detail h3 {
+  color: #e5e7eb;
+  font-weight: 800;
+}
+
+body.dark-mode .detail-subtitle {
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+body.dark-mode .detail-description {
+  color: #e2e8f0;
+}
+
+body.dark-mode .detail-seller,
+body.dark-mode .detail-actions label {
+  color: #cbd5e1;
+  font-weight: 600;
 }
 
 body.dark-mode input,

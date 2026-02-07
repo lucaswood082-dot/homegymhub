@@ -40,44 +40,640 @@
       <h3>Access Required</h3>
       <p id="adminMessage">Verifying your account credentials.</p>
       <div class="admin-gate-actions">
-        <button id="gateLoginBtn" class="btn primary">Log In</button>
-        <button id="gateHomeBtn" class="btn ghost">Back to Home</button>
+        <button id="gateLoginBtn" class="btn primary" type="button" onclick="window.location.href='auth.html?redirect=admin.html'">Log In</button>
+        <button id="gateHomeBtn" class="btn ghost" type="button" onclick="window.location.href='index.html'">Back to Home</button>
       </div>
     </section>
 
     <section id="adminContent" class="admin-card hidden">
       <h3>Admin Tools</h3>
-      <p>Quick links and checks for Primal Lab operations. Keep this page open while moderating or verifying listings.</p>
+      <p>Moderate listings, verify sellers, and keep the community tidy without leaving this console.</p>
       <div class="admin-actions">
-        <button class="btn primary" data-link="marketplace.html">Open Marketplace</button>
+        <button class="btn ghost" data-link="marketplace.html">Open Marketplace</button>
         <button class="btn ghost" data-link="threads.html">Open Community</button>
-        <button class="btn ghost" data-link="account.html">Account Page</button>
+        <button class="btn ghost" data-link="builder.html">Open Planner</button>
       </div>
+    </section>
+
+    <section id="adminOverview" class="admin-card hidden">
+      <h3>Overview</h3>
+      <div class="admin-grid" id="adminOverviewGrid">
+        <div class="admin-tile">
+          <strong>Listings</strong>
+          <span id="statListings">0</span>
+        </div>
+        <div class="admin-tile">
+          <strong>Active Listings</strong>
+          <span id="statListingsActive">0</span>
+        </div>
+        <div class="admin-tile">
+          <strong>Community Threads</strong>
+          <span id="statThreads">0</span>
+        </div>
+        <div class="admin-tile">
+          <strong>Messages (Marketplace)</strong>
+          <span id="statMessages">0</span>
+        </div>
+        <div class="admin-tile">
+          <strong>Registered Users</strong>
+          <span id="statUsers">0</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="adminUsers" class="admin-card hidden">
+      <div class="admin-card-header">
+        <div>
+          <h3>User Management</h3>
+          <p>Search users and toggle verified seller status.</p>
+        </div>
+        <button id="refreshUsersBtn" class="btn ghost">Refresh</button>
+      </div>
+      <div class="admin-form-row">
+        <input id="userSearch" type="text" placeholder="Search by display name or UUID">
+      </div>
+      <div id="adminUsersTable" class="admin-table"></div>
+    </section>
+
+    <section id="adminHealth" class="admin-card hidden">
+      <h3>System Health</h3>
+      <p>Quick checks for API connectivity and storage access.</p>
       <div class="admin-grid">
         <div class="admin-tile">
-          <strong>Verify Sellers</strong>
-          <p>Use Supabase to toggle verified status for trusted sellers.</p>
+          <strong>Auth Session</strong>
+          <span id="healthAuth" class="admin-pill offline">Checking…</span>
         </div>
         <div class="admin-tile">
-          <strong>Moderate Listings</strong>
-          <p>Review listings for accuracy and remove any that break guidelines.</p>
+          <strong>Database API</strong>
+          <span id="healthDb" class="admin-pill offline">Checking…</span>
         </div>
         <div class="admin-tile">
-          <strong>Support Inbox</strong>
-          <p>Monitor new chats and assist when users report issues.</p>
+          <strong>Storage</strong>
+          <span id="healthStorage" class="admin-pill offline">Checking…</span>
         </div>
       </div>
+      <div class="admin-actions" style="margin-top: 1rem;">
+        <button id="refreshHealthBtn" class="btn ghost">Run Health Check</button>
+      </div>
+    </section>
+
+    <section id="adminVerify" class="admin-card hidden">
+      <h3>Verify Sellers</h3>
+      <p>Toggle verified status for trusted sellers. This updates the account badge and marketplace listings.</p>
+      <div class="admin-form-row">
+        <input id="verifyUserId" type="text" placeholder="Seller UUID">
+        <button id="verifyToggleBtn" class="btn primary">Toggle Verified</button>
+      </div>
+      <div class="admin-form-row">
+        <input id="verifyListingId" type="text" placeholder="Or paste listing ID">
+        <button id="verifyFromListingBtn" class="btn ghost">Use Listing Seller</button>
+      </div>
+    </section>
+
+    <section id="adminListings" class="admin-card hidden">
+      <div class="admin-card-header">
+        <div>
+          <h3>Marketplace Listings</h3>
+          <p>Search and remove listings, or verify sellers directly.</p>
+        </div>
+        <button id="refreshListingsBtn" class="btn ghost">Refresh</button>
+      </div>
+      <div class="admin-form-row">
+        <input id="listingSearch" type="text" placeholder="Search by title or seller email">
+        <select id="listingStatusFilter">
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="removed">Removed</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      <div id="adminListingsTable" class="admin-table"></div>
+    </section>
+
+    <section id="adminThreads" class="admin-card hidden">
+      <div class="admin-card-header">
+        <div>
+          <h3>Community Threads</h3>
+          <p>Remove threads that break guidelines.</p>
+        </div>
+        <button id="refreshThreadsBtn" class="btn ghost">Refresh</button>
+      </div>
+      <div id="adminThreadsList" class="admin-table"></div>
       <div class="admin-actions" style="margin-top: 1.4rem;">
         <span class="admin-note">Access locked to Admin UUID</span>
       </div>
     </section>
   </main>
 
+  <div id="adminToast" class="admin-toast hidden"></div>
+
   <footer class="footer">
     © 2026 Primal Lab - Admin Console
   </footer>
 
   <script src="darkmode.js"></script>
-  <script type="module" src="admin.js"></script>
+  <script>
+    const status = document.getElementById("adminStatus");
+    const message = document.getElementById("adminMessage");
+    status.textContent = "Loading admin tools…";
+    message.textContent = "Starting secure admin session.";
+
+    const ADMIN_UUID = "b4cb6833-f4ea-4dcd-8443-229a7767a041";
+    const supabaseUrl = "https://nqomiajgtmxxsupjgvvu.supabase.co";
+    const supabaseKey = "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA";
+
+    function setStatus(text, ok = false) {
+      status.textContent = text;
+      status.style.background = ok
+        ? "rgba(31, 157, 98, 0.15)"
+        : "rgba(239, 68, 68, 0.12)";
+      status.style.borderColor = ok
+        ? "rgba(31, 157, 98, 0.4)"
+        : "rgba(239, 68, 68, 0.35)";
+      status.style.color = ok ? "#0f7a45" : "#b91c1c";
+    }
+
+    function showToast(text, isError = false) {
+      const toast = document.getElementById("adminToast");
+      if (!toast) return;
+      toast.textContent = text;
+      toast.style.background = isError ? "rgba(239, 68, 68, 0.9)" : "rgba(15, 23, 42, 0.92)";
+      toast.classList.remove("hidden");
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.add("hidden"), 2200);
+    }
+
+    function showGate(text) {
+      document.getElementById("adminGate").classList.remove("hidden");
+      document.getElementById("adminContent").classList.add("hidden");
+      document.getElementById("adminOverview").classList.add("hidden");
+      document.getElementById("adminUsers").classList.add("hidden");
+      document.getElementById("adminVerify").classList.add("hidden");
+      document.getElementById("adminListings").classList.add("hidden");
+      document.getElementById("adminThreads").classList.add("hidden");
+      document.getElementById("adminHealth").classList.add("hidden");
+      message.textContent = text;
+    }
+
+    function showContent() {
+      document.getElementById("adminGate").classList.add("hidden");
+      document.getElementById("adminContent").classList.remove("hidden");
+      document.getElementById("adminOverview").classList.remove("hidden");
+      document.getElementById("adminUsers").classList.remove("hidden");
+      document.getElementById("adminVerify").classList.remove("hidden");
+      document.getElementById("adminListings").classList.remove("hidden");
+      document.getElementById("adminThreads").classList.remove("hidden");
+      document.getElementById("adminHealth").classList.remove("hidden");
+    }
+
+    function initParticles() {
+      const particlesContainer = document.getElementById("particles");
+      if (!particlesContainer) return;
+      for (let i = 0; i < 40; i += 1) {
+        const p = document.createElement("div");
+        p.className = "particle";
+        p.style.left = `${Math.random() * 100}%`;
+        p.style.animationDuration = `${Math.random() * 12 + 8}s`;
+        p.style.animationDelay = `${Math.random() * 5}s`;
+        p.style.setProperty("--drift", `${Math.random() * 200 - 100}px`);
+        particlesContainer.appendChild(p);
+      }
+    }
+
+    function hookStaticButtons() {
+      document.querySelectorAll("[data-link]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const target = btn.getAttribute("data-link");
+          if (target) window.location.href = target;
+        });
+      });
+
+      document.getElementById("gateLoginBtn")?.addEventListener("click", () => {
+        window.location.href = "auth.html?redirect=admin.html";
+      });
+      document.getElementById("gateHomeBtn")?.addEventListener("click", () => {
+        window.location.href = "index.html";
+      });
+      document.getElementById("loginBtn")?.addEventListener("click", () => {
+        window.location.href = "auth.html?redirect=admin.html";
+      });
+      document.getElementById("accountBtn")?.addEventListener("click", () => {
+        window.location.href = "account.html";
+      });
+      document.getElementById("logoutBtn")?.addEventListener("click", () => {
+        window.location.href = "auth.html";
+      });
+    }
+
+    async function boot() {
+      try {
+        const mod = await import("https://esm.sh/@supabase/supabase-js@2");
+        const supabase = mod.createClient(supabaseUrl, supabaseKey, {
+          auth: {
+            persistSession: true,
+            storageKey: "sb-nqomiajgtmxxsupjgvvu-auth-token"
+          }
+        });
+        window.__adminSupabase = supabase;
+
+        const { data } = await supabase.auth.getUser();
+        const user = data?.user || null;
+
+        if (user) {
+          document.getElementById("loginBtn").style.display = "none";
+          document.getElementById("accountBtn").style.display = "inline-flex";
+          document.getElementById("logoutBtn").style.display = "inline-flex";
+        } else {
+          document.getElementById("loginBtn").style.display = "inline-flex";
+          document.getElementById("accountBtn").style.display = "none";
+          document.getElementById("logoutBtn").style.display = "none";
+        }
+
+        if (!user) {
+          setStatus("Access denied", false);
+          showGate("Log in with the admin account to access this console.");
+          return;
+        }
+
+        if (user.id !== ADMIN_UUID) {
+          setStatus("Access denied", false);
+          showGate("This account is not authorized for the admin console.");
+          return;
+        }
+
+        setStatus("Admin access granted", true);
+        showContent();
+        window.__adminAuthorized = true;
+
+        const [
+          { count: listingCount },
+          { count: activeCount },
+          { count: threadCount },
+          { count: messageCount }
+        ] =
+          await Promise.all([
+            supabase.from("marketplace_listings").select("id", { count: "exact", head: true }),
+            supabase
+              .from("marketplace_listings")
+              .select("id", { count: "exact", head: true })
+              .eq("status", "active"),
+            supabase.from("main_threads").select("id", { count: "exact", head: true }),
+            supabase.from("marketplace_messages").select("id", { count: "exact", head: true })
+          ]);
+
+        document.getElementById("statListings").textContent = listingCount || 0;
+        document.getElementById("statListingsActive").textContent = activeCount || 0;
+        document.getElementById("statThreads").textContent = threadCount || 0;
+        document.getElementById("statMessages").textContent = messageCount || 0;
+        const { data: userCount, error: userCountError } = await supabase.rpc("admin_user_count");
+        document.getElementById("statUsers").textContent = userCountError ? "—" : userCount || 0;
+      } catch (err) {
+        console.error("Admin boot error:", err);
+        setStatus("Admin tools failed to load", false);
+        showGate("Admin script failed. Check your connection or console logs.");
+      }
+    }
+
+    async function loadUsers(supabase) {
+      const table = document.getElementById("adminUsersTable");
+      const term = document.getElementById("userSearch").value.trim();
+      table.innerHTML = "<div class='admin-row'>Loading users…</div>";
+
+      const { data, error } = await supabase.rpc("admin_user_directory", {
+        search_term: term || null
+      });
+      if (error) {
+        console.error("Users load error:", error);
+        table.innerHTML = "<div class='admin-row'>Failed to load users. Run the admin SQL setup.</div>";
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        table.innerHTML = "<div class='admin-row'>No users found.</div>";
+        return;
+      }
+
+      table.innerHTML = "";
+      data.forEach((profile) => {
+        const row = document.createElement("div");
+        row.className = "admin-row";
+        row.innerHTML = `
+          <div>
+            <strong>${profile.display_name || "Unnamed User"}</strong>
+            <small>${profile.email || "No email"}</small>
+            <small>${profile.id}</small>
+          </div>
+          <div>
+            <span class="admin-pill ${profile.verified_seller ? "" : "offline"}">
+              ${profile.verified_seller ? "verified" : "unverified"}
+            </span>
+          </div>
+          <div>
+            <small>${profile.created_at ? new Date(profile.created_at).toLocaleString() : "Joined unknown"}</small>
+          </div>
+        `;
+
+        const actions = document.createElement("div");
+        actions.className = "admin-actions-inline";
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "btn secondary";
+        toggleBtn.textContent = profile.verified_seller ? "Unverify" : "Verify";
+        toggleBtn.addEventListener("click", async () => {
+          toggleBtn.disabled = true;
+          const nextValue = !profile.verified_seller;
+          const ok = await toggleVerified(supabase, profile.id, nextValue);
+          if (!ok) {
+            toggleBtn.disabled = false;
+            return;
+          }
+
+          profile.verified_seller = nextValue;
+          row.querySelector(".admin-pill").textContent = nextValue ? "verified" : "unverified";
+          row.querySelector(".admin-pill").className = `admin-pill ${nextValue ? "" : "offline"}`;
+          toggleBtn.textContent = nextValue ? "Unverify" : "Verify";
+          toggleBtn.disabled = false;
+        });
+
+        actions.appendChild(toggleBtn);
+        row.appendChild(actions);
+        table.appendChild(row);
+      });
+    }
+
+    async function toggleVerified(supabase, userId, nextValue) {
+      if (!userId) return;
+      const { error } = await supabase.rpc("admin_set_verified", {
+        user_id: userId,
+        is_verified: nextValue
+      });
+      if (!error) return true;
+
+      console.error("Verify update error:", error);
+      // Fallback: attempt direct updates if RPC isn't available
+      const profileUpdate = await supabase
+        .from("profiles")
+        .update({ verified_seller: nextValue })
+        .eq("id", userId);
+      if (profileUpdate.error) {
+        console.error("Direct profile update failed:", profileUpdate.error);
+        showToast("Verify failed (check admin SQL).", true);
+        return false;
+      }
+      const listingUpdate = await supabase
+        .from("marketplace_listings")
+        .update({ seller_verified: nextValue })
+        .eq("created_by", userId);
+      if (listingUpdate.error) {
+        console.error("Direct listing update failed:", listingUpdate.error);
+        showToast("Verify failed updating listings.", true);
+        return false;
+      }
+      return true;
+    }
+
+    async function loadListings(supabase) {
+      const table = document.getElementById("adminListingsTable");
+      const searchTerm = document.getElementById("listingSearch").value.trim();
+      const statusFilter = document.getElementById("listingStatusFilter").value;
+      table.innerHTML = "<div class='admin-row'>Loading listings…</div>";
+
+      let query = supabase
+        .from("marketplace_listings")
+        .select("id,title,price,status,created_at,created_by,seller_name,seller_email,seller_verified")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,seller_email.ilike.%${searchTerm}%`);
+      }
+      if (statusFilter) {
+        query = query.eq("status", statusFilter);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.error("Admin listings error:", error);
+        table.innerHTML = "<div class='admin-row'>Failed to load listings.</div>";
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        table.innerHTML = "<div class='admin-row'>No listings found.</div>";
+        return;
+      }
+
+      table.innerHTML = "";
+      data.forEach((listing) => {
+        const row = document.createElement("div");
+        row.className = "admin-row";
+        row.innerHTML = `
+          <div>
+            <strong>${listing.title || "Untitled"}</strong>
+            <small>${listing.seller_name || "Unknown Seller"} • ${listing.seller_email || "No email"}</small>
+            <small>${listing.id}</small>
+          </div>
+          <div>
+            <span class="admin-pill ${listing.status === "active" ? "" : "offline"}">
+              ${listing.status || "unknown"}
+            </span>
+          </div>
+          <div>
+            <small>${listing.price ? `$${Number(listing.price).toFixed(2)}` : "No price"}</small>
+            <small>${new Date(listing.created_at).toLocaleString()}</small>
+          </div>
+        `;
+
+        const actions = document.createElement("div");
+        actions.className = "admin-actions-inline";
+        const verifyBtn = document.createElement("button");
+        verifyBtn.className = "btn secondary";
+        verifyBtn.textContent = listing.seller_verified ? "Unverify" : "Verify";
+        verifyBtn.addEventListener("click", async () => {
+          verifyBtn.disabled = true;
+          const ok = await toggleVerified(supabase, listing.created_by, !listing.seller_verified);
+          if (ok) {
+            listing.seller_verified = !listing.seller_verified;
+            verifyBtn.textContent = listing.seller_verified ? "Unverify" : "Verify";
+          }
+          verifyBtn.disabled = false;
+        });
+
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "btn ghost";
+        removeBtn.textContent = "Remove";
+        removeBtn.addEventListener("click", async () => {
+          const { error: deleteError } = await supabase
+            .from("marketplace_listings")
+            .delete()
+            .eq("id", listing.id);
+
+          if (deleteError) {
+            console.error("Remove listing error:", deleteError);
+            return;
+          }
+          loadListings(supabase);
+        });
+
+        actions.appendChild(verifyBtn);
+        actions.appendChild(removeBtn);
+        row.appendChild(actions);
+        table.appendChild(row);
+      });
+    }
+
+    async function loadThreads(supabase) {
+      const list = document.getElementById("adminThreadsList");
+      list.innerHTML = "<div class='admin-row'>Loading threads…</div>";
+
+      const { data, error } = await supabase
+        .from("main_threads")
+        .select("id,title,created_at")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error("Admin threads error:", error);
+        list.innerHTML = "<div class='admin-row'>Failed to load threads.</div>";
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        list.innerHTML = "<div class='admin-row'>No threads found.</div>";
+        return;
+      }
+
+      list.innerHTML = "";
+      data.forEach((thread) => {
+        const row = document.createElement("div");
+        row.className = "admin-row";
+        row.innerHTML = `
+          <div>
+            <strong>${thread.title || "Untitled Thread"}</strong>
+            <small>${thread.id}</small>
+          </div>
+          <div></div>
+          <div><small>${new Date(thread.created_at).toLocaleString()}</small></div>
+        `;
+        const actions = document.createElement("div");
+        actions.className = "admin-actions-inline";
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "btn ghost";
+        removeBtn.textContent = "Remove";
+        removeBtn.addEventListener("click", async () => {
+          const { error: deleteError } = await supabase
+            .from("main_threads")
+            .delete()
+            .eq("id", thread.id);
+          if (deleteError) {
+            console.error("Delete thread error:", deleteError);
+            return;
+          }
+          loadThreads(supabase);
+        });
+        actions.appendChild(removeBtn);
+        row.appendChild(actions);
+        list.appendChild(row);
+      });
+    }
+
+    function setHealthStatus(el, ok, text) {
+      if (!el) return;
+      el.textContent = text;
+      el.className = `admin-pill ${ok ? "" : "offline"}`;
+    }
+
+    async function runHealthCheck(supabase) {
+      const authEl = document.getElementById("healthAuth");
+      const dbEl = document.getElementById("healthDb");
+      const storageEl = document.getElementById("healthStorage");
+
+      setHealthStatus(authEl, false, "Checking…");
+      setHealthStatus(dbEl, false, "Checking…");
+      setHealthStatus(storageEl, false, "Checking…");
+
+      try {
+        const { data } = await supabase.auth.getUser();
+        setHealthStatus(authEl, !!data?.user, data?.user ? "OK" : "No Session");
+      } catch {
+        setHealthStatus(authEl, false, "Auth Error");
+      }
+
+      try {
+        const { error } = await supabase
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .limit(1);
+        setHealthStatus(dbEl, !error, error ? "DB Error" : "OK");
+      } catch {
+        setHealthStatus(dbEl, false, "DB Error");
+      }
+
+      try {
+        const { data, error } = await supabase.storage.listBuckets();
+        setHealthStatus(storageEl, !error && Array.isArray(data), error ? "Storage Error" : "OK");
+      } catch {
+        setHealthStatus(storageEl, false, "Storage Error");
+      }
+    }
+
+    initParticles();
+    hookStaticButtons();
+    boot().then(() => {
+      const supabase = window.__adminSupabase;
+      if (!supabase || !window.__adminAuthorized) return;
+      loadUsers(supabase);
+      loadListings(supabase);
+      loadThreads(supabase);
+
+      document.getElementById("refreshUsersBtn")?.addEventListener("click", () => loadUsers(supabase));
+      document.getElementById("userSearch")?.addEventListener("input", (e) => {
+        clearTimeout(e.target._timer);
+        e.target._timer = setTimeout(() => loadUsers(supabase), 250);
+      });
+
+      document.getElementById("refreshHealthBtn")?.addEventListener("click", () => runHealthCheck(supabase));
+      runHealthCheck(supabase);
+
+      document.getElementById("refreshListingsBtn")?.addEventListener("click", () => loadListings(supabase));
+      document.getElementById("listingStatusFilter")?.addEventListener("change", () => loadListings(supabase));
+      document.getElementById("listingSearch")?.addEventListener("input", (e) => {
+        clearTimeout(e.target._timer);
+        e.target._timer = setTimeout(() => loadListings(supabase), 250);
+      });
+
+      document.getElementById("refreshThreadsBtn")?.addEventListener("click", () => loadThreads(supabase));
+
+      document.getElementById("verifyToggleBtn")?.addEventListener("click", async () => {
+        const userId = document.getElementById("verifyUserId").value.trim();
+        if (!userId) return;
+        const { data } = await supabase.rpc("admin_user_directory", {
+          search_term: userId
+        });
+        const match = Array.isArray(data) ? data.find((u) => u.id === userId) : null;
+        const nextValue = match ? !match.verified_seller : true;
+        await toggleVerified(supabase, userId, nextValue);
+        loadUsers(supabase);
+      });
+
+      document.getElementById("verifyFromListingBtn")?.addEventListener("click", async () => {
+        const listingId = document.getElementById("verifyListingId").value.trim();
+        if (!listingId) return;
+        const { data, error } = await supabase
+          .from("marketplace_listings")
+          .select("created_by")
+          .eq("id", listingId)
+          .single();
+        if (error || !data?.created_by) return;
+        document.getElementById("verifyUserId").value = data.created_by;
+        const { data: userData } = await supabase.rpc("admin_user_directory", {
+          search_term: data.created_by
+        });
+        const match = Array.isArray(userData) ? userData.find((u) => u.id === data.created_by) : null;
+        const nextValue = match ? !match.verified_seller : true;
+        await toggleVerified(supabase, data.created_by, nextValue);
+        loadUsers(supabase);
+      });
+    });
+  </script>
 </body>
 </html>

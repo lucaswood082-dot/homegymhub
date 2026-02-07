@@ -101,6 +101,14 @@
             <input id="listingPrice" type="number" step="0.01" placeholder="200">
           </div>
           <div class="field">
+            <label>Length (m)</label>
+            <input id="listingLength" type="number" step="0.01" min="0.1" placeholder="Length (m)">
+          </div>
+          <div class="field">
+            <label>Width (m)</label>
+            <input id="listingWidth" type="number" step="0.01" min="0.1" placeholder="Width (m)">
+          </div>
+          <div class="field">
             <label>Pickup location</label>
             <input id="listingLocation" type="text" placeholder="e.g., Glenelg, SA">
           </div>
@@ -137,6 +145,34 @@
       <div class="modal-actions">
         <button id="listingSave" class="header-btn">Publish</button>
         <button id="listingCancel" class="header-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="listingDetailsModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card listing-detail">
+      <div class="detail-header">
+        <div>
+          <h3 id="detailTitle">Listing</h3>
+          <p id="detailSubtitle" class="detail-subtitle"></p>
+        </div>
+        <button id="detailCloseBtn" class="header-btn">Close</button>
+      </div>
+      <div class="detail-body detail-body-single">
+        <div class="detail-info">
+          <div class="detail-pill" id="detailPrice"></div>
+          <div class="detail-meta" id="detailMeta"></div>
+          <p id="detailDescription" class="detail-description"></p>
+          <div class="detail-seller" id="detailSeller"></div>
+          <div class="detail-actions">
+            <label>Show in design</label>
+            <select id="detailDesignSelect"></select>
+            <div class="detail-action-buttons">
+              <button id="detailPreviewBtn" class="header-btn">Preview In Planner</button>
+              <button id="detailShowBtn" class="header-btn primary">Show In Planner</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

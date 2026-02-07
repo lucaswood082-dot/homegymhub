@@ -13,6 +13,8 @@ const listingModal = document.getElementById("listingModal");
 const listingTitle = document.getElementById("listingTitle");
 const listingDescription = document.getElementById("listingDescription");
 const listingPrice = document.getElementById("listingPrice");
+const listingLength = document.getElementById("listingLength");
+const listingWidth = document.getElementById("listingWidth");
 const listingLocation = document.getElementById("listingLocation");
 const listingCategory = document.getElementById("listingCategory");
 const listingCondition = document.getElementById("listingCondition");
@@ -45,8 +47,21 @@ const exitChatBtn = document.getElementById("exitChatBtn");
 
 const toast = document.getElementById("toast");
 
+const listingDetailsModal = document.getElementById("listingDetailsModal");
+const detailTitle = document.getElementById("detailTitle");
+const detailSubtitle = document.getElementById("detailSubtitle");
+const detailPrice = document.getElementById("detailPrice");
+const detailMeta = document.getElementById("detailMeta");
+const detailDescription = document.getElementById("detailDescription");
+const detailSeller = document.getElementById("detailSeller");
+const detailDesignSelect = document.getElementById("detailDesignSelect");
+const detailShowBtn = document.getElementById("detailShowBtn");
+const detailPreviewBtn = document.getElementById("detailPreviewBtn");
+const detailCloseBtn = document.getElementById("detailCloseBtn");
+
 let currentUser = null;
 let activeThread = null;
+let activeListing = null;
 let inboxChannel = null;
 let threadChannel = null;
 let typingSendTimeout = null;
@@ -114,10 +129,138 @@ function closeListingModal() {
   listingModal.setAttribute("aria-hidden", "true");
 }
 
+function openListingDetails(listing) {
+  activeListing = listing;
+  if (!listingDetailsModal) return;
+  detailTitle.textContent = listing.title || "Listing";
+  detailSubtitle.textContent = listing.category ? `Category: ${listing.category}` : "";
+  detailDescription.textContent = listing.description || "";
+  detailSeller.textContent = `Seller: ${listing.seller_name || "Primal Lab user"}`;
+  detailPrice.textContent = listing.price ? `$${Number(listing.price).toFixed(2)}` : "Offer";
+  detailMeta.innerHTML = "";
+  const metaItems = [];
+  if (listing.size_m) {
+    const parts = String(listing.size_m).match(/[\d.]+/g);
+    if (parts && parts.length >= 2) {
+      metaItems.push(`Length: ${parts[0]} m`);
+      metaItems.push(`Width: ${parts[1]} m`);
+    } else {
+      metaItems.push(`Size: ${listing.size_m} m`);
+    }
+  }
+  if (listing.condition) metaItems.push(listing.condition);
+  if (listing.location) metaItems.push(listing.location);
+  if (listing.created_at) metaItems.push(new Date(listing.created_at).toLocaleDateString());
+  metaItems.forEach((text) => {
+    const span = document.createElement("span");
+    span.textContent = text;
+    detailMeta.appendChild(span);
+  });
+
+  // Image preview removed from details layout
+
+  loadDesignOptions();
+  listingDetailsModal.classList.remove("hidden");
+  listingDetailsModal.setAttribute("aria-hidden", "false");
+}
+
+function closeListingDetails() {
+  listingDetailsModal.classList.add("hidden");
+  listingDetailsModal.setAttribute("aria-hidden", "true");
+  activeListing = null;
+}
+
+async function loadDesignOptions() {
+  if (!detailDesignSelect) return;
+  detailDesignSelect.innerHTML = "";
+  if (!currentUser) {
+    const opt = document.createElement("option");
+    opt.textContent = "Log in to view designs";
+    opt.value = "";
+    detailDesignSelect.appendChild(opt);
+    detailShowBtn.disabled = true;
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("user_designs")
+    .select("id, name")
+    .order("updated_at", { ascending: false });
+
+  if (error || !data || data.length === 0) {
+    const opt = document.createElement("option");
+    opt.textContent = "No designs yet";
+    opt.value = "";
+    detailDesignSelect.appendChild(opt);
+    detailShowBtn.disabled = true;
+    return;
+  }
+
+  data.forEach((design) => {
+    const opt = document.createElement("option");
+    opt.value = design.id;
+    opt.textContent = design.name;
+    detailDesignSelect.appendChild(opt);
+  });
+  detailShowBtn.disabled = false;
+}
+
 createListingBtn?.addEventListener("click", openListingModal);
 listingCancel?.addEventListener("click", closeListingModal);
 listingModal?.addEventListener("click", (e) => {
   if (e.target === listingModal) closeListingModal();
+});
+
+listingDetailsModal?.addEventListener("click", (e) => {
+  if (e.target === listingDetailsModal) closeListingDetails();
+});
+
+detailCloseBtn?.addEventListener("click", closeListingDetails);
+
+detailShowBtn?.addEventListener("click", () => {
+  if (!activeListing) return;
+  if (!currentUser) {
+    showToast("Log in to add to a design", "info");
+    return;
+  }
+  const targetDesignId = detailDesignSelect?.value;
+  if (!targetDesignId) {
+    showToast("Select a design first", "error");
+    return;
+  }
+  const payload = {
+    name: activeListing.title || "Marketplace Item",
+    size_m: activeListing.size_m || "",
+    listing_id: activeListing.id,
+    image_url: activeListing.image_url || null
+  };
+  localStorage.setItem("pl_marketplace_add_item", JSON.stringify(payload));
+  localStorage.setItem("pl_marketplace_target_design", targetDesignId);
+  localStorage.setItem("pl_marketplace_mode", "place");
+  window.location.href = "builder.html?from=marketplace";
+});
+
+detailPreviewBtn?.addEventListener("click", () => {
+  if (!activeListing) return;
+  if (!currentUser) {
+    showToast("Log in to preview in a design", "info");
+    return;
+  }
+  const targetDesignId = detailDesignSelect?.value;
+  if (!targetDesignId) {
+    showToast("Select a design first", "error");
+    return;
+  }
+  const payload = {
+    name: activeListing.title || "Marketplace Item",
+    size_m: activeListing.size_m || "",
+    listing_id: activeListing.id,
+    image_url: activeListing.image_url || null
+  };
+  localStorage.setItem("pl_marketplace_add_item", JSON.stringify(payload));
+  localStorage.setItem("pl_marketplace_target_design", targetDesignId);
+  localStorage.setItem("pl_marketplace_mode", "preview");
+  window.location.href = "builder.html?from=marketplace";
 });
 
 function updateImagePreview(src) {
@@ -170,8 +313,10 @@ listingSave?.addEventListener("click", async () => {
   }
   const title = listingTitle.value.trim();
   const description = listingDescription.value.trim();
-  if (!title || !description) {
-    showToast("Title and description are required", "error");
+  const lengthVal = listingLength?.value?.trim();
+  const widthVal = listingWidth?.value?.trim();
+  if (!title || !description || !lengthVal || !widthVal) {
+    showToast("Title, description, length, and width are required", "error");
     return;
   }
   const wordCount = description.split(/\s+/).filter(Boolean).length;
@@ -207,9 +352,11 @@ listingSave?.addEventListener("click", async () => {
     .maybeSingle();
   if (profile?.verified_seller) sellerVerified = true;
 
+  const sizeFormatted = `${Number(lengthVal)} x ${Number(widthVal)}`;
   const payload = {
     title,
     description,
+    size_m: sizeFormatted,
     price: listingPrice.value ? Number(listingPrice.value) : null,
     location: listingLocation?.value?.trim() || null,
     category: listingCategory.value,
@@ -232,6 +379,8 @@ listingSave?.addEventListener("click", async () => {
 
   listingTitle.value = "";
   listingDescription.value = "";
+  if (listingLength) listingLength.value = "";
+  if (listingWidth) listingWidth.value = "";
   listingPrice.value = "";
   if (listingLocation) listingLocation.value = "";
   listingImage.value = "";
@@ -281,9 +430,18 @@ async function loadListings() {
 
   listingGrid.innerHTML = data.map((item) => {
     const price = item.price ? `$${Number(item.price).toFixed(2)}` : "Offer";
+    let sizeLabel = "";
+    if (item.size_m) {
+      const parts = String(item.size_m).match(/[\d.]+/g);
+      if (parts && parts.length >= 2) {
+        sizeLabel = `${parts[0]} x ${parts[1]} m`;
+      } else {
+        sizeLabel = item.size_m;
+      }
+    }
     const img = item.image_url
-      ? `<img class="listing-image" src="${item.image_url}" alt="${item.title}" onerror="this.style.display='none'">`
-      : `<div class="listing-image"></div>`;
+      ? `<img class="listing-image" src="${item.image_url}" alt="${item.title}" onerror="this.remove()">`
+      : ``;
 
     const owner = currentUser && item.created_by === currentUser.id;
 
@@ -294,6 +452,7 @@ async function loadListings() {
         <p class="listing-desc">${item.description}</p>
         <div class="listing-meta">
           <span>${price}</span>
+          ${sizeLabel ? `<span>${sizeLabel}</span>` : ""}
           <span>${item.category}</span>
           <span>${item.condition}</span>
           ${item.location ? `<span>${item.location}</span>` : ""}
@@ -306,6 +465,16 @@ async function loadListings() {
       </div>
     `;
   }).join("");
+
+  document.querySelectorAll(".listing-card").forEach((card) => {
+    card.addEventListener("click", (e) => {
+      const target = e.target;
+      if (target.closest(".listing-actions")) return;
+      const id = card.dataset.id;
+      const listing = data.find((l) => l.id === id);
+      if (listing) openListingDetails(listing);
+    });
+  });
 
   document.querySelectorAll(".inquire-btn").forEach((btn) => {
     btn.addEventListener("click", () => {

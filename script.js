@@ -115,6 +115,10 @@ let wallPreview = null;
 let wallOrientation = null;
 const WALL_MIN_PX = 14;
 
+const MARKETPLACE_IMPORT_KEY = "pl_marketplace_add_item";
+const MARKETPLACE_TARGET_KEY = "pl_marketplace_target_design";
+const MARKETPLACE_MODE_KEY = "pl_marketplace_mode";
+
 const DESIGN_STORAGE_KEY = "pl_planner_designs_v1";
 const DESIGN_ACTIVE_KEY = "pl_planner_design_active_v1";
 
@@ -1075,6 +1079,7 @@ async function initDesignTabsAsync() {
       useSupabaseDesigns = true;
       currentUserId = session.user.id;
       await loadDesignsFromSupabase();
+      handleMarketplaceImport();
       return;
     }
   }
@@ -1084,7 +1089,85 @@ async function initDesignTabsAsync() {
   activeDesignId = designs[0].id;
   renderTabs();
   applyDesign(designs[0]);
+  handleMarketplaceImport();
   showToast("Log in to save designs to your account");
+}
+
+function parseSizeString(value) {
+  if (!value) return null;
+  const matches = String(value).match(/[\d.]+/g);
+  if (!matches || matches.length < 2) return null;
+  const w = Number(matches[0]);
+  const h = Number(matches[1]);
+  if (!w || !h) return null;
+  return { w, h };
+}
+
+function handleMarketplaceImport() {
+  const raw = localStorage.getItem(MARKETPLACE_IMPORT_KEY);
+  if (!raw) return;
+  let payload = null;
+  try {
+    payload = JSON.parse(raw);
+  } catch {
+    localStorage.removeItem(MARKETPLACE_IMPORT_KEY);
+    localStorage.removeItem(MARKETPLACE_TARGET_KEY);
+    return;
+  }
+
+  const size = parseSizeString(payload.size_m);
+  if (!size) {
+    showToast("Marketplace item size is invalid");
+    localStorage.removeItem(MARKETPLACE_IMPORT_KEY);
+    localStorage.removeItem(MARKETPLACE_TARGET_KEY);
+    return;
+  }
+
+  const targetId = localStorage.getItem(MARKETPLACE_TARGET_KEY);
+  if (targetId && activeDesignId !== targetId) {
+    const target = designs.find((d) => d.id === targetId);
+    if (target) {
+      switchDesign(targetId);
+    }
+  }
+
+  const centerX = grid.clientWidth / 2;
+  const centerY = grid.clientHeight / 2;
+  const mode = localStorage.getItem(MARKETPLACE_MODE_KEY) || "place";
+
+  if (mode === "preview") {
+    const el = spawn(payload.name || "Marketplace Item", size.w, size.h, centerX, centerY, "equipment");
+    if (el) {
+      el.classList.add("preview-item");
+      el.dataset.preview = "true";
+      el.style.opacity = "0.6";
+      showToast("Preview loaded. Click the grid to place it.");
+      grid.addEventListener(
+        "click",
+        () => {
+          if (el.dataset.preview === "true") {
+            el.dataset.preview = "false";
+            el.classList.remove("preview-item");
+            el.style.opacity = "";
+            saveCurrentDesign();
+          }
+        },
+        { once: true }
+      );
+    } else {
+      showToast("Item is too large for the current room size");
+    }
+  } else {
+    const el = spawn(payload.name || "Marketplace Item", size.w, size.h, centerX, centerY, "equipment");
+    if (!el) {
+      showToast("Item is too large for the current room size");
+    } else {
+      saveCurrentDesign();
+    }
+  }
+  localStorage.removeItem(MARKETPLACE_IMPORT_KEY);
+  localStorage.removeItem(MARKETPLACE_TARGET_KEY);
+  localStorage.removeItem(MARKETPLACE_MODE_KEY);
 }
 
 async function loadDesignsFromSupabase() {
