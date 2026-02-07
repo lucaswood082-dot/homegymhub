@@ -93,12 +93,16 @@
       <div class="modal-form">
         <label>Title</label>
         <input id="listingTitle" type="text" placeholder="e.g., Rogue Power Rack">
-        <label>Description</label>
-        <textarea id="listingDescription" rows="4" placeholder="Describe the equipment, condition, size, and pickup info"></textarea>
+        <label>Description (max 100 words)</label>
+        <textarea id="listingDescription" rows="4" placeholder="Describe the equipment, condition, size, and pickup info" maxlength="800"></textarea>
         <div class="row">
           <div class="field">
             <label>Price (optional)</label>
             <input id="listingPrice" type="number" step="0.01" placeholder="200">
+          </div>
+          <div class="field">
+            <label>Pickup location</label>
+            <input id="listingLocation" type="text" placeholder="e.g., Glenelg, SA">
           </div>
           <div class="field">
             <label>Category</label>
@@ -123,6 +127,12 @@
         </div>
         <label>Image URL (optional)</label>
         <input id="listingImage" type="url" placeholder="https://...">
+        <label>Or upload an image</label>
+        <div id="imageDrop" class="image-drop">
+          <div class="image-drop-text">Drop an image here or click to upload</div>
+          <input id="listingImageFile" type="file" accept="image/*">
+        </div>
+        <img id="imagePreview" class="image-preview hidden" alt="Listing preview">
       </div>
       <div class="modal-actions">
         <button id="listingSave" class="header-btn">Publish</button>

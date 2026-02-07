@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Console | Primal Lab</title>
+  <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="darkmode.css">
+</head>
+<body>
+  <div class="bg-gradient"></div>
+  <div id="particles"></div>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">Primal Lab</a>
+      <nav class="nav-links">
+        <a href="index.html#modules">Modules</a>
+        <a href="builder.html">Planner</a>
+        <a href="marketplace.html">Marketplace</a>
+        <a href="threads.html">Community</a>
+      </nav>
+      <div class="auth-actions">
+        <button id="loginBtn">Log In</button>
+        <button id="accountBtn" style="display:none;">Account</button>
+        <button id="logoutBtn" style="display:none;">Log Out</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="admin-hero">
+    <h1>Admin Console</h1>
+    <p>Restricted access for Primal Lab operations. This console is locked to authorized administrators only.</p>
+    <div id="adminStatus" class="admin-status">Checking access…</div>
+  </section>
+
+  <main class="admin-shell">
+    <section id="adminGate" class="admin-card">
+      <h3>Access Required</h3>
+      <p id="adminMessage">Verifying your account credentials.</p>
+      <div class="admin-gate-actions">
+        <button id="gateLoginBtn" class="btn primary">Log In</button>
+        <button id="gateHomeBtn" class="btn ghost">Back to Home</button>
+      </div>
+    </section>
+
+    <section id="adminContent" class="admin-card hidden">
+      <h3>Admin Tools</h3>
+      <p>Quick links and checks for Primal Lab operations. Keep this page open while moderating or verifying listings.</p>
+      <div class="admin-actions">
+        <button class="btn primary" data-link="marketplace.html">Open Marketplace</button>
+        <button class="btn ghost" data-link="threads.html">Open Community</button>
+        <button class="btn ghost" data-link="account.html">Account Page</button>
+      </div>
+      <div class="admin-grid">
+        <div class="admin-tile">
+          <strong>Verify Sellers</strong>
+          <p>Use Supabase to toggle verified status for trusted sellers.</p>
+        </div>
+        <div class="admin-tile">
+          <strong>Moderate Listings</strong>
+          <p>Review listings for accuracy and remove any that break guidelines.</p>
+        </div>
+        <div class="admin-tile">
+          <strong>Support Inbox</strong>
+          <p>Monitor new chats and assist when users report issues.</p>
+        </div>
+      </div>
+      <div class="admin-actions" style="margin-top: 1.4rem;">
+        <span class="admin-note">Access locked to Admin UUID</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    © 2026 Primal Lab - Admin Console
+  </footer>
+
+  <script src="darkmode.js"></script>
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

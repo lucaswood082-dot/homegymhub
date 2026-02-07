@@ -13,9 +13,13 @@ const listingModal = document.getElementById("listingModal");
 const listingTitle = document.getElementById("listingTitle");
 const listingDescription = document.getElementById("listingDescription");
 const listingPrice = document.getElementById("listingPrice");
+const listingLocation = document.getElementById("listingLocation");
 const listingCategory = document.getElementById("listingCategory");
 const listingCondition = document.getElementById("listingCondition");
 const listingImage = document.getElementById("listingImage");
+const listingImageFile = document.getElementById("listingImageFile");
+const imagePreview = document.getElementById("imagePreview");
+const imageDrop = document.getElementById("imageDrop");
 const listingSave = document.getElementById("listingSave");
 const listingCancel = document.getElementById("listingCancel");
 
@@ -116,6 +120,49 @@ listingModal?.addEventListener("click", (e) => {
   if (e.target === listingModal) closeListingModal();
 });
 
+function updateImagePreview(src) {
+  if (!imagePreview) return;
+  if (!src) {
+    imagePreview.classList.add("hidden");
+    imagePreview.removeAttribute("src");
+    return;
+  }
+  imagePreview.src = src;
+  imagePreview.classList.remove("hidden");
+}
+
+listingImage?.addEventListener("input", () => {
+  updateImagePreview(listingImage.value.trim());
+});
+
+listingImageFile?.addEventListener("change", () => {
+  const file = listingImageFile.files?.[0];
+  if (!file) return updateImagePreview(listingImage.value.trim());
+  const url = URL.createObjectURL(file);
+  updateImagePreview(url);
+});
+
+imageDrop?.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  imageDrop.classList.add("dragging");
+});
+
+imageDrop?.addEventListener("dragleave", () => {
+  imageDrop.classList.remove("dragging");
+});
+
+imageDrop?.addEventListener("drop", (e) => {
+  e.preventDefault();
+  imageDrop.classList.remove("dragging");
+  const file = e.dataTransfer.files?.[0];
+  if (!file) return;
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  listingImageFile.files = dt.files;
+  const url = URL.createObjectURL(file);
+  updateImagePreview(url);
+});
+
 listingSave?.addEventListener("click", async () => {
   if (!currentUser) {
     showToast("Log in to create a listing", "info");
@@ -127,19 +174,53 @@ listingSave?.addEventListener("click", async () => {
     showToast("Title and description are required", "error");
     return;
   }
+  const wordCount = description.split(/\s+/).filter(Boolean).length;
+  if (wordCount > 100) {
+    showToast("Description must be 100 words or less", "error");
+    return;
+  }
+
+  let imageUrl = listingImage.value.trim() || null;
+  const file = listingImageFile?.files?.[0];
+  if (file) {
+    const ext = file.name.split(".").pop() || "png";
+    const path = `marketplace/${currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error: uploadErr } = await supabase.storage
+      .from("marketplace-images")
+      .upload(path, file, { upsert: false });
+    if (uploadErr) {
+      console.error(uploadErr);
+      showToast("Image upload failed", "error");
+      return;
+    }
+    const { data: publicUrl } = supabase.storage
+      .from("marketplace-images")
+      .getPublicUrl(path);
+    imageUrl = publicUrl?.publicUrl || null;
+  }
+
+  let sellerVerified = false;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("verified_seller")
+    .eq("id", currentUser.id)
+    .maybeSingle();
+  if (profile?.verified_seller) sellerVerified = true;
 
   const payload = {
     title,
     description,
     price: listingPrice.value ? Number(listingPrice.value) : null,
+    location: listingLocation?.value?.trim() || null,
     category: listingCategory.value,
     condition: listingCondition.value,
-    image_url: listingImage.value.trim() || null,
+    image_url: imageUrl,
     created_by: currentUser.id,
     seller_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email,
     seller_email: currentUser.email,
     seller_avatar: currentUser.user_metadata?.avatar_url || null,
-    status: "active"
+    status: "active",
+    seller_verified: sellerVerified
   };
 
   const { error } = await supabase.from("marketplace_listings").insert(payload);
@@ -152,7 +233,10 @@ listingSave?.addEventListener("click", async () => {
   listingTitle.value = "";
   listingDescription.value = "";
   listingPrice.value = "";
+  if (listingLocation) listingLocation.value = "";
   listingImage.value = "";
+  if (listingImageFile) listingImageFile.value = "";
+  updateImagePreview("");
   closeListingModal();
   showToast("Listing published", "success");
   loadListings();
@@ -206,12 +290,13 @@ async function loadListings() {
     return `
       <div class="listing-card" data-id="${item.id}">
         ${img}
-        <h3 class="listing-title">${item.title}</h3>
+        <h3 class="listing-title">${item.title}${item.seller_verified ? `<span class="verified-badge">Verified</span>` : ""}</h3>
         <p class="listing-desc">${item.description}</p>
         <div class="listing-meta">
           <span>${price}</span>
           <span>${item.category}</span>
           <span>${item.condition}</span>
+          ${item.location ? `<span>${item.location}</span>` : ""}
         </div>
         <div class="listing-meta">Seller: ${item.seller_name || "Primal Lab user"}</div>
         <div class="listing-actions">
@@ -233,22 +318,14 @@ async function loadListings() {
   document.querySelectorAll(".remove-listing").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const id = btn.dataset.id;
-      const { error: delErr } = await supabase
+      const { error: hardErr } = await supabase
         .from("marketplace_listings")
-        .update({ status: "removed" })
+        .delete()
         .eq("id", id);
-      if (delErr) {
-        console.error("Remove listing error:", delErr);
-        // Fallback to delete if update blocked
-        const { error: hardErr } = await supabase
-          .from("marketplace_listings")
-          .delete()
-          .eq("id", id);
-        if (hardErr) {
-          console.error("Hard delete error:", hardErr);
-          showToast("Failed to remove listing", "error");
-          return;
-        }
+      if (hardErr) {
+        console.error("Remove listing error:", hardErr);
+        showToast("Failed to remove listing", "error");
+        return;
       }
       showToast("Listing removed", "success");
       loadListings();
@@ -328,7 +405,7 @@ async function loadInbox() {
 
   const { data, error } = await supabase
     .from("marketplace_threads")
-    .select("id, listing_id, buyer_id, seller_id, status, created_at, last_message_at, buyer_last_read_at, seller_last_read_at, buyer_closed_at, seller_closed_at, listing:marketplace_listings(title, price, seller_name)")
+    .select("id, listing_id, buyer_id, seller_id, status, created_at, last_message_at, buyer_last_read_at, seller_last_read_at, buyer_closed_at, seller_closed_at, listing:marketplace_listings(title, price, seller_name, seller_verified)")
     .or(`buyer_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`)
     .order("last_message_at", { ascending: false, nullsFirst: false });
 
@@ -363,7 +440,7 @@ async function loadInbox() {
     return `
       <div class="inbox-item ${pinned ? "pinned" : ""}" data-id="${thread.id}" data-listing="${thread.listing_id}">
         <h4>${listing.title || "Listing"}</h4>
-        <p>${listing.price ? `$${Number(listing.price).toFixed(2)}` : "Offer"} · ${listing.seller_name || "Seller"}</p>
+        <p>${listing.price ? `$${Number(listing.price).toFixed(2)}` : "Offer"} · ${listing.seller_name || "Seller"}${listing.seller_verified ? " ✅" : ""}</p>
         <div class="inbox-row">
           <span class="pill ${otherClosed ? "pill-muted" : ""}">${otherClosed ? "Closed by other" : "Open"}</span>
           <button class="pin-btn ${pinned ? "active" : ""}" data-id="${thread.id}" type="button">${pinned ? "Pinned" : "Pin"}</button>

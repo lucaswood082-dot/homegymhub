@@ -60,12 +60,15 @@
         </div>
         
         <div class="profile-info">
-          <h2 id="displayNameText">Loading...</h2>
+          <h2 id="displayNameText">Loading... <span id="verifiedBadge" class="verified-badge hidden">Verified</span></h2>
           <span class="email" id="emailText">Loading...</span>
         </div>
       </div>
 
       <button class="btn primary" id="editProfileBtn">Edit Profile</button>
+      <div id="adminLinkWrap" class="admin-link hidden">
+        <button class="btn secondary" id="adminConsoleBtn">Admin Console</button>
+      </div>
 
       <div class="dark-toggle">
         <span>Dark Mode</span>
@@ -147,14 +150,18 @@
     const avatarInput = document.getElementById("avatarInput");
     const profileImg = document.getElementById("profileImg");
     const displayNameText = document.getElementById("displayNameText");
+    const verifiedBadge = document.getElementById("verifiedBadge");
     const displayNameInput = document.getElementById("displayNameInput");
     const saveNameBtn = document.getElementById("saveNameBtn");
     const cancelBtn = document.getElementById("cancelBtn");
     const emailText = document.getElementById("emailText");
     const logoutBtn = document.getElementById("logoutBtn");
+    const adminLinkWrap = document.getElementById("adminLinkWrap");
+    const adminConsoleBtn = document.getElementById("adminConsoleBtn");
     const toast = document.getElementById("toast");
 
     const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'><path d='M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z'/></svg>";
+    const ADMIN_UUID = "b4cb6833-f4ea-4dcd-8443-229a7767a041";
 
     let currentUser = null;
     let currentProfile = null;
@@ -214,14 +221,17 @@
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         
-        if (userError || !user) {
-          showToast("Please log in to view your account", true);
-          setTimeout(() => window.location.href = "auth.html", 2000);
-          return;
-        }
+    if (userError || !user) {
+      showToast("Please log in to view your account", true);
+      setTimeout(() => window.location.href = "auth.html", 2000);
+      return;
+    }
 
-        currentUser = user;
-        emailText.textContent = user.email;
+    currentUser = user;
+    if (adminLinkWrap && user.id === ADMIN_UUID) {
+      adminLinkWrap.classList.remove("hidden");
+    }
+    emailText.textContent = user.email;
 
         // Load profile from database
         const { data: profiles, error: profileError } = await supabase
@@ -237,7 +247,10 @@
 
         if (profiles && profiles.length > 0) {
           currentProfile = profiles[0];
-          displayNameText.textContent = currentProfile.display_name || "Your Name";
+          displayNameText.firstChild.textContent = currentProfile.display_name || "Your Name";
+          if (verifiedBadge) {
+            verifiedBadge.classList.toggle("hidden", !currentProfile.verified_seller);
+          }
           
           // Load profile image from Supabase Storage
           if (currentProfile.profile_image_url) {
@@ -257,19 +270,22 @@
 
           if (createError) {
             console.error("Profile creation error:", createError);
-            displayNameText.textContent = "Your Name";
+            displayNameText.firstChild.textContent = "Your Name";
+            if (verifiedBadge) verifiedBadge.classList.add("hidden");
             return;
           }
 
           if (newProfile && newProfile.length > 0) {
             currentProfile = newProfile[0];
-            displayNameText.textContent = currentProfile.display_name;
+            displayNameText.firstChild.textContent = currentProfile.display_name;
+            if (verifiedBadge) verifiedBadge.classList.add("hidden");
             profileImg.src = defaultAvatar;
           }
         }
       } catch (err) {
         console.error("Load user data error:", err);
-        displayNameText.textContent = "Your Name";
+        displayNameText.firstChild.textContent = "Your Name";
+        if (verifiedBadge) verifiedBadge.classList.add("hidden");
         showToast("Error loading account data", true);
       }
     }
@@ -317,6 +333,10 @@
       editSection.classList.remove("hidden");
       editProfileBtn.style.display = "none";
       displayNameInput.value = currentProfile?.display_name || displayNameText.textContent;
+    });
+
+    adminConsoleBtn?.addEventListener("click", () => {
+      window.location.href = "admin.html";
     });
 
     // Cancel button
