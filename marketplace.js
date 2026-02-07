@@ -47,6 +47,7 @@ let inboxChannel = null;
 let threadChannel = null;
 let typingSendTimeout = null;
 let typingHideTimeout = null;
+let chatPollInterval = null;
 
 function showToast(message, type = "info") {
   if (!toast) return;
@@ -279,6 +280,14 @@ async function handleInquiry(listing) {
   }
 
   if (existing) {
+    if (isClosedForUser(existing)) {
+      const payload = currentUser.id === existing.buyer_id
+        ? { buyer_closed_at: null }
+        : { seller_closed_at: null };
+      await supabase.from("marketplace_threads").update(payload).eq("id", existing.id);
+      if (currentUser.id === existing.buyer_id) existing.buyer_closed_at = null;
+      if (currentUser.id === existing.seller_id) existing.seller_closed_at = null;
+    }
     openChat(existing, listing);
     return;
   }
@@ -442,10 +451,6 @@ closeInbox?.addEventListener("click", () => {
 
 async function openChat(thread, listing) {
   activeThread = thread;
-  if (isClosedForUser(thread)) {
-    showToast("Chat closed on your end", "info");
-    return;
-  }
   if (typingIndicator) typingIndicator.classList.add("hidden");
   chatTitle.textContent = listing?.title || "Chat";
   chatMeta.textContent = listing?.seller_name ? `Seller: ${listing.seller_name}` : "";
@@ -455,6 +460,7 @@ async function openChat(thread, listing) {
     chatInput?.focus();
   }, 60);
   setupThreadRealtime(thread.id);
+  startChatPolling(thread.id);
   await loadMessages(thread.id);
   await markThreadRead(thread);
   await markMessagesRead(thread.id);
@@ -471,6 +477,7 @@ function closeChatModal() {
   chatModal.setAttribute("aria-hidden", "true");
   activeThread = null;
   teardownThreadRealtime();
+  stopChatPolling();
   clearTimeout(typingSendTimeout);
   clearTimeout(typingHideTimeout);
   if (typingIndicator) typingIndicator.classList.add("hidden");
@@ -507,9 +514,10 @@ async function loadMessages(threadId) {
       ? (msg.read_at ? "Read" : msg.delivered_at ? "Delivered" : "Sent")
       : "";
     return `
-      <div class="chat-bubble ${cls}">
+      <div class="chat-bubble ${cls}" data-msg-id="${msg.id}">
         <div>${msg.body}</div>
         ${isSelf ? `<div class="chat-status">${status}</div>` : ""}
+        ${isSelf ? `<button class="msg-delete" type="button" aria-label="Delete message">Delete</button>` : ""}
       </div>
     `;
   }).join("");
@@ -517,6 +525,27 @@ async function loadMessages(threadId) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 
   await markMessagesDelivered(threadId);
+
+  chatMessages.querySelectorAll(".msg-delete").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const bubble = btn.closest(".chat-bubble");
+      const msgId = bubble?.dataset?.msgId;
+      if (!msgId) return;
+      const { error } = await supabase
+        .from("marketplace_messages")
+        .delete()
+        .eq("id", msgId)
+        .eq("sender_id", currentUser.id);
+      if (error) {
+        console.error(error);
+        showToast("Failed to delete message", "error");
+        return;
+      }
+      showToast("Message deleted", "success");
+      loadMessages(threadId);
+    });
+  });
 }
 
 async function markMessagesDelivered(threadId) {
@@ -574,6 +603,13 @@ chatInput?.addEventListener("input", () => {
   broadcastTyping(true);
   clearTimeout(typingSendTimeout);
   typingSendTimeout = setTimeout(() => broadcastTyping(false), 1500);
+});
+
+chatInput?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendChatBtn?.click();
+  }
 });
 
 closeChatBtn?.addEventListener("click", async () => {
@@ -693,6 +729,20 @@ function broadcastTyping(typing) {
     event: "typing",
     payload: { thread_id: activeThread.id, user_id: currentUser?.id, typing }
   });
+}
+
+function startChatPolling(threadId) {
+  stopChatPolling();
+  chatPollInterval = setInterval(() => {
+    if (!activeThread) return;
+    loadMessages(threadId);
+  }, 3000);
+}
+
+function stopChatPolling() {
+  if (!chatPollInterval) return;
+  clearInterval(chatPollInterval);
+  chatPollInterval = null;
 }
 
 function isClosedForUser(thread) {

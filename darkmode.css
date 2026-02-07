@@ -291,6 +291,12 @@ body.dark-mode .typing-indicator {
   color: rgba(226, 232, 240, 0.7);
 }
 
+body.dark-mode .msg-delete {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
 body.dark-mode .pin-btn {
   background: rgba(15, 23, 42, 0.8);
   color: #2fc777;
