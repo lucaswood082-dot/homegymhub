@@ -425,6 +425,13 @@ body {
   border: 1px solid rgba(15, 23, 42, 0.12);
 }
 
+.chat-status {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+}
+
 .chat-input {
   display: flex;
   gap: 10px;
@@ -440,6 +447,17 @@ body {
 
 .chat-input .header-btn {
   min-width: 90px;
+}
+
+.typing-indicator {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+  padding-left: 4px;
+}
+
+.typing-indicator.hidden {
+  display: none;
 }
 
 .inbox {
@@ -503,6 +521,11 @@ body {
   transition: transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
 }
 
+.inbox-item.pinned {
+  border-color: rgba(31, 157, 98, 0.45);
+  box-shadow: 0 12px 24px rgba(31, 157, 98, 0.12);
+}
+
 .inbox-item:hover {
   transform: translateY(-1px);
   box-shadow: 0 12px 20px rgba(15, 23, 42, 0.1);
@@ -517,6 +540,37 @@ body {
   margin: 0;
   font-size: 12px;
   color: var(--muted);
+}
+
+.inbox-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pin-btn {
+  border: 1px solid rgba(31, 157, 98, 0.2);
+  background: rgba(255, 255, 255, 0.8);
+  color: #1f9d62;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+
+.pin-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(31, 157, 98, 0.15);
+}
+
+.pin-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  border-color: transparent;
 }
 
 .pill {

@@ -286,6 +286,22 @@ body.dark-mode .chat-bubble.other {
   background: rgba(148, 163, 184, 0.2);
 }
 
+body.dark-mode .chat-status,
+body.dark-mode .typing-indicator {
+  color: rgba(226, 232, 240, 0.7);
+}
+
+body.dark-mode .pin-btn {
+  background: rgba(15, 23, 42, 0.8);
+  color: #2fc777;
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+body.dark-mode .pin-btn.active {
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
+  color: #fff;
+}
+
 body.dark-mode .pill {
   background: rgba(31, 157, 98, 0.25);
   color: #2fc777;

@@ -498,6 +498,7 @@
           .from('marketplace_listings')
           .select('*')
           .eq('created_by', user.id)
+          .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(5);
 

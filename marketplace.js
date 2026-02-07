@@ -33,6 +33,7 @@ const chatModal = document.getElementById("chatModal");
 const chatTitle = document.getElementById("chatTitle");
 const chatMeta = document.getElementById("chatMeta");
 const chatMessages = document.getElementById("chatMessages");
+const typingIndicator = document.getElementById("typingIndicator");
 const chatInput = document.getElementById("chatInput");
 const sendChatBtn = document.getElementById("sendChatBtn");
 const closeChatBtn = document.getElementById("closeChatBtn");
@@ -42,6 +43,10 @@ const toast = document.getElementById("toast");
 
 let currentUser = null;
 let activeThread = null;
+let inboxChannel = null;
+let threadChannel = null;
+let typingSendTimeout = null;
+let typingHideTimeout = null;
 
 function showToast(message, type = "info") {
   if (!toast) return;
@@ -306,6 +311,12 @@ async function loadInbox() {
 
   inboxList.innerHTML = '<div class="loading">Loading chats...</div>';
 
+  const { data: pinRows } = await supabase
+    .from("marketplace_pins")
+    .select("thread_id")
+    .eq("user_id", currentUser.id);
+  const pinnedSet = new Set((pinRows || []).map((p) => p.thread_id));
+
   const { data, error } = await supabase
     .from("marketplace_threads")
     .select("id, listing_id, buyer_id, seller_id, status, created_at, last_message_at, buyer_last_read_at, seller_last_read_at, buyer_closed_at, seller_closed_at, listing:marketplace_listings(title, price, seller_name)")
@@ -325,16 +336,29 @@ async function loadInbox() {
   }
 
   const visibleThreads = data.filter((t) => !isClosedForUser(t));
+  visibleThreads.sort((a, b) => {
+    const ap = pinnedSet.has(a.id) ? 1 : 0;
+    const bp = pinnedSet.has(b.id) ? 1 : 0;
+    if (ap !== bp) return bp - ap;
+    const at = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+    const bt = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+    return bt - at;
+  });
+
   updateInboxBadge(countUnreadThreads(visibleThreads));
 
   inboxList.innerHTML = visibleThreads.map((thread) => {
     const listing = thread.listing || {};
     const otherClosed = isClosedByOther(thread);
+    const pinned = pinnedSet.has(thread.id);
     return `
-      <div class="inbox-item" data-id="${thread.id}" data-listing="${thread.listing_id}">
+      <div class="inbox-item ${pinned ? "pinned" : ""}" data-id="${thread.id}" data-listing="${thread.listing_id}">
         <h4>${listing.title || "Listing"}</h4>
         <p>${listing.price ? `$${Number(listing.price).toFixed(2)}` : "Offer"} · ${listing.seller_name || "Seller"}</p>
-        <span class="pill ${otherClosed ? "pill-muted" : ""}">${otherClosed ? "Closed by other" : "Open"}</span>
+        <div class="inbox-row">
+          <span class="pill ${otherClosed ? "pill-muted" : ""}">${otherClosed ? "Closed by other" : "Open"}</span>
+          <button class="pin-btn ${pinned ? "active" : ""}" data-id="${thread.id}" type="button">${pinned ? "Pinned" : "Pin"}</button>
+        </div>
       </div>
     `;
   }).join("");
@@ -346,6 +370,20 @@ async function loadInbox() {
       const thread = visibleThreads.find((t) => t.id === threadId);
       const listing = thread?.listing || {};
       openChat(thread, { id: listingId, title: listing.title, seller_name: listing.seller_name });
+    });
+  });
+
+  inboxList.querySelectorAll(".pin-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      if (!id) return;
+      if (btn.classList.contains("active")) {
+        await supabase.from("marketplace_pins").delete().eq("thread_id", id).eq("user_id", currentUser.id);
+      } else {
+        await supabase.from("marketplace_pins").insert({ thread_id: id, user_id: currentUser.id });
+      }
+      loadInbox();
     });
   });
 }
@@ -408,6 +446,7 @@ async function openChat(thread, listing) {
     showToast("Chat closed on your end", "info");
     return;
   }
+  if (typingIndicator) typingIndicator.classList.add("hidden");
   chatTitle.textContent = listing?.title || "Chat";
   chatMeta.textContent = listing?.seller_name ? `Seller: ${listing.seller_name}` : "";
   chatModal.classList.remove("hidden");
@@ -415,8 +454,10 @@ async function openChat(thread, listing) {
   setTimeout(() => {
     chatInput?.focus();
   }, 60);
+  setupThreadRealtime(thread.id);
   await loadMessages(thread.id);
   await markThreadRead(thread);
+  await markMessagesRead(thread.id);
   refreshInboxBadge();
   const closed = thread.status === "closed";
   const otherClosed = isClosedByOther(thread);
@@ -429,6 +470,10 @@ function closeChatModal() {
   chatModal.classList.add("hidden");
   chatModal.setAttribute("aria-hidden", "true");
   activeThread = null;
+  teardownThreadRealtime();
+  clearTimeout(typingSendTimeout);
+  clearTimeout(typingHideTimeout);
+  if (typingIndicator) typingIndicator.classList.add("hidden");
 }
 
 exitChatBtn?.addEventListener("click", closeChatModal);
@@ -456,11 +501,42 @@ async function loadMessages(threadId) {
   }
 
   chatMessages.innerHTML = data.map((msg) => {
-    const cls = msg.sender_id === currentUser?.id ? "self" : "other";
-    return `<div class="chat-bubble ${cls}">${msg.body}</div>`;
+    const isSelf = msg.sender_id === currentUser?.id;
+    const cls = isSelf ? "self" : "other";
+    const status = isSelf
+      ? (msg.read_at ? "Read" : msg.delivered_at ? "Delivered" : "Sent")
+      : "";
+    return `
+      <div class="chat-bubble ${cls}">
+        <div>${msg.body}</div>
+        ${isSelf ? `<div class="chat-status">${status}</div>` : ""}
+      </div>
+    `;
   }).join("");
 
   chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  await markMessagesDelivered(threadId);
+}
+
+async function markMessagesDelivered(threadId) {
+  if (!currentUser) return;
+  await supabase
+    .from("marketplace_messages")
+    .update({ delivered_at: new Date().toISOString() })
+    .eq("thread_id", threadId)
+    .neq("sender_id", currentUser.id)
+    .is("delivered_at", null);
+}
+
+async function markMessagesRead(threadId) {
+  if (!currentUser) return;
+  await supabase
+    .from("marketplace_messages")
+    .update({ read_at: new Date().toISOString() })
+    .eq("thread_id", threadId)
+    .neq("sender_id", currentUser.id)
+    .is("read_at", null);
 }
 
 sendChatBtn?.addEventListener("click", async () => {
@@ -492,6 +568,14 @@ sendChatBtn?.addEventListener("click", async () => {
   refreshInboxBadge();
 });
 
+chatInput?.addEventListener("input", () => {
+  if (!activeThread || !threadChannel) return;
+  if (activeThread.status === "closed") return;
+  broadcastTyping(true);
+  clearTimeout(typingSendTimeout);
+  typingSendTimeout = setTimeout(() => broadcastTyping(false), 1500);
+});
+
 closeChatBtn?.addEventListener("click", async () => {
   if (!activeThread) return;
   const payload = currentUser?.id === activeThread.buyer_id
@@ -520,9 +604,11 @@ if (supabase) {
   supabase.auth.onAuthStateChange(() => {
     refreshAuth().then(() => loadListings());
     refreshInboxBadge();
+    setupInboxRealtime();
   });
   refreshAuth().then(() => loadListings());
   refreshInboxBadge();
+  setupInboxRealtime();
 }
 
 const params = new URLSearchParams(window.location.search);
@@ -542,6 +628,71 @@ async function markThreadRead(thread) {
     ? { buyer_last_read_at: new Date().toISOString() }
     : { seller_last_read_at: new Date().toISOString() };
   await supabase.from("marketplace_threads").update(payload).eq("id", thread.id);
+}
+
+function setupInboxRealtime() {
+  if (!currentUser || inboxChannel) return;
+  inboxChannel = supabase.channel(`marketplace-inbox-${currentUser.id}`);
+  inboxChannel
+    .on("postgres_changes", { event: "*", schema: "public", table: "marketplace_threads" }, () => {
+      refreshInboxBadge();
+      if (!inboxDrawer.classList.contains("hidden")) loadInbox();
+    })
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "marketplace_messages" }, () => {
+      refreshInboxBadge();
+      if (!inboxDrawer.classList.contains("hidden")) loadInbox();
+    })
+    .subscribe();
+}
+
+function setupThreadRealtime(threadId) {
+  teardownThreadRealtime();
+  threadChannel = supabase.channel(`marketplace-thread-${threadId}`);
+
+  threadChannel
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "marketplace_messages", filter: `thread_id=eq.${threadId}` }, async (payload) => {
+      if (payload?.new?.sender_id && payload.new.sender_id !== currentUser?.id) {
+        await markMessagesDelivered(threadId);
+      }
+      if (chatModal && !chatModal.classList.contains("hidden")) {
+        await markMessagesRead(threadId);
+      }
+      loadMessages(threadId);
+      refreshInboxBadge();
+    })
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "marketplace_messages", filter: `thread_id=eq.${threadId}` }, () => {
+      loadMessages(threadId);
+    })
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "marketplace_threads", filter: `id=eq.${threadId}` }, (payload) => {
+      if (payload?.new) {
+        activeThread = { ...activeThread, ...payload.new };
+        loadInbox();
+      }
+    })
+    .on("broadcast", { event: "typing" }, ({ payload }) => {
+      if (!payload || payload.user_id === currentUser?.id) return;
+      if (typingIndicator) {
+        typingIndicator.classList.toggle("hidden", !payload.typing);
+        clearTimeout(typingHideTimeout);
+        typingHideTimeout = setTimeout(() => typingIndicator.classList.add("hidden"), 1200);
+      }
+    })
+    .subscribe();
+}
+
+function teardownThreadRealtime() {
+  if (!threadChannel) return;
+  supabase.removeChannel(threadChannel);
+  threadChannel = null;
+}
+
+function broadcastTyping(typing) {
+  if (!threadChannel || !activeThread) return;
+  threadChannel.send({
+    type: "broadcast",
+    event: "typing",
+    payload: { thread_id: activeThread.id, user_id: currentUser?.id, typing }
+  });
 }
 
 function isClosedForUser(thread) {
