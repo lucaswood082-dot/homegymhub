@@ -495,9 +495,9 @@
         }
 
         const { data, error } = await supabase
-          .from('listings')
+          .from('marketplace_listings')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('created_by', user.id)
           .order('created_at', { ascending: false })
           .limit(5);
 
@@ -508,14 +508,14 @@
         }
 
         if (!data || data.length === 0) {
-          container.innerHTML = '<div class="empty-state"><p>No listings yet</p><a href="marketplace.html" class="pill">Create Listing</a></div>';
+          container.innerHTML = '<div class="empty-state"><p>No listings yet</p><a href="marketplace.html?create=1" class="pill">Create Listing</a></div>';
           return;
         }
 
         container.innerHTML = data.map(listing => `
           <div class="listing-item" onclick="window.location.href='marketplace.html'">
             <div class="listing-title">${escapeHTML(listing.title)}</div>
-            <div class="listing-price">$${listing.price.toFixed(2)}</div>
+            <div class="listing-price">${listing.price ? `$${Number(listing.price).toFixed(2)}` : 'Offer'}</div>
           </div>
         `).join('');
 

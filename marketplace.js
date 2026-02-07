@@ -43,9 +43,11 @@ const toast = document.getElementById("toast");
 let currentUser = null;
 let activeThread = null;
 
-function showToast(message) {
+function showToast(message, type = "info") {
   if (!toast) return;
   toast.textContent = message;
+  toast.classList.remove("info", "error", "success");
+  toast.classList.add(type);
   toast.classList.remove("hidden");
   clearTimeout(toast._timer);
   toast._timer = setTimeout(() => toast.classList.add("hidden"), 2000);
@@ -84,13 +86,13 @@ accountBtn?.addEventListener("click", () => {
 logoutBtn?.addEventListener("click", async () => {
   await supabase.auth.signOut();
   await refreshAuth();
-  showToast("Logged out");
+  showToast("Logged out", "success");
   loadListings();
 });
 
 function openListingModal() {
   if (!currentUser) {
-    showToast("Log in to create a listing");
+    showToast("Log in to create a listing", "info");
     return;
   }
   listingModal.classList.remove("hidden");
@@ -110,13 +112,13 @@ listingModal?.addEventListener("click", (e) => {
 
 listingSave?.addEventListener("click", async () => {
   if (!currentUser) {
-    showToast("Log in to create a listing");
+    showToast("Log in to create a listing", "info");
     return;
   }
   const title = listingTitle.value.trim();
   const description = listingDescription.value.trim();
   if (!title || !description) {
-    showToast("Title and description are required");
+    showToast("Title and description are required", "error");
     return;
   }
 
@@ -137,7 +139,7 @@ listingSave?.addEventListener("click", async () => {
   const { error } = await supabase.from("marketplace_listings").insert(payload);
   if (error) {
     console.error(error);
-    showToast("Failed to publish listing");
+    showToast("Failed to publish listing", "error");
     return;
   }
 
@@ -146,7 +148,7 @@ listingSave?.addEventListener("click", async () => {
   listingPrice.value = "";
   listingImage.value = "";
   closeListingModal();
-  showToast("Listing published");
+  showToast("Listing published", "success");
   loadListings();
 });
 
@@ -238,11 +240,11 @@ async function loadListings() {
           .eq("id", id);
         if (hardErr) {
           console.error("Hard delete error:", hardErr);
-          showToast("Failed to remove listing");
+          showToast("Failed to remove listing", "error");
           return;
         }
       }
-      showToast("Listing removed");
+      showToast("Listing removed", "success");
       loadListings();
     });
   });
@@ -250,11 +252,11 @@ async function loadListings() {
 
 async function handleInquiry(listing) {
   if (!currentUser) {
-    showToast("Log in to send an inquiry");
+    showToast("Log in to send an inquiry", "info");
     return;
   }
   if (listing.created_by === currentUser.id) {
-    showToast("You can’t message your own listing");
+    showToast("You can’t message your own listing", "error");
     return;
   }
 
@@ -267,7 +269,7 @@ async function handleInquiry(listing) {
 
   if (error) {
     console.error(error);
-    showToast("Couldn’t start chat");
+    showToast("Couldn’t start chat", "error");
     return;
   }
 
@@ -289,7 +291,7 @@ async function handleInquiry(listing) {
 
   if (createErr) {
     console.error(createErr);
-    showToast("Couldn’t start chat");
+    showToast("Couldn’t start chat", "error");
     return;
   }
 
@@ -298,7 +300,7 @@ async function handleInquiry(listing) {
 
 async function loadInbox() {
   if (!currentUser) {
-    showToast("Log in to view inbox");
+    showToast("Log in to view inbox", "info");
     return;
   }
 
@@ -306,9 +308,8 @@ async function loadInbox() {
 
   const { data, error } = await supabase
     .from("marketplace_threads")
-    .select("id, listing_id, buyer_id, seller_id, status, created_at, last_message_at, buyer_last_read_at, seller_last_read_at, listing:marketplace_listings(title, price, seller_name)")
+    .select("id, listing_id, buyer_id, seller_id, status, created_at, last_message_at, buyer_last_read_at, seller_last_read_at, buyer_closed_at, seller_closed_at, listing:marketplace_listings(title, price, seller_name)")
     .or(`buyer_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`)
-    .eq("status", "open")
     .order("last_message_at", { ascending: false, nullsFirst: false });
 
   if (error) {
@@ -318,19 +319,22 @@ async function loadInbox() {
   }
 
   if (!data || !data.length) {
-    inboxList.innerHTML = '<div class="loading">No open chats.</div>';
+    inboxList.innerHTML = '<div class="loading">No chats yet.</div>';
     updateInboxBadge(0);
     return;
   }
 
-  updateInboxBadge(countUnreadThreads(data));
+  const visibleThreads = data.filter((t) => !isClosedForUser(t));
+  updateInboxBadge(countUnreadThreads(visibleThreads));
 
-  inboxList.innerHTML = data.map((thread) => {
+  inboxList.innerHTML = visibleThreads.map((thread) => {
     const listing = thread.listing || {};
+    const otherClosed = isClosedByOther(thread);
     return `
       <div class="inbox-item" data-id="${thread.id}" data-listing="${thread.listing_id}">
         <h4>${listing.title || "Listing"}</h4>
         <p>${listing.price ? `$${Number(listing.price).toFixed(2)}` : "Offer"} · ${listing.seller_name || "Seller"}</p>
+        <span class="pill ${otherClosed ? "pill-muted" : ""}">${otherClosed ? "Closed by other" : "Open"}</span>
       </div>
     `;
   }).join("");
@@ -339,7 +343,7 @@ async function loadInbox() {
     item.addEventListener("click", () => {
       const threadId = item.dataset.id;
       const listingId = item.dataset.listing;
-      const thread = data.find((t) => t.id === threadId);
+      const thread = visibleThreads.find((t) => t.id === threadId);
       const listing = thread?.listing || {};
       openChat(thread, { id: listingId, title: listing.title, seller_name: listing.seller_name });
     });
@@ -350,6 +354,8 @@ function countUnreadThreads(threads) {
   const now = Date.now();
   let count = 0;
   threads.forEach((t) => {
+    if (isClosedForUser(t)) return;
+    if (t.status !== "open") return;
     if (!t.last_message_at) return;
     const last = new Date(t.last_message_at).getTime();
     const lastRead = currentUser?.id === t.buyer_id
@@ -375,9 +381,9 @@ async function refreshInboxBadge() {
   if (!currentUser) return updateInboxBadge(0);
   const { data } = await supabase
     .from("marketplace_threads")
-    .select("buyer_id, seller_id, last_message_at, buyer_last_read_at, seller_last_read_at")
+    .select("buyer_id, seller_id, status, last_message_at, buyer_last_read_at, seller_last_read_at, buyer_closed_at, seller_closed_at")
     .or(`buyer_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`)
-    .eq("status", "open");
+    .order("last_message_at", { ascending: false, nullsFirst: false });
   if (!data) return;
   updateInboxBadge(countUnreadThreads(data));
 }
@@ -398,6 +404,10 @@ closeInbox?.addEventListener("click", () => {
 
 async function openChat(thread, listing) {
   activeThread = thread;
+  if (isClosedForUser(thread)) {
+    showToast("Chat closed on your end", "info");
+    return;
+  }
   chatTitle.textContent = listing?.title || "Chat";
   chatMeta.textContent = listing?.seller_name ? `Seller: ${listing.seller_name}` : "";
   chatModal.classList.remove("hidden");
@@ -408,6 +418,11 @@ async function openChat(thread, listing) {
   await loadMessages(thread.id);
   await markThreadRead(thread);
   refreshInboxBadge();
+  const closed = thread.status === "closed";
+  const otherClosed = isClosedByOther(thread);
+  chatInput.disabled = closed;
+  sendChatBtn.disabled = closed;
+  chatInput.placeholder = closed ? "Chat closed" : (otherClosed ? "Other user closed the chat" : "Type a message...");
 }
 
 function closeChatModal() {
@@ -450,6 +465,10 @@ async function loadMessages(threadId) {
 
 sendChatBtn?.addEventListener("click", async () => {
   if (!activeThread || !currentUser) return;
+  if (activeThread.status === "closed") {
+    showToast("This chat is closed", "info");
+    return;
+  }
   const body = chatInput.value.trim();
   if (!body) return;
 
@@ -461,7 +480,7 @@ sendChatBtn?.addEventListener("click", async () => {
 
   if (error) {
     console.error(error);
-    showToast("Failed to send message");
+    showToast("Failed to send message", "error");
     return;
   }
 
@@ -475,15 +494,18 @@ sendChatBtn?.addEventListener("click", async () => {
 
 closeChatBtn?.addEventListener("click", async () => {
   if (!activeThread) return;
+  const payload = currentUser?.id === activeThread.buyer_id
+    ? { buyer_closed_at: new Date().toISOString() }
+    : { seller_closed_at: new Date().toISOString() };
   const { error } = await supabase
     .from("marketplace_threads")
-    .update({ status: "closed", closed_at: new Date().toISOString() })
+    .update(payload)
     .eq("id", activeThread.id);
   if (error) {
-    showToast("Couldn’t close chat");
+    showToast("Couldn’t close chat", "error");
     return;
   }
-  showToast("Chat closed");
+  showToast("Chat closed on your end", "success");
   closeChatModal();
   loadInbox();
   refreshInboxBadge();
@@ -503,10 +525,35 @@ if (supabase) {
   refreshInboxBadge();
 }
 
+const params = new URLSearchParams(window.location.search);
+if (params.get("create") === "1") {
+  refreshAuth().then(() => {
+    if (currentUser) {
+      openListingModal();
+    } else {
+      showToast("Log in to create a listing", "info");
+    }
+  });
+}
+
 async function markThreadRead(thread) {
   if (!thread || !currentUser) return;
   const payload = currentUser.id === thread.buyer_id
     ? { buyer_last_read_at: new Date().toISOString() }
     : { seller_last_read_at: new Date().toISOString() };
   await supabase.from("marketplace_threads").update(payload).eq("id", thread.id);
+}
+
+function isClosedForUser(thread) {
+  if (!thread || !currentUser) return false;
+  return currentUser.id === thread.buyer_id
+    ? Boolean(thread.buyer_closed_at)
+    : Boolean(thread.seller_closed_at);
+}
+
+function isClosedByOther(thread) {
+  if (!thread || !currentUser) return false;
+  return currentUser.id === thread.buyer_id
+    ? Boolean(thread.seller_closed_at)
+    : Boolean(thread.buyer_closed_at);
 }
