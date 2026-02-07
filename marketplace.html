@@ -1,11 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketplace – Primal Lab</title>
+  <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="marketplace.css">
+  <link rel="stylesheet" href="darkmode.css">
 </head>
 <body>
-    
+  <div class="bg-gradient"></div>
+  <div id="particles"></div>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">Primal Lab</a>
+      <nav class="nav-links">
+        <a href="index.html#modules">Modules</a>
+        <a href="builder.html">Planner</a>
+        <a href="threads.html">Community</a>
+      </nav>
+      <div class="auth-actions">
+        <button id="loginBtn">Log In</button>
+        <button id="accountBtn" style="display:none;">Account</button>
+        <button id="logoutBtn" style="display:none;">Log Out</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="market-hero">
+    <div class="market-hero-content">
+      <div>
+        <h1 class="market-title">Marketplace</h1>
+        <p class="market-subtitle">List equipment, browse setups, and message sellers directly. No payments here — just clean, fast connections.</p>
+      </div>
+      <div class="market-hero-actions">
+        <button id="createListingBtn" class="btn primary">Create Listing</button>
+        <button id="openInboxBtn" class="btn ghost">Inbox <span id="inboxBadge" class="inbox-badge hidden"></span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="market-shell">
+    <aside class="market-filters">
+      <div class="filter-card">
+        <h3>Search</h3>
+        <input id="searchInput" type="text" placeholder="Search listings…">
+      </div>
+      <div class="filter-card">
+        <h3>Filters</h3>
+        <select id="categoryFilter">
+          <option value="">All categories</option>
+          <option value="strength">Strength</option>
+          <option value="cardio">Cardio</option>
+          <option value="boxing">Boxing</option>
+          <option value="functional">Functional</option>
+          <option value="recovery">Recovery</option>
+          <option value="other">Other</option>
+        </select>
+        <select id="conditionFilter">
+          <option value="">Any condition</option>
+          <option value="new">New</option>
+          <option value="like-new">Like new</option>
+          <option value="good">Good</option>
+          <option value="fair">Fair</option>
+        </select>
+        <select id="sortFilter">
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+        </select>
+        <label class="toggle-row">
+          <input type="checkbox" id="myListingsToggle">
+          <span>My listings</span>
+        </label>
+      </div>
+      <div class="filter-card">
+        <h3>Tips</h3>
+        <p>Keep your listings clear and include exact dimensions or brand names when possible.</p>
+      </div>
+    </aside>
+
+    <div class="market-content">
+      <div id="listingGrid" class="listing-grid">
+        <div class="loading">Loading listings...</div>
+      </div>
+    </div>
+  </section>
+
+  <div id="listingModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <h3>Create Listing</h3>
+      <div class="modal-form">
+        <label>Title</label>
+        <input id="listingTitle" type="text" placeholder="e.g., Rogue Power Rack">
+        <label>Description</label>
+        <textarea id="listingDescription" rows="4" placeholder="Describe the equipment, condition, size, and pickup info"></textarea>
+        <div class="row">
+          <div class="field">
+            <label>Price (optional)</label>
+            <input id="listingPrice" type="number" step="0.01" placeholder="200">
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <select id="listingCategory">
+              <option value="strength">Strength</option>
+              <option value="cardio">Cardio</option>
+              <option value="boxing">Boxing</option>
+              <option value="functional">Functional</option>
+              <option value="recovery">Recovery</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Condition</label>
+            <select id="listingCondition">
+              <option value="new">New</option>
+              <option value="like-new">Like new</option>
+              <option value="good" selected>Good</option>
+              <option value="fair">Fair</option>
+            </select>
+          </div>
+        </div>
+        <label>Image URL (optional)</label>
+        <input id="listingImage" type="url" placeholder="https://...">
+      </div>
+      <div class="modal-actions">
+        <button id="listingSave" class="header-btn">Publish</button>
+        <button id="listingCancel" class="header-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="chatModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card chat-modal">
+      <div class="chat-header">
+        <div>
+          <h3 id="chatTitle">Chat</h3>
+          <p id="chatMeta" class="chat-meta"></p>
+        </div>
+        <div class="chat-actions">
+          <button id="closeChatBtn" class="header-btn">Close Chat</button>
+          <button id="exitChatBtn" class="header-btn">Exit</button>
+        </div>
+      </div>
+      <div id="chatMessages" class="chat-messages"></div>
+      <div class="chat-input">
+        <input id="chatInput" type="text" placeholder="Type a message...">
+        <button id="sendChatBtn" class="header-btn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="inboxDrawer" class="inbox hidden">
+    <div class="inbox-header">
+      <h3>Inbox</h3>
+      <button id="closeInbox" class="header-btn">Close</button>
+    </div>
+    <div id="inboxList" class="inbox-list"></div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    window.supabaseClient = createClient(
+      "https://nqomiajgtmxxsupjgvvu.supabase.co",
+      "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA"
+    );
+  </script>
+  <script src="marketplace.js" defer></script>
+  <script src="darkmode.js"></script>
+  <script>
+    const particlesContainer = document.getElementById('particles');
+    if (particlesContainer) {
+      for (let i = 0; i < 48; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (Math.random() * 22 + 24) + 's';
+        p.style.animationDelay = Math.random() * 8 + 's';
+        p.style.setProperty('--drift', (Math.random() * 160 - 80) + 'px');
+        particlesContainer.appendChild(p);
+      }
+    }
+  </script>
 </body>
 </html>
