@@ -21,6 +21,10 @@
   font-family: Inter, system-ui, sans-serif;
 }
 
+html {
+  background: #f6fff9;
+}
+
 body {
   margin: 0;
   height: 100vh;

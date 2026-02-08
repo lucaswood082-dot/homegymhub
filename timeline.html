@@ -6,13 +6,30 @@
   <title>Development Roadmap</title>
   <link rel="stylesheet" href="timeline.css">
   <link rel="stylesheet" href="darkmode.css">
+  <style>
+    html { background: #f6fff9; }
+    body { background: #f6fff9; }
+  </style>
+  <script>
+    (function () {
+      try {
+        const isDark = localStorage.getItem("darkMode") === "true";
+        document.documentElement.classList.toggle("dark-mode", isDark);
+        document.documentElement.style.background = isDark ? "#0f172a" : "#f6fff9";
+        document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+        document.addEventListener("DOMContentLoaded", () => {
+          document.body.classList.toggle("dark-mode", isDark);
+        });
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
 
   <main class="timeline-page">
     <header class="timeline-header">
       <h1>Development Roadmap</h1>
-      <p>Track our journey from foundation to advanced features. Each phase builds upon the last to create a comprehensive Primal Lab planning platform.</p>
+      <p>Here’s where Primal Lab is today and what’s next. Each phase captures the major systems already live and the upgrades on deck.</p>
     </header>
 
     <div class="timeline-container">
@@ -28,12 +45,12 @@
             <span class="status-badge completed">Completed</span>
           </div>
           <h2>Foundation</h2>
-          <p class="phase-description">Establishing core infrastructure and ensuring reliability across all devices.</p>
+          <p class="phase-description">Core platform polish and stability across desktop and mobile.</p>
           <ul class="feature-list">
             <li>Responsive layout & overflow fixes</li>
-            <li>Mobile and touch interaction support</li>
-            <li>Performance optimization</li>
-            <li>Visual cleanup and consistency</li>
+            <li>Touch support and smooth interactions</li>
+            <li>Performance tuning and load smoothing</li>
+            <li>Unified visual system</li>
           </ul>
         </div>
       </div>
@@ -47,15 +64,15 @@
         <div class="phase-content">
           <div class="phase-header">
             <span class="phase-label">Phase 2</span>
-            <span class="status-badge in-progress">In Progress</span>
+            <span class="status-badge completed">Completed</span>
           </div>
-          <h2>Interactive Builder</h2>
-          <p class="phase-description">Creating intuitive tools for designing and visualizing your perfect lab space.</p>
+          <h2>Interactive Planner</h2>
+          <p class="phase-description">Design tools, snapping, exports, and multi‑design workflows.</p>
           <ul class="feature-list">
-            <li>Primal Lab Builder with drag & drop</li>
-            <li>Grid snapping and item locking</li>
-            <li>Mobile-first interactions</li>
-            <li>Real-time preview updates</li>
+            <li>Drag & drop equipment + structures</li>
+            <li>Snapping, rotation, locking, and grouping</li>
+            <li>Multiple designs with rename/delete</li>
+            <li>PNG export and layout previews</li>
           </ul>
         </div>
       </div>
@@ -69,15 +86,15 @@
         <div class="phase-content">
           <div class="phase-header">
             <span class="phase-label">Phase 3</span>
-            <span class="status-badge planned">Planned</span>
+            <span class="status-badge in-progress">In Progress</span>
           </div>
-          <h2>Personalisation</h2>
-          <p class="phase-description">Empowering users to save, share, and customize their Primal Lab designs.</p>
+          <h2>Marketplace & Community</h2>
+          <p class="phase-description">Live listings, direct chats, and community sharing with moderation tools.</p>
           <ul class="feature-list">
-            <li>Save & load custom layouts</li>
-            <li>Shareable Primal Lab designs</li>
-            <li>Preset room sizes and templates</li>
-            <li>User account integration</li>
+            <li>Marketplace listings + messaging</li>
+            <li>Community threads and replies</li>
+            <li>Account profiles and verification</li>
+            <li>Admin moderation console</li>
           </ul>
         </div>
       </div>
@@ -94,12 +111,12 @@
             <span class="status-badge planned">Planned</span>
           </div>
           <h2>Advanced Tools</h2>
-          <p class="phase-description">Next-generation features to bring your Primal Lab vision to life.</p>
+          <p class="phase-description">The next wave: smarter workflows and richer previews.</p>
           <ul class="feature-list">
-            <li>3D Primal Lab previews and walkthroughs</li>
-            <li>Budget estimation calculator</li>
-            <li>Community layouts gallery</li>
-            <li>AI-powered layout suggestions</li>
+            <li>3D walkthrough previews</li>
+            <li>Budget and equipment calculators</li>
+            <li>Community layout gallery</li>
+            <li>Smart layout suggestions</li>
           </ul>
         </div>
       </div>

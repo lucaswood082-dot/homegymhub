@@ -220,6 +220,10 @@ body {
               0 0 22px rgba(47, 199, 119, 0.18);
 }
 
+.listing-card:active {
+  transform: translateY(-3px) scale(0.99);
+}
+
 .listing-card::after {
   content: "";
   position: absolute;
@@ -329,6 +333,10 @@ body {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.header-btn:active {
+  transform: translateY(1px) scale(0.98);
 }
 
 .header-btn.primary {

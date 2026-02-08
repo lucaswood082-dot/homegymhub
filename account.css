@@ -13,7 +13,7 @@ html, body {
   width: 100%; 
   overflow-x: hidden; 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #ffffff; 
+  background: #f6fff9; 
   color: #1a1a1a; 
   scroll-behavior: smooth; 
 }
@@ -514,6 +514,10 @@ html, body {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none !important;
+}
+
+.btn:active {
+  transform: translateY(1px) scale(0.98);
 }
 
 .admin-link {

@@ -32,7 +32,12 @@
   <section class="admin-hero">
     <h1>Admin Console</h1>
     <p>Restricted access for Primal Lab operations. This console is locked to authorized administrators only.</p>
-    <div id="adminStatus" class="admin-status">Checking access…</div>
+    <div class="admin-hero-row">
+      <div id="adminStatus" class="admin-status">Checking access…</div>
+      <div id="adminNotif" class="admin-notif hidden">
+        Notifications <span id="adminNotifCount">0</span>
+      </div>
+    </div>
   </section>
 
   <main class="admin-shell">
@@ -77,6 +82,10 @@
         <div class="admin-tile">
           <strong>Registered Users</strong>
           <span id="statUsers">0</span>
+        </div>
+        <div class="admin-tile">
+          <strong>Contact Messages</strong>
+          <span id="statContacts">0</span>
         </div>
       </div>
     </section>
@@ -163,9 +172,21 @@
         <span class="admin-note">Access locked to Admin UUID</span>
       </div>
     </section>
+
+    <section id="adminContacts" class="admin-card hidden">
+      <div class="admin-card-header">
+        <div>
+          <h3>Contact Messages</h3>
+          <p>Latest messages submitted from the contact page.</p>
+        </div>
+        <button id="refreshContactsBtn" class="btn ghost">Refresh</button>
+      </div>
+      <div id="adminContactsList" class="admin-table"></div>
+    </section>
   </main>
 
   <div id="adminToast" class="admin-toast hidden"></div>
+  <div id="adminNotify" class="admin-toast hidden"></div>
 
   <footer class="footer">
     © 2026 Primal Lab - Admin Console
@@ -175,6 +196,8 @@
   <script>
     const status = document.getElementById("adminStatus");
     const message = document.getElementById("adminMessage");
+    const adminNotif = document.getElementById("adminNotif");
+    const adminNotifCount = document.getElementById("adminNotifCount");
     status.textContent = "Loading admin tools…";
     message.textContent = "Starting secure admin session.";
 
@@ -203,6 +226,16 @@
       toast._timer = setTimeout(() => toast.classList.add("hidden"), 2200);
     }
 
+    let notifCount = 0;
+    function bumpNotif(text) {
+      notifCount += 1;
+      if (adminNotif && adminNotifCount) {
+        adminNotif.classList.remove("hidden");
+        adminNotifCount.textContent = notifCount;
+      }
+      showToast(text);
+    }
+
     function showGate(text) {
       document.getElementById("adminGate").classList.remove("hidden");
       document.getElementById("adminContent").classList.add("hidden");
@@ -212,6 +245,7 @@
       document.getElementById("adminListings").classList.add("hidden");
       document.getElementById("adminThreads").classList.add("hidden");
       document.getElementById("adminHealth").classList.add("hidden");
+      document.getElementById("adminContacts").classList.add("hidden");
       message.textContent = text;
     }
 
@@ -224,6 +258,7 @@
       document.getElementById("adminListings").classList.remove("hidden");
       document.getElementById("adminThreads").classList.remove("hidden");
       document.getElementById("adminHealth").classList.remove("hidden");
+      document.getElementById("adminContacts").classList.remove("hidden");
     }
 
     function initParticles() {
@@ -309,7 +344,8 @@
           { count: listingCount },
           { count: activeCount },
           { count: threadCount },
-          { count: messageCount }
+          { count: messageCount },
+          { count: contactCount }
         ] =
           await Promise.all([
             supabase.from("marketplace_listings").select("id", { count: "exact", head: true }),
@@ -318,13 +354,16 @@
               .select("id", { count: "exact", head: true })
               .eq("status", "active"),
             supabase.from("main_threads").select("id", { count: "exact", head: true }),
-            supabase.from("marketplace_messages").select("id", { count: "exact", head: true })
+            supabase.from("marketplace_messages").select("id", { count: "exact", head: true }),
+            supabase.from("contact_messages").select("id", { count: "exact", head: true })
           ]);
 
         document.getElementById("statListings").textContent = listingCount || 0;
         document.getElementById("statListingsActive").textContent = activeCount || 0;
         document.getElementById("statThreads").textContent = threadCount || 0;
         document.getElementById("statMessages").textContent = messageCount || 0;
+        const contactEl = document.getElementById("statContacts");
+        if (contactEl) contactEl.textContent = contactCount || 0;
         const { data: userCount, error: userCountError } = await supabase.rpc("admin_user_count");
         document.getElementById("statUsers").textContent = userCountError ? "—" : userCount || 0;
       } catch (err) {
@@ -576,6 +615,72 @@
       });
     }
 
+    async function loadContacts(supabase) {
+      const list = document.getElementById("adminContactsList");
+      list.innerHTML = "<div class='admin-row'>Loading messages…</div>";
+
+      const { data, error } = await supabase
+        .from("contact_messages")
+        .select("id, name, email, topic, message, created_at, status")
+        .order("created_at", { ascending: false })
+        .limit(25);
+
+      if (error) {
+        console.error("Contact load error:", error);
+        list.innerHTML = "<div class='admin-row'>Failed to load contact messages.</div>";
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        list.innerHTML = "<div class='admin-row'>No contact messages yet.</div>";
+        return;
+      }
+
+      list.innerHTML = "";
+      data.filter((msg) => msg.status !== "completed").forEach((msg) => {
+        const row = document.createElement("div");
+        row.className = "admin-row";
+        row.innerHTML = `
+          <div>
+            <strong>${msg.name || "Anonymous"}</strong>
+            <small>${msg.email || "No email"}</small>
+            <small>${msg.topic || "General"}</small>
+          </div>
+          <div></div>
+          <div>
+            <small>${new Date(msg.created_at).toLocaleString()}</small>
+          </div>
+        `;
+        const actions = document.createElement("div");
+        actions.className = "admin-actions-inline";
+        const viewBtn = document.createElement("button");
+        viewBtn.className = "btn ghost";
+        viewBtn.textContent = "View";
+        viewBtn.addEventListener("click", () => {
+          showToast(msg.message || "No message body");
+        });
+        const doneBtn = document.createElement("button");
+        doneBtn.className = "btn secondary";
+        doneBtn.textContent = "Complete";
+        doneBtn.addEventListener("click", async () => {
+          const { error: updateError } = await supabase
+            .from("contact_messages")
+            .update({ status: "completed" })
+            .eq("id", msg.id);
+          if (updateError) {
+            console.error("Complete message error:", updateError);
+            showToast("Failed to complete message", true);
+            return;
+          }
+          loadContacts(supabase);
+        });
+        actions.appendChild(viewBtn);
+        actions.appendChild(doneBtn);
+        row.appendChild(actions);
+        list.appendChild(row);
+      });
+    }
+
     function setHealthStatus(el, ok, text) {
       if (!el) return;
       el.textContent = text;
@@ -624,6 +729,7 @@
       loadUsers(supabase);
       loadListings(supabase);
       loadThreads(supabase);
+      loadContacts(supabase);
 
       document.getElementById("refreshUsersBtn")?.addEventListener("click", () => loadUsers(supabase));
       document.getElementById("userSearch")?.addEventListener("input", (e) => {
@@ -642,6 +748,35 @@
       });
 
       document.getElementById("refreshThreadsBtn")?.addEventListener("click", () => loadThreads(supabase));
+      document.getElementById("refreshContactsBtn")?.addEventListener("click", () => loadContacts(supabase));
+      const contactChannel = supabase
+        .channel("contact_messages_watch")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "contact_messages" },
+          (payload) => {
+            const msg = payload.new;
+            bumpNotif(`New contact message from ${msg.name || "Unknown"}`);
+            loadContacts(supabase);
+            const stat = document.getElementById("statContacts");
+            if (stat && Number.isFinite(Number(stat.textContent))) {
+              stat.textContent = Number(stat.textContent) + 1;
+            }
+          }
+        )
+        .subscribe();
+
+      const profileChannel = supabase
+        .channel("profiles_watch")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "profiles" },
+          (payload) => {
+            const user = payload.new;
+            bumpNotif(`New user registered: ${user.display_name || user.id}`);
+          }
+        )
+        .subscribe();
 
       document.getElementById("verifyToggleBtn")?.addEventListener("click", async () => {
         const userId = document.getElementById("verifyUserId").value.trim();

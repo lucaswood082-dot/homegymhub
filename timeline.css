@@ -6,10 +6,14 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #ffffff;
+  background: #f6fff9;
   color: #1a1a1a;
   line-height: 1.6;
   overflow-x: hidden;
+}
+
+html {
+  background: #f6fff9;
 }
 
 /* Animated gradient background */
@@ -212,9 +216,9 @@ body {
 }
 
 .status-badge.planned {
-  background: rgba(255, 107, 53, 0.1);
-  color: #1f9d62;
-  border: 2px solid rgba(255, 107, 53, 0.3);
+  background: linear-gradient(135deg, #1f9d62, #2fc777);
+  color: #fff;
+  border: 2px solid rgba(47, 199, 119, 0.4);
 }
 
 /* Phase Title */

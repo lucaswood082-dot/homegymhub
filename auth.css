@@ -9,11 +9,15 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #ffffff;
+  background: #f6fff9;
   color: #1a1a1a;
   line-height: 1.6;
   overflow-x: hidden;
   overflow-y: hidden;
+}
+
+html {
+  background: #f6fff9;
 }
 
 /* Animated gradient background */

@@ -48,6 +48,44 @@ body {
   color: #0f7a45;
 }
 
+.admin-hero-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 1.2rem;
+}
+
+.admin-notif {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: rgba(47, 199, 119, 0.18);
+  color: #0f7a45;
+  border: 1px solid rgba(47, 199, 119, 0.45);
+}
+
+.admin-notif span {
+  display: inline-flex;
+  min-width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.1);
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.admin-notif.hidden {
+  display: none;
+}
+
 .admin-shell {
   max-width: 1200px;
   margin: 0 auto 6rem;
@@ -164,7 +202,7 @@ body {
 .admin-toast {
   position: fixed;
   right: 24px;
-  bottom: 24px;
+  top: 24px;
   padding: 0.9rem 1.2rem;
   border-radius: 14px;
   background: rgba(15, 23, 42, 0.9);
@@ -173,6 +211,8 @@ body {
   box-shadow: 0 15px 35px rgba(15, 23, 42, 0.25);
   z-index: 200;
   transition: transform 0.2s ease, opacity 0.2s ease;
+  max-width: min(420px, 92vw);
+  line-height: 1.4;
 }
 
 .admin-toast.hidden {

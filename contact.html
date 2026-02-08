@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact | Primal Lab</title>
+  <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="contact.css">
+  <link rel="stylesheet" href="darkmode.css">
+  <style>
+    html { background: #f6fff9; }
+    body { background: #f6fff9; }
+  </style>
+  <script>
+    (function () {
+      try {
+        const isDark = localStorage.getItem("darkMode") === "true";
+        document.documentElement.classList.toggle("dark-mode", isDark);
+        document.documentElement.style.background = isDark ? "#0f172a" : "#f6fff9";
+        document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+        document.addEventListener("DOMContentLoaded", () => {
+          document.body.classList.toggle("dark-mode", isDark);
+        });
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-gradient"></div>
+  <div id="particles"></div>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">Primal Lab</a>
+      <nav class="nav-links">
+        <a href="index.html#modules">Modules</a>
+        <a href="contact.html">Contact</a>
+        <a href="index.html#about">About</a>
+      </nav>
+      <div class="auth-actions">
+        <button id="loginBtn">Log In</button>
+        <button id="accountBtn" style="display:none;">Account</button>
+        <button id="logoutBtn" style="display:none;">Log Out</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="contact-hero">
+    <div class="contact-hero-inner">
+      <h1>Contact Primal Lab</h1>
+      <p>Got feedback or need help? Send a quick message and we’ll get back to you.</p>
+    </div>
+  </section>
+
+  <main class="contact-shell">
+    <section class="contact-card">
+      <h2>Send a message</h2>
+      <p class="contact-subtitle">We reply within 1–2 business days.</p>
+
+      <form id="contactForm" class="contact-form">
+        <label for="contactName">Name</label>
+        <input id="contactName" type="text" placeholder="Your name" required>
+
+        <label for="contactEmail">Email</label>
+        <input id="contactEmail" type="email" placeholder="you@email.com" required>
+
+        <label for="contactTopic">Topic</label>
+        <select id="contactTopic">
+          <option value="General">General</option>
+          <option value="Marketplace">Marketplace</option>
+          <option value="Planner">Planner</option>
+          <option value="Community">Community</option>
+          <option value="Bug Report">Bug Report</option>
+        </select>
+
+        <label for="contactMessage">Message</label>
+        <textarea id="contactMessage" rows="5" placeholder="Tell us how we can help..." required></textarea>
+
+        <div class="contact-actions">
+          <button type="submit" class="btn primary">Send Message</button>
+          <button type="button" id="copyEmailBtn" class="btn secondary">Copy Email</button>
+        </div>
+      </form>
+      <div id="contactConfirmation" class="contact-confirmation">
+        Thanks! Your message was received. We’ll get back to you soon.
+      </div>
+    </section>
+
+    <aside class="contact-card info-card">
+      <h3>Other ways to reach us</h3>
+      <div class="info-row">
+        <span>Support Email</span>
+        <strong id="supportEmail">primallabcontact@gmail.com</strong>
+      </div>
+      <div class="info-row">
+        <span>Hours</span>
+        <strong>Mon–Fri, 9am–5pm</strong>
+      </div>
+      <div class="info-row">
+        <span>Location</span>
+        <strong>Adelaide, AU</strong>
+      </div>
+      <p class="info-note">Tip: include screenshots or error text for faster help.</p>
+    </aside>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <footer class="footer">
+    © 2026 Primal Lab - Built for builders
+  </footer>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const supabaseUrl = "https://nqomiajgtmxxsupjgvvu.supabase.co";
+    const supabaseKey = "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const loginBtn = document.getElementById("loginBtn");
+    const accountBtn = document.getElementById("accountBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const toast = document.getElementById("toast");
+    const supportEmail = document.getElementById("supportEmail").textContent;
+
+    function showToast(message, type = "success") {
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.remove("hidden");
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.add("hidden"), 2600);
+    }
+
+    async function refreshAuth() {
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user || null;
+      if (user) {
+        loginBtn.style.display = "none";
+        accountBtn.style.display = "inline-flex";
+        logoutBtn.style.display = "inline-flex";
+      } else {
+        loginBtn.style.display = "inline-flex";
+        accountBtn.style.display = "none";
+        logoutBtn.style.display = "none";
+      }
+    }
+
+    loginBtn?.addEventListener("click", () => {
+      window.location.href = "auth.html";
+    });
+    accountBtn?.addEventListener("click", () => {
+      window.location.href = "account.html";
+    });
+    logoutBtn?.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      await refreshAuth();
+      showToast("Logged out", "success");
+    });
+
+    const form = document.getElementById("contactForm");
+    const copyBtn = document.getElementById("copyEmailBtn");
+
+    copyBtn?.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(supportEmail);
+      showToast("Support email copied", "success");
+    });
+
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("contactName").value.trim();
+      const email = document.getElementById("contactEmail").value.trim();
+      const topic = document.getElementById("contactTopic").value;
+      const message = document.getElementById("contactMessage").value.trim();
+
+      if (!name || !email || !message) {
+        showToast("Please complete all fields", "error");
+        return;
+      }
+
+      try {
+        const { error } = await supabase.from("contact_messages").insert({
+          name,
+          email,
+          topic,
+          message
+        });
+        if (error) throw error;
+      } catch (err) {
+        console.error("Contact save error:", err);
+        showToast("Couldn't send message. Try again.", "error");
+        return;
+      }
+
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-contact`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({ name, email, topic, message, to: supportEmail })
+        });
+      } catch (err) {
+        console.warn("Contact email function failed:", err);
+      }
+
+      form.reset();
+      form.classList.add("hidden");
+      document.getElementById("contactConfirmation")?.classList.add("show");
+    });
+
+    refreshAuth();
+  </script>
+  <script src="darkmode.js"></script>
+  <script>
+    const particlesContainer = document.getElementById('particles');
+    for (let i = 0; i < 36; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (Math.random() * 12 + 8) + 's';
+      p.style.animationDelay = Math.random() * 5 + 's';
+      p.style.setProperty('--drift', (Math.random() * 200 - 100) + 'px');
+      particlesContainer.appendChild(p);
+    }
+  </script>
+</body>
+</html>
