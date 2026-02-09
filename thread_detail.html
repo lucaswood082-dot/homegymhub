@@ -242,7 +242,7 @@ async function loadReplies() {
       created_at,
       author_id,
       image_urls,
-      profiles!inner(display_name)
+      profiles!inner(display_name, verified_seller)
     `)
     .eq("main_thread_id", thread_id)
     .order("created_at", { ascending: true });
@@ -271,7 +271,10 @@ async function loadReplies() {
       <div class="reply-header">
         <div class="reply-author-section">
           <img src="${profileImg}" alt="Profile" class="reply-avatar">
-          <strong class="reply-author">${r.profiles.display_name}</strong>
+          <span class="reply-name">
+            <strong class="reply-author">${r.profiles.display_name}</strong>
+            ${r.profiles.verified_seller ? `<span class="verified-icon" title="Verified seller" aria-label="Verified seller"></span>` : ""}
+          </span>
         </div>
         <div class="reply-actions">
           <span class="reply-date">${new Date(r.created_at).toLocaleString()}</span>

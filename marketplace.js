@@ -78,6 +78,21 @@ function showToast(message, type = "info") {
   toast._timer = setTimeout(() => toast.classList.add("hidden"), 2000);
 }
 
+function escapeHTML(str) {
+  const div = document.createElement("div");
+  div.textContent = str ?? "";
+  return div.innerHTML;
+}
+
+function titleCase(s) {
+  return String(s || "")
+    .replace(/_/g, " ")
+    .replace(/-/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 if (!supabase) {
   console.error("Supabase client not available");
   if (listingGrid) {
@@ -135,7 +150,12 @@ function openListingDetails(listing) {
   detailTitle.textContent = listing.title || "Listing";
   detailSubtitle.textContent = listing.category ? `Category: ${listing.category}` : "";
   detailDescription.textContent = listing.description || "";
-  detailSeller.textContent = `Seller: ${listing.seller_name || "Primal Lab user"}`;
+  const sellerName = listing._sellerDisplayName || listing.seller_name || "Primal Lab user";
+  detailSeller.innerHTML = `Seller: <strong class="detail-seller-name">${escapeHTML(sellerName)}</strong>${
+    (listing._sellerVerified || listing.seller_verified)
+      ? ` <span class="verified-icon" title="Verified seller" aria-label="Verified seller"></span>`
+      : ""
+  }`;
   detailPrice.textContent = listing.price ? `$${Number(listing.price).toFixed(2)}` : "Offer";
   detailMeta.innerHTML = "";
   const metaItems = [];
@@ -347,7 +367,7 @@ listingSave?.addEventListener("click", async () => {
   let sellerVerified = false;
   const { data: profile } = await supabase
     .from("profiles")
-    .select("verified_seller")
+    .select("verified_seller, display_name")
     .eq("id", currentUser.id)
     .maybeSingle();
   if (profile?.verified_seller) sellerVerified = true;
@@ -363,7 +383,11 @@ listingSave?.addEventListener("click", async () => {
     condition: listingCondition.value,
     image_url: imageUrl,
     created_by: currentUser.id,
-    seller_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email,
+    seller_name:
+      profile?.display_name ||
+      currentUser.user_metadata?.full_name ||
+      currentUser.user_metadata?.name ||
+      currentUser.email,
     seller_email: currentUser.email,
     seller_avatar: currentUser.user_metadata?.avatar_url || null,
     status: "active",
@@ -428,6 +452,27 @@ async function loadListings() {
     return;
   }
 
+  // Resolve seller display names from profiles (older listings may have email stored).
+  const sellerIds = Array.from(new Set(data.map((d) => d.created_by).filter(Boolean)));
+  const profileById = new Map();
+  if (sellerIds.length) {
+    const { data: profiles, error: profilesErr } = await supabase
+      .from("profiles")
+      .select("id, display_name, verified_seller")
+      .in("id", sellerIds)
+      .limit(400);
+    if (profilesErr) {
+      console.warn("Profiles lookup failed (seller display names):", profilesErr);
+    } else {
+      (profiles || []).forEach((p) => profileById.set(p.id, p));
+    }
+  }
+  data.forEach((item) => {
+    const p = item.created_by ? profileById.get(item.created_by) : null;
+    item._sellerDisplayName = p?.display_name || item.seller_name || "Primal Lab user";
+    item._sellerVerified = !!(item.seller_verified || p?.verified_seller);
+  });
+
   listingGrid.innerHTML = data.map((item) => {
     const price = item.price ? `$${Number(item.price).toFixed(2)}` : "Offer";
     let sizeLabel = "";
@@ -440,24 +485,43 @@ async function loadListings() {
       }
     }
     const img = item.image_url
-      ? `<img class="listing-image" src="${item.image_url}" alt="${item.title}" onerror="this.remove()">`
+      ? `<div class="listing-media"><img src="${escapeHTML(item.image_url)}" alt="${escapeHTML(item.title || "Listing image")}" loading="lazy" onerror="this.closest('.listing-media')?.remove()"></div>`
       : ``;
 
     const owner = currentUser && item.created_by === currentUser.id;
+    const sellerName = item._sellerDisplayName || item.seller_name || "Primal Lab user";
+    const verified = item._sellerVerified
+      ? `<span class="verified-icon" title="Verified seller" aria-label="Verified seller"></span>`
+      : "";
+
+    const tags = [
+      sizeLabel ? `${sizeLabel}` : "",
+      item.category ? titleCase(item.category) : "",
+      item.condition ? titleCase(item.condition) : "",
+      item.location ? item.location : ""
+    ].filter(Boolean);
+
+    const desc = String(item.description || "").trim();
+    const descHtml = desc ? `<p class="listing-desc">${escapeHTML(desc)}</p>` : "";
 
     return `
       <div class="listing-card" data-id="${item.id}">
         ${img}
-        <h3 class="listing-title">${item.title}${item.seller_verified ? `<span class="verified-badge">Verified</span>` : ""}</h3>
-        <p class="listing-desc">${item.description}</p>
-        <div class="listing-meta">
-          <span>${price}</span>
-          ${sizeLabel ? `<span>${sizeLabel}</span>` : ""}
-          <span>${item.category}</span>
-          <span>${item.condition}</span>
-          ${item.location ? `<span>${item.location}</span>` : ""}
+        <div class="listing-head">
+          <h3 class="listing-title">${escapeHTML(item.title || "Untitled")}</h3>
+          <div class="listing-price">${escapeHTML(price)}</div>
         </div>
-        <div class="listing-meta">Seller: ${item.seller_name || "Primal Lab user"}</div>
+        <div class="listing-seller">
+          <span>Seller:</span>
+          <span class="seller-name">${escapeHTML(sellerName)}</span>
+          ${verified}
+        </div>
+        ${descHtml}
+        ${tags.length ? `
+          <div class="listing-meta">
+            ${tags.map((t) => `<span>${escapeHTML(t)}</span>`).join("")}
+          </div>
+        ` : ``}
         <div class="listing-actions">
           ${owner ? `<button class="header-btn remove-listing" data-id="${item.id}">Remove</button>` : ``}
           ${owner ? `` : `<button class="header-btn primary inquire-btn" data-id="${item.id}">Inquire</button>`}
@@ -602,14 +666,33 @@ async function loadInbox() {
 
   updateInboxBadge(countUnreadThreads(visibleThreads));
 
+  // Resolve seller display names for inbox rows (show display_name instead of email).
+  const inboxSellerIds = Array.from(new Set(visibleThreads.map((t) => t.seller_id).filter(Boolean)));
+  const inboxProfileById = new Map();
+  if (inboxSellerIds.length) {
+    const { data: inboxProfiles, error: inboxProfilesErr } = await supabase
+      .from("profiles")
+      .select("id, display_name, verified_seller")
+      .in("id", inboxSellerIds)
+      .limit(400);
+    if (inboxProfilesErr) {
+      console.warn("Inbox profiles lookup failed:", inboxProfilesErr);
+    } else {
+      (inboxProfiles || []).forEach((p) => inboxProfileById.set(p.id, p));
+    }
+  }
+
   inboxList.innerHTML = visibleThreads.map((thread) => {
     const listing = thread.listing || {};
     const otherClosed = isClosedByOther(thread);
     const pinned = pinnedSet.has(thread.id);
+    const prof = thread.seller_id ? inboxProfileById.get(thread.seller_id) : null;
+    const sellerName = prof?.display_name || listing.seller_name || "Seller";
+    const sellerVerified = !!(listing.seller_verified || prof?.verified_seller);
     return `
       <div class="inbox-item ${pinned ? "pinned" : ""}" data-id="${thread.id}" data-listing="${thread.listing_id}">
         <h4>${listing.title || "Listing"}</h4>
-        <p>${listing.price ? `$${Number(listing.price).toFixed(2)}` : "Offer"} · ${listing.seller_name || "Seller"}${listing.seller_verified ? " ✅" : ""}</p>
+        <p>${listing.price ? `$${Number(listing.price).toFixed(2)}` : "Offer"} · ${escapeHTML(sellerName)}${sellerVerified ? ` <span class="verified-icon" title="Verified seller" aria-label="Verified seller"></span>` : ""}</p>
         <div class="inbox-row">
           <span class="pill ${otherClosed ? "pill-muted" : ""}">${otherClosed ? "Closed by other" : "Open"}</span>
           <button class="pin-btn ${pinned ? "active" : ""}" data-id="${thread.id}" type="button">${pinned ? "Pinned" : "Pin"}</button>
@@ -624,7 +707,9 @@ async function loadInbox() {
       const listingId = item.dataset.listing;
       const thread = visibleThreads.find((t) => t.id === threadId);
       const listing = thread?.listing || {};
-      openChat(thread, { id: listingId, title: listing.title, seller_name: listing.seller_name });
+      const prof = thread?.seller_id ? inboxProfileById.get(thread.seller_id) : null;
+      const sellerName = prof?.display_name || listing.seller_name || "Seller";
+      openChat(thread, { id: listingId, title: listing.title, seller_name: sellerName });
     });
   });
 
@@ -699,7 +784,8 @@ async function openChat(thread, listing) {
   activeThread = thread;
   if (typingIndicator) typingIndicator.classList.add("hidden");
   chatTitle.textContent = listing?.title || "Chat";
-  chatMeta.textContent = listing?.seller_name ? `Seller: ${listing.seller_name}` : "";
+  const sellerLabel = listing?._sellerDisplayName || listing?.seller_name || "";
+  chatMeta.textContent = sellerLabel ? `Seller: ${sellerLabel}` : "";
   chatModal.classList.remove("hidden");
   chatModal.setAttribute("aria-hidden", "false");
   setTimeout(() => {

@@ -118,6 +118,7 @@
   </main>
 
   <div id="toast" class="toast hidden"></div>
+  <div id="copyPopup" class="copy-popup hidden" role="status" aria-live="polite">Copied</div>
 
   <footer class="footer">
     © 2026 Primal Lab - Built for builders
@@ -172,10 +173,32 @@
 
     const form = document.getElementById("contactForm");
     const copyBtn = document.getElementById("copyEmailBtn");
+    const copyPopup = document.getElementById("copyPopup");
+
+    function showCopyPopup(anchorEl) {
+      if (!copyPopup || !anchorEl) return;
+      const r = anchorEl.getBoundingClientRect();
+      const x = r.left + r.width / 2;
+      const y = r.top;
+      copyPopup.style.left = `${Math.round(x)}px`;
+      copyPopup.style.top = `${Math.round(y)}px`;
+      copyPopup.classList.remove("hidden");
+      copyPopup.classList.add("show");
+      clearTimeout(copyPopup._timer);
+      copyPopup._timer = setTimeout(() => {
+        copyPopup.classList.remove("show");
+        copyPopup.classList.add("hidden");
+      }, 1200);
+    }
 
     copyBtn?.addEventListener("click", async () => {
-      await navigator.clipboard.writeText(supportEmail);
-      showToast("Support email copied", "success");
+      try {
+        await navigator.clipboard.writeText(supportEmail);
+        showCopyPopup(copyBtn);
+      } catch (err) {
+        console.warn("Clipboard copy failed:", err);
+        showToast("Couldn't copy email", "error");
+      }
     });
 
     form?.addEventListener("submit", async (e) => {

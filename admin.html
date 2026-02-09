@@ -887,6 +887,7 @@
     let activeAthleteChatId = null;
     let activeAthleteChat = null;
     let athleteMsgChannel = null;
+    let athleteChatListRefreshTimer = null;
 
     function renderAdminMsg(msg, mine) {
       const row = document.createElement("div");
@@ -925,6 +926,7 @@
 
       const athleteIds = athletes.map((a) => a.user_id).filter(Boolean);
       let chatByAthleteId = new Map();
+      let lastMsgByChatId = new Map();
 
       if (athleteIds.length) {
         const { data: chats, error: chatErr } = await supabase
@@ -941,6 +943,24 @@
           chats.forEach((c) => {
             if (!chatByAthleteId.has(c.athlete_id)) chatByAthleteId.set(c.athlete_id, c);
           });
+
+          const chatIds = chats.map((c) => c.id).filter(Boolean);
+          if (chatIds.length) {
+            const { data: msgs, error: msgErr } = await supabase
+              .from("athlete_chat_messages")
+              .select("chat_id,body,sender_id,created_at")
+              .in("chat_id", chatIds)
+              .order("created_at", { ascending: false })
+              .limit(Math.min(900, chatIds.length * 6));
+
+            if (msgErr) {
+              console.error("Athlete last message preview load error:", msgErr);
+            } else if (Array.isArray(msgs)) {
+              msgs.forEach((m) => {
+                if (!lastMsgByChatId.has(m.chat_id)) lastMsgByChatId.set(m.chat_id, m);
+              });
+            }
+          }
         }
       }
 
@@ -982,9 +1002,7 @@
         const chat = chatByAthleteId.get(a.user_id) || null;
         const row = document.createElement("button");
         row.type = "button";
-        row.className = "admin-row";
-        row.style.cursor = "pointer";
-        row.style.textAlign = "left";
+        row.className = "admin-row chat-row";
 
         const title = a.display_name || "Athlete";
         const email = a.email || "";
@@ -993,17 +1011,30 @@
         const pillText = chat ? (chat.status || "open") : "new";
         const pillClass = chat ? (chat.status === "open" ? "" : "offline") : "offline";
 
+        const last = chat?.id ? lastMsgByChatId.get(chat.id) : null;
+        const normalized = (last?.body || "").replace(/\s+/g, " ").trim();
+        const clipped =
+          normalized && normalized.length > 90 ? `${normalized.slice(0, 89)}…` : normalized;
+        const preview =
+          clipped ? `${last?.sender_id === ADMIN_UUID ? "You: " : ""}${clipped}` : "";
+
+        const line2Html = line2 ? `<small>${escapeHTML(line2)}</small>` : "";
+        const previewHtml = preview ? `<small class="admin-preview">${escapeHTML(preview)}</small>` : "";
+        const whenStr = when ? new Date(when).toLocaleString() : "";
+        const whenHtml = whenStr ? `<small>${escapeHTML(whenStr)}</small>` : "";
+
         row.innerHTML = `
           <div>
             <strong>${escapeHTML(title)}</strong>
             <small>${escapeHTML(email || a.user_id)}</small>
-            <small>${escapeHTML(line2 || "")}</small>
+            ${line2Html}
+            ${previewHtml}
           </div>
           <div>
             <span class="admin-pill ${pillClass}">${escapeHTML(pillText)}</span>
           </div>
           <div>
-            <small>${when ? new Date(when).toLocaleString() : ""}</small>
+            ${whenHtml}
           </div>
         `;
 
@@ -1013,6 +1044,8 @@
             // Refresh list so "new" flips into a real chat.
             chatByAthleteId.set(a.user_id, ensured);
             openAthleteChat(supabase, ensured, a);
+            clearTimeout(athleteChatListRefreshTimer);
+            athleteChatListRefreshTimer = setTimeout(() => loadAthleteChats(supabase), 80);
           }
         });
 
@@ -1082,6 +1115,8 @@
             msgs.querySelector(".admin-row")?.remove();
             msgs.appendChild(renderAdminMsg(msg, msg.sender_id === ADMIN_UUID));
             msgs.scrollTop = msgs.scrollHeight;
+            clearTimeout(athleteChatListRefreshTimer);
+            athleteChatListRefreshTimer = setTimeout(() => loadAthleteChats(supabase), 180);
           }
         )
         .subscribe();
