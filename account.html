@@ -47,6 +47,7 @@
         <a href="index.html">Home</a>
         <a href="builder.html">Planner</a>
         <a href="marketplace.html">Marketplace</a>
+        <a href="athletes.html">Athletes</a>
         <a href="threads.html">Community</a>
       </div>
       <div class="auth-actions">
@@ -97,6 +98,9 @@
       <button class="btn primary" id="editProfileBtn">Edit Profile</button>
       <div id="adminLinkWrap" class="admin-link hidden">
         <button class="btn secondary" id="adminConsoleBtn">Admin Console</button>
+      </div>
+      <div id="athleteLinkWrap" class="admin-link hidden">
+        <button class="btn secondary" id="athletePortalBtn">Athlete Portal</button>
       </div>
 
       <div class="dark-toggle">
@@ -187,6 +191,8 @@
     const logoutBtn = document.getElementById("logoutBtn");
     const adminLinkWrap = document.getElementById("adminLinkWrap");
     const adminConsoleBtn = document.getElementById("adminConsoleBtn");
+    const athleteLinkWrap = document.getElementById("athleteLinkWrap");
+    const athletePortalBtn = document.getElementById("athletePortalBtn");
     const toast = document.getElementById("toast");
 
     const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'><path d='M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z'/></svg>";
@@ -263,6 +269,19 @@
       adminLinkWrap.classList.remove("hidden");
     }
     emailText.textContent = user.email;
+    // Athlete portal: only show if this user is an approved athlete.
+    try {
+      const { data: athleteRows, error: athleteErr } = await supabase
+        .from("athlete_sponsorships")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
+        .limit(1);
+      const isAthlete = !athleteErr && Array.isArray(athleteRows) && athleteRows.length > 0;
+      athleteLinkWrap?.classList.toggle("hidden", !isAthlete);
+    } catch {
+      athleteLinkWrap?.classList.add("hidden");
+    }
 
         // Load profile from database
         const { data: profiles, error: profileError } = await supabase
@@ -368,6 +387,10 @@
 
     adminConsoleBtn?.addEventListener("click", () => {
       window.location.href = "admin.html";
+    });
+
+    athletePortalBtn?.addEventListener("click", () => {
+      window.location.href = "athlete_portal.html";
     });
 
     // Cancel button

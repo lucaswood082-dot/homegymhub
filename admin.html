@@ -18,6 +18,7 @@
       <nav class="nav-links">
         <a href="index.html#modules">Modules</a>
         <a href="builder.html">Planner</a>
+        <a href="athletes.html">Athletes</a>
         <a href="marketplace.html">Marketplace</a>
         <a href="threads.html">Community</a>
       </nav>
@@ -86,6 +87,10 @@
         <div class="admin-tile">
           <strong>Contact Messages</strong>
           <span id="statContacts">0</span>
+        </div>
+        <div class="admin-tile">
+          <strong>Athlete Applications</strong>
+          <span id="statAthletes">0</span>
         </div>
       </div>
     </section>
@@ -183,6 +188,58 @@
       </div>
       <div id="adminContactsList" class="admin-table"></div>
     </section>
+
+    <section id="adminAthletes" class="admin-card hidden">
+      <div class="admin-card-header">
+        <div>
+          <h3>Athlete Sponsorship</h3>
+          <p>Approve or reject sponsorship applications. Approved athletes appear on the public Athletes page.</p>
+        </div>
+        <button id="refreshAthletesBtn" class="btn ghost">Refresh</button>
+      </div>
+      <div class="admin-form-row">
+        <input id="athleteSearch" type="text" placeholder="Search athletes by name, email, sport, or UUID">
+        <select id="athleteStatusFilter">
+          <option value="approved">Approved roster</option>
+          <option value="pending">Pending applications</option>
+          <option value="rejected">Rejected</option>
+          <option value="">All statuses</option>
+        </select>
+      </div>
+      <div id="adminAthletesList" class="admin-table"></div>
+    </section>
+
+    <section id="adminAthleteMessages" class="admin-card hidden">
+      <div class="admin-card-header">
+        <div>
+          <h3>Athlete Messages</h3>
+          <p>Private 1:1 chats. Only you and that athlete can see the conversation.</p>
+        </div>
+        <button id="refreshAthleteChatsBtn" class="btn ghost">Refresh</button>
+      </div>
+      <div class="admin-form-row">
+        <input id="athleteChatSearch" type="text" placeholder="Search by athlete name, email, or UUID">
+      </div>
+      <div class="admin-split">
+        <div id="adminAthleteChatsList" class="admin-table"></div>
+        <div class="admin-chat">
+          <div class="admin-chat-head">
+            <div>
+              <strong id="adminAthleteChatTitle">Select a chat</strong>
+              <div class="admin-chat-sub" id="adminAthleteChatSub">—</div>
+            </div>
+            <button id="adminCloseAthleteChatBtn" class="btn secondary" type="button" disabled>Close chat</button>
+          </div>
+          <div id="adminAthleteMsgs" class="admin-chat-msgs">
+            <div class="admin-row">Choose an athlete chat to view messages.</div>
+          </div>
+          <form id="adminAthleteComposer" class="admin-chat-compose">
+            <input id="adminAthleteInput" type="text" placeholder="Write a message…" maxlength="500" disabled>
+            <button class="btn primary" type="submit" disabled id="adminAthleteSendBtn">Send</button>
+          </form>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div id="adminToast" class="admin-toast hidden"></div>
@@ -226,6 +283,12 @@
       toast._timer = setTimeout(() => toast.classList.add("hidden"), 2200);
     }
 
+    function escapeHTML(str) {
+      const div = document.createElement("div");
+      div.textContent = str ?? "";
+      return div.innerHTML;
+    }
+
     let notifCount = 0;
     function bumpNotif(text) {
       notifCount += 1;
@@ -246,6 +309,8 @@
       document.getElementById("adminThreads").classList.add("hidden");
       document.getElementById("adminHealth").classList.add("hidden");
       document.getElementById("adminContacts").classList.add("hidden");
+      document.getElementById("adminAthletes").classList.add("hidden");
+      document.getElementById("adminAthleteMessages").classList.add("hidden");
       message.textContent = text;
     }
 
@@ -259,6 +324,8 @@
       document.getElementById("adminThreads").classList.remove("hidden");
       document.getElementById("adminHealth").classList.remove("hidden");
       document.getElementById("adminContacts").classList.remove("hidden");
+      document.getElementById("adminAthletes").classList.remove("hidden");
+      document.getElementById("adminAthleteMessages").classList.remove("hidden");
     }
 
     function initParticles() {
@@ -345,7 +412,8 @@
           { count: activeCount },
           { count: threadCount },
           { count: messageCount },
-          { count: contactCount }
+          { count: contactCount },
+          { count: athletePendingCount }
         ] =
           await Promise.all([
             supabase.from("marketplace_listings").select("id", { count: "exact", head: true }),
@@ -355,7 +423,11 @@
               .eq("status", "active"),
             supabase.from("main_threads").select("id", { count: "exact", head: true }),
             supabase.from("marketplace_messages").select("id", { count: "exact", head: true }),
-            supabase.from("contact_messages").select("id", { count: "exact", head: true })
+            supabase.from("contact_messages").select("id", { count: "exact", head: true }),
+            supabase
+              .from("athlete_sponsorships")
+              .select("id", { count: "exact", head: true })
+              .eq("status", "pending")
           ]);
 
         document.getElementById("statListings").textContent = listingCount || 0;
@@ -364,6 +436,8 @@
         document.getElementById("statMessages").textContent = messageCount || 0;
         const contactEl = document.getElementById("statContacts");
         if (contactEl) contactEl.textContent = contactCount || 0;
+        const athleteEl = document.getElementById("statAthletes");
+        if (athleteEl) athleteEl.textContent = athletePendingCount || 0;
         const { data: userCount, error: userCountError } = await supabase.rpc("admin_user_count");
         document.getElementById("statUsers").textContent = userCountError ? "—" : userCount || 0;
       } catch (err) {
@@ -681,6 +755,395 @@
       });
     }
 
+    async function loadAthletes(supabase) {
+      const list = document.getElementById("adminAthletesList");
+      list.innerHTML = "<div class='admin-row'>Loading applications…</div>";
+
+      const term = document.getElementById("athleteSearch")?.value?.trim() || "";
+      const status = document.getElementById("athleteStatusFilter")?.value ?? "approved";
+
+      let query = supabase
+        .from("athlete_sponsorships")
+        .select("id, user_id, email, display_name, sport, discipline, location, bio, highlights, social_url, avatar_url, created_at, status, approved_at")
+        .order(status === "approved" ? "approved_at" : "created_at", { ascending: false, nullsFirst: false })
+        .limit(80);
+
+      if (status) query = query.eq("status", status);
+
+      if (term) {
+        query = query.or(
+          `display_name.ilike.%${term}%,email.ilike.%${term}%,sport.ilike.%${term}%,discipline.ilike.%${term}%,location.ilike.%${term}%,user_id.eq.${term}`
+        );
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Athletes load error:", error);
+        list.innerHTML = "<div class='admin-row'>Failed to load athletes.</div>";
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        list.innerHTML = "<div class='admin-row'>No athletes found.</div>";
+        return;
+      }
+
+      list.innerHTML = "";
+      data.forEach((app) => {
+        const row = document.createElement("div");
+        row.className = "admin-row";
+        row.innerHTML = `
+          <div>
+            <strong>${app.display_name || "Unnamed Athlete"}</strong>
+            <small>${app.email || "No email"}</small>
+            <small>${(app.sport || "sport") + " • " + (app.discipline || "discipline") + " • " + (app.location || "location")}</small>
+            <small>${app.user_id || ""}</small>
+          </div>
+          <div>
+            <span class="admin-pill ${app.status === "approved" ? "" : "offline"}">${app.status || "unknown"}</span>
+          </div>
+          <div>
+            <small>${new Date((app.status === "approved" ? (app.approved_at || app.created_at) : app.created_at)).toLocaleString()}</small>
+          </div>
+        `;
+
+        const actions = document.createElement("div");
+        actions.className = "admin-actions-inline";
+
+        const viewBtn = document.createElement("button");
+        viewBtn.className = "btn ghost";
+        viewBtn.textContent = "View";
+        viewBtn.addEventListener("click", () => {
+          const bits = [
+            app.bio ? `Bio: ${app.bio}` : "",
+            app.highlights ? `Highlights: ${app.highlights}` : "",
+            app.social_url ? `Social: ${app.social_url}` : ""
+          ].filter(Boolean);
+          showToast(bits.join(" • ") || "No details");
+        });
+
+        const approveBtn = document.createElement("button");
+        approveBtn.className = "btn primary";
+        approveBtn.textContent = "Approve";
+        approveBtn.addEventListener("click", async () => {
+          approveBtn.disabled = true;
+          const { error: updateError } = await supabase
+            .from("athlete_sponsorships")
+            .update({ status: "approved", approved_at: new Date().toISOString() })
+            .eq("id", app.id);
+          if (updateError) {
+            console.error("Approve athlete error:", updateError);
+            showToast("Failed to approve athlete", true);
+            approveBtn.disabled = false;
+            return;
+          }
+          showToast("Athlete approved");
+          const stat = document.getElementById("statAthletes");
+          if (stat && Number.isFinite(Number(stat.textContent))) stat.textContent = Math.max(0, Number(stat.textContent) - 1);
+          // Remove immediately so it feels instant, then refresh to reflect filters.
+          row.remove();
+          if (!list.children.length) list.innerHTML = "<div class='admin-row'>No athletes found.</div>";
+          loadAthletes(supabase);
+        });
+
+        const rejectBtn = document.createElement("button");
+        rejectBtn.className = "btn secondary";
+        rejectBtn.textContent = app.status === "approved" ? "Remove" : "Reject";
+        rejectBtn.addEventListener("click", async () => {
+          rejectBtn.disabled = true;
+          const { error: updateError } = await supabase
+            .from("athlete_sponsorships")
+            .update({ status: "rejected" })
+            .eq("id", app.id);
+          if (updateError) {
+            console.error("Reject athlete error:", updateError);
+            showToast("Failed to update athlete", true);
+            rejectBtn.disabled = false;
+            return;
+          }
+          showToast(app.status === "approved" ? "Athlete removed" : "Application rejected");
+          const stat = document.getElementById("statAthletes");
+          if (stat && app.status === "pending" && Number.isFinite(Number(stat.textContent))) {
+            stat.textContent = Math.max(0, Number(stat.textContent) - 1);
+          }
+          // Remove immediately so it disappears from the current view.
+          row.remove();
+          if (!list.children.length) list.innerHTML = "<div class='admin-row'>No athletes found.</div>";
+          // If you're currently viewing "pending", keep the filter and refresh in the background.
+          // If you're viewing "approved", this also removes from roster instantly.
+          setTimeout(() => loadAthletes(supabase), 50);
+        });
+
+        actions.appendChild(viewBtn);
+        if (app.status === "pending") actions.appendChild(approveBtn);
+        actions.appendChild(rejectBtn);
+        row.appendChild(actions);
+        list.appendChild(row);
+      });
+    }
+
+    // Athlete direct messages (private athlete <-> admin)
+    let activeAthleteChatId = null;
+    let activeAthleteChat = null;
+    let athleteMsgChannel = null;
+
+    function renderAdminMsg(msg, mine) {
+      const row = document.createElement("div");
+      row.className = `admin-msg ${mine ? "mine" : ""}`;
+      row.innerHTML = `
+        <div class="admin-bubble">
+          <div class="body">${escapeHTML(msg.body || "")}</div>
+          <div class="time">${new Date(msg.created_at).toLocaleString()}</div>
+        </div>
+      `;
+      return row;
+    }
+
+    async function loadAthleteChats(supabase) {
+      const list = document.getElementById("adminAthleteChatsList");
+      const term = (document.getElementById("athleteChatSearch")?.value || "").trim().toLowerCase();
+      list.innerHTML = "<div class='admin-row'>Loading athletes…</div>";
+
+      const { data: athletes, error: athleteErr } = await supabase
+        .from("athlete_sponsorships")
+        .select("user_id,email,display_name,sport,discipline,location,approved_at,status")
+        .eq("status", "approved")
+        .order("approved_at", { ascending: false, nullsFirst: false })
+        .limit(160);
+
+      if (athleteErr) {
+        console.error("Approved athletes load error:", athleteErr);
+        list.innerHTML = "<div class='admin-row'>Failed to load approved athletes.</div>";
+        return;
+      }
+
+      if (!athletes || athletes.length === 0) {
+        list.innerHTML = "<div class='admin-row'>No approved athletes yet.</div>";
+        return;
+      }
+
+      const athleteIds = athletes.map((a) => a.user_id).filter(Boolean);
+      let chatByAthleteId = new Map();
+
+      if (athleteIds.length) {
+        const { data: chats, error: chatErr } = await supabase
+          .from("athlete_chats")
+          .select("id, athlete_id, status, created_at, last_message_at")
+          .eq("admin_id", ADMIN_UUID)
+          .in("athlete_id", athleteIds)
+          .limit(200);
+
+        if (chatErr) {
+          console.error("Athlete chats load error:", chatErr);
+          // Still render roster so you can see athletes; chat creation will show a useful toast if blocked.
+        } else if (Array.isArray(chats)) {
+          chats.forEach((c) => {
+            if (!chatByAthleteId.has(c.athlete_id)) chatByAthleteId.set(c.athlete_id, c);
+          });
+        }
+      }
+
+      const filtered = athletes.filter((a) => {
+        if (!term) return true;
+        const hay = [
+          a.user_id,
+          a.email,
+          a.display_name,
+          a.sport,
+          a.discipline,
+          a.location
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(term);
+      });
+
+      if (!filtered.length) {
+        list.innerHTML = "<div class='admin-row'>No athletes match your search.</div>";
+        return;
+      }
+
+      // Sort: active chats first (latest message), then newest approved.
+      filtered.sort((a, b) => {
+        const ca = chatByAthleteId.get(a.user_id);
+        const cb = chatByAthleteId.get(b.user_id);
+        const ta = ca?.last_message_at ? new Date(ca.last_message_at).getTime() : 0;
+        const tb = cb?.last_message_at ? new Date(cb.last_message_at).getTime() : 0;
+        if (ta !== tb) return tb - ta;
+        const aa = a.approved_at ? new Date(a.approved_at).getTime() : 0;
+        const ab = b.approved_at ? new Date(b.approved_at).getTime() : 0;
+        return ab - aa;
+      });
+
+      list.innerHTML = "";
+      filtered.forEach((a) => {
+        const chat = chatByAthleteId.get(a.user_id) || null;
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "admin-row";
+        row.style.cursor = "pointer";
+        row.style.textAlign = "left";
+
+        const title = a.display_name || "Athlete";
+        const email = a.email || "";
+        const line2 = [a.sport, a.discipline, a.location].filter(Boolean).join(" • ");
+        const when = chat?.last_message_at || chat?.created_at || a.approved_at;
+        const pillText = chat ? (chat.status || "open") : "new";
+        const pillClass = chat ? (chat.status === "open" ? "" : "offline") : "offline";
+
+        row.innerHTML = `
+          <div>
+            <strong>${escapeHTML(title)}</strong>
+            <small>${escapeHTML(email || a.user_id)}</small>
+            <small>${escapeHTML(line2 || "")}</small>
+          </div>
+          <div>
+            <span class="admin-pill ${pillClass}">${escapeHTML(pillText)}</span>
+          </div>
+          <div>
+            <small>${when ? new Date(when).toLocaleString() : ""}</small>
+          </div>
+        `;
+
+        row.addEventListener("click", async () => {
+          const ensured = await ensureAthleteChatForAdmin(supabase, a, chat);
+          if (ensured) {
+            // Refresh list so "new" flips into a real chat.
+            chatByAthleteId.set(a.user_id, ensured);
+            openAthleteChat(supabase, ensured, a);
+          }
+        });
+
+        list.appendChild(row);
+      });
+    }
+
+    async function ensureAthleteChatForAdmin(supabase, athlete, existingChat) {
+      if (existingChat?.id) return existingChat;
+      if (!athlete?.user_id) return null;
+
+      try {
+        const { data: found, error: findErr } = await supabase
+          .from("athlete_chats")
+          .select("id, athlete_id, status, created_at, last_message_at")
+          .eq("athlete_id", athlete.user_id)
+          .eq("admin_id", ADMIN_UUID)
+          .limit(1);
+
+        if (!findErr && Array.isArray(found) && found.length > 0) return found[0];
+
+        const { data: created, error: createErr } = await supabase
+          .from("athlete_chats")
+          .insert({ athlete_id: athlete.user_id, admin_id: ADMIN_UUID, status: "open" })
+          .select("id, athlete_id, status, created_at, last_message_at")
+          .single();
+
+        if (createErr) throw createErr;
+        return created;
+      } catch (err) {
+        console.error("Ensure athlete chat error:", err);
+        showToast("Unable to start chat. Re-run athlete_chat.sql to allow admin chat creation.", true);
+        return null;
+      }
+    }
+
+    async function openAthleteChat(supabase, chat, meta) {
+      activeAthleteChatId = chat.id;
+      activeAthleteChat = chat;
+
+      const title = document.getElementById("adminAthleteChatTitle");
+      const sub = document.getElementById("adminAthleteChatSub");
+      const input = document.getElementById("adminAthleteInput");
+      const sendBtn = document.getElementById("adminAthleteSendBtn");
+      const closeBtn = document.getElementById("adminCloseAthleteChatBtn");
+
+      title.textContent = meta?.display_name ? `Chat: ${meta.display_name}` : "Athlete chat";
+      sub.textContent = meta?.email ? meta.email : chat.athlete_id;
+      input.disabled = false;
+      sendBtn.disabled = false;
+      closeBtn.disabled = false;
+
+      await loadAthleteChatMessages(supabase, chat.id);
+
+      if (athleteMsgChannel) {
+        try { await supabase.removeChannel(athleteMsgChannel); } catch {}
+      }
+
+      athleteMsgChannel = supabase
+        .channel(`admin_athlete_chat_${chat.id}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "athlete_chat_messages", filter: `chat_id=eq.${chat.id}` },
+          (payload) => {
+            const msg = payload.new;
+            const msgs = document.getElementById("adminAthleteMsgs");
+            msgs.querySelector(".admin-row")?.remove();
+            msgs.appendChild(renderAdminMsg(msg, msg.sender_id === ADMIN_UUID));
+            msgs.scrollTop = msgs.scrollHeight;
+          }
+        )
+        .subscribe();
+    }
+
+    async function loadAthleteChatMessages(supabase, chatId) {
+      const msgs = document.getElementById("adminAthleteMsgs");
+      msgs.innerHTML = "<div class='admin-row'>Loading messages…</div>";
+
+      const { data, error } = await supabase
+        .from("athlete_chat_messages")
+        .select("id,body,sender_id,created_at")
+        .eq("chat_id", chatId)
+        .order("created_at", { ascending: true })
+        .limit(400);
+
+      if (error) {
+        console.error("Athlete messages load error:", error);
+        msgs.innerHTML = "<div class='admin-row'>Failed to load messages.</div>";
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        msgs.innerHTML = "<div class='admin-row'>No messages yet.</div>";
+        return;
+      }
+
+      msgs.innerHTML = "";
+      data.forEach((m) => msgs.appendChild(renderAdminMsg(m, m.sender_id === ADMIN_UUID)));
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    async function sendAthleteAdminMessage(supabase, text) {
+      if (!activeAthleteChatId) return;
+      const body = (text || "").trim();
+      if (!body) return;
+
+      const { error } = await supabase
+        .from("athlete_chat_messages")
+        .insert({ chat_id: activeAthleteChatId, sender_id: ADMIN_UUID, body });
+
+      if (error) {
+        console.error("Send athlete admin message error:", error);
+        showToast("Failed to send message", true);
+      }
+    }
+
+    async function closeActiveAthleteChat(supabase) {
+      if (!activeAthleteChatId) return;
+      const { error } = await supabase
+        .from("athlete_chats")
+        .update({ status: "closed_admin" })
+        .eq("id", activeAthleteChatId);
+      if (error) {
+        console.error("Close athlete chat error:", error);
+        showToast("Failed to close chat", true);
+        return;
+      }
+      showToast("Chat closed");
+      loadAthleteChats(supabase);
+    }
+
     function setHealthStatus(el, ok, text) {
       if (!el) return;
       el.textContent = text;
@@ -730,6 +1193,8 @@
       loadListings(supabase);
       loadThreads(supabase);
       loadContacts(supabase);
+      loadAthletes(supabase);
+      loadAthleteChats(supabase);
 
       document.getElementById("refreshUsersBtn")?.addEventListener("click", () => loadUsers(supabase));
       document.getElementById("userSearch")?.addEventListener("input", (e) => {
@@ -749,6 +1214,36 @@
 
       document.getElementById("refreshThreadsBtn")?.addEventListener("click", () => loadThreads(supabase));
       document.getElementById("refreshContactsBtn")?.addEventListener("click", () => loadContacts(supabase));
+      document.getElementById("refreshAthletesBtn")?.addEventListener("click", () => loadAthletes(supabase));
+      document.getElementById("athleteStatusFilter")?.addEventListener("change", () => loadAthletes(supabase));
+      document.getElementById("athleteSearch")?.addEventListener("input", (e) => {
+        clearTimeout(e.target._timer);
+        e.target._timer = setTimeout(() => loadAthletes(supabase), 250);
+      });
+
+      document.getElementById("refreshAthleteChatsBtn")?.addEventListener("click", () => loadAthleteChats(supabase));
+      document.getElementById("athleteChatSearch")?.addEventListener("input", (e) => {
+        clearTimeout(e.target._timer);
+        e.target._timer = setTimeout(() => loadAthleteChats(supabase), 250);
+      });
+
+      document.getElementById("adminAthleteComposer")?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const input = document.getElementById("adminAthleteInput");
+        if (!input) return;
+        const text = input.value;
+        input.value = "";
+        await sendAthleteAdminMessage(supabase, text);
+      });
+
+      document.getElementById("adminAthleteInput")?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          document.getElementById("adminAthleteComposer")?.requestSubmit();
+        }
+      });
+
+      document.getElementById("adminCloseAthleteChatBtn")?.addEventListener("click", () => closeActiveAthleteChat(supabase));
       const contactChannel = supabase
         .channel("contact_messages_watch")
         .on(
@@ -762,6 +1257,40 @@
             if (stat && Number.isFinite(Number(stat.textContent))) {
               stat.textContent = Number(stat.textContent) + 1;
             }
+          }
+        )
+        .subscribe();
+
+      const athleteChannel = supabase
+        .channel("athlete_apps_watch")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "athlete_sponsorships" },
+          (payload) => {
+            const app = payload.new;
+            if (app?.status && app.status !== "pending") return;
+            bumpNotif(`New athlete application: ${app.display_name || "Unnamed"}`);
+            loadAthletes(supabase);
+            const stat = document.getElementById("statAthletes");
+            if (stat && Number.isFinite(Number(stat.textContent))) {
+              stat.textContent = Number(stat.textContent) + 1;
+            }
+          }
+        )
+        .subscribe();
+
+      const athleteMsgWatch = supabase
+        .channel("athlete_msg_watch")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "athlete_chat_messages" },
+          (payload) => {
+            const msg = payload.new;
+            if (!msg) return;
+            // Only notify on athlete -> admin messages (not our own sends).
+            if (msg.sender_id && msg.sender_id === ADMIN_UUID) return;
+            bumpNotif("New athlete message");
+            loadAthleteChats(supabase);
           }
         )
         .subscribe();

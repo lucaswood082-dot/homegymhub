@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (function () {
+      try {
+        const isDark = localStorage.getItem("darkMode") === "true";
+        const bg = isDark ? "#0f172a" : "#f6fff9";
+        document.write(`<style>html,body{background:var(--page-bg, ${bg}) !important;}</style>`);
+        if (isDark) document.documentElement.classList.add("dark-mode");
+        document.documentElement.style.setProperty("--page-bg", bg);
+        document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+      } catch (e) {}
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Athletes – Primal Lab</title>
+  <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="athletes.css">
+  <link rel="stylesheet" href="darkmode.css">
+  <style id="prepaint">
+    html, body { background: var(--page-bg, #f6fff9); }
+  </style>
+  <script>
+    (function () {
+      try {
+        const isDark = localStorage.getItem("darkMode") === "true";
+        document.documentElement.classList.toggle("dark-mode", isDark);
+        document.documentElement.style.setProperty("--page-bg", isDark ? "#0f172a" : "#f6fff9");
+        document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+        document.addEventListener("DOMContentLoaded", () => {
+          document.body.classList.toggle("dark-mode", isDark);
+          document.body.style.background = getComputedStyle(document.documentElement).getPropertyValue("--page-bg");
+        });
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body class="ath-page">
+  <div class="bg-gradient"></div>
+  <div id="particles"></div>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">Primal Lab</a>
+      <nav class="nav-links">
+        <a href="index.html#modules">Modules</a>
+        <a href="athletes.html">Athletes</a>
+        <a href="contact.html">Contact</a>
+        <a href="index.html#about">About</a>
+      </nav>
+      <div class="auth-actions">
+        <button id="loginBtn">Log In</button>
+        <button id="accountBtn" style="display:none;">Account</button>
+        <button id="logoutBtn" style="display:none;">Log Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="ath-main">
+    <section class="ath-hero">
+      <div class="ath-hero-inner">
+        <div class="ath-hero-copy">
+          <div class="ath-eyebrow">Primal Lab Athlete Program</div>
+          <h1>Athletes</h1>
+          <p>
+            We sponsor competitors and builders across strength, boxing, endurance, and team sports.
+            If you train with intent and bring energy to the community — apply.
+          </p>
+
+          <div class="ath-cta-row">
+            <button id="applyBtn" class="btn primary">Apply for Sponsorship</button>
+            <div id="statusPill" class="ath-status-pill hidden"></div>
+          </div>
+
+          <div class="ath-stats" aria-label="Program stats">
+            <div class="ath-stat">
+              <strong id="statApproved">—</strong>
+              <span>Sponsored athletes</span>
+            </div>
+            <div class="ath-stat">
+              <strong>6</strong>
+              <span>Sport categories</span>
+            </div>
+            <div class="ath-stat">
+              <strong>1</strong>
+              <span>Unified hub</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ath-hero-art" aria-hidden="true">
+          <div class="ath-orbit">
+            <div class="ath-orbit-ring ring-a"></div>
+            <div class="ath-orbit-ring ring-b"></div>
+            <div class="ath-orbit-ring ring-c"></div>
+            <div class="ath-core"></div>
+            <div class="ath-sat sat-1"></div>
+            <div class="ath-sat sat-2"></div>
+            <div class="ath-sat sat-3"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ath-toolbar">
+      <div class="ath-toolbar-inner">
+        <div class="ath-search">
+          <input id="searchInput" type="text" placeholder="Search athlete, discipline, location…">
+        </div>
+        <div class="ath-filters">
+          <button class="ath-chip active" data-sport="">All</button>
+          <button class="ath-chip" data-sport="strength">Strength</button>
+          <button class="ath-chip" data-sport="boxing">Boxing</button>
+          <button class="ath-chip" data-sport="cardio">Cardio</button>
+          <button class="ath-chip" data-sport="endurance">Endurance</button>
+          <button class="ath-chip" data-sport="team">Team</button>
+          <button class="ath-chip" data-sport="other">Other</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="ath-roster">
+      <div class="ath-roster-inner">
+        <header class="ath-roster-head">
+          <h2>Sponsored Roster</h2>
+          <p>Click an athlete to open their social.</p>
+        </header>
+        <div id="athleteGrid" class="ath-grid">
+          <div class="ath-loading">Loading athletes…</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Apply Drawer -->
+  <div id="applyOverlay" class="ath-overlay hidden" aria-hidden="true">
+    <div class="ath-drawer" role="dialog" aria-modal="true" aria-label="Sponsorship application">
+      <div class="ath-drawer-head">
+        <div>
+          <div class="ath-drawer-title">Sponsorship Application</div>
+          <div class="ath-drawer-sub">Short, direct, and real. We’ll review it in the admin console.</div>
+        </div>
+        <button id="closeApply" class="btn ghost" type="button">Close</button>
+      </div>
+
+      <form id="applyForm" class="ath-form">
+        <div class="ath-field">
+          <label for="appEmail">Email</label>
+          <input id="appEmail" type="email" placeholder="you@email.com" required>
+        </div>
+
+        <div class="ath-form-row">
+          <div class="ath-field">
+            <label for="appName">Name</label>
+            <input id="appName" type="text" maxlength="40" placeholder="Athlete / brand name" required>
+          </div>
+          <div class="ath-field">
+            <label for="appSport">Sport</label>
+            <select id="appSport" required>
+              <option value="strength">Strength</option>
+              <option value="boxing">Boxing</option>
+              <option value="cardio">Cardio</option>
+              <option value="endurance">Endurance</option>
+              <option value="team">Team Sport</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ath-form-row">
+          <div class="ath-field">
+            <label for="appDiscipline">Discipline</label>
+            <input id="appDiscipline" type="text" maxlength="48" placeholder="e.g., Powerlifting, Muay Thai" required>
+          </div>
+          <div class="ath-field">
+            <label for="appLocation">Location</label>
+            <input id="appLocation" type="text" maxlength="60" placeholder="City, State" required>
+          </div>
+        </div>
+
+        <div class="ath-form-row">
+          <div class="ath-field">
+            <label for="appSocial">Social link (optional)</label>
+            <input id="appSocial" type="url" maxlength="180" placeholder="https://instagram.com/…">
+          </div>
+          <div class="ath-field">
+            <label for="appAvatar">Image URL (optional)</label>
+            <input id="appAvatar" type="url" maxlength="220" placeholder="https://…/profile.jpg">
+          </div>
+        </div>
+
+        <div class="ath-field">
+          <label for="appBio">Bio (max 100 words)</label>
+          <textarea id="appBio" rows="6" placeholder="What do you train for? Goals? Why Primal Lab?" required></textarea>
+          <div class="ath-counter"><span id="bioCount">0</span>/100 words</div>
+        </div>
+
+        <div class="ath-field">
+          <label for="appHighlights">Highlights (optional)</label>
+          <input id="appHighlights" type="text" maxlength="140" placeholder="e.g., National qualifier, 2x state champ">
+        </div>
+
+        <div class="ath-form-actions">
+          <button id="submitApp" class="btn primary" type="submit">Submit</button>
+          <button id="cancelApp" class="btn secondary" type="button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <footer class="footer">
+    © 2026 Primal Lab - Athletes
+  </footer>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const supabase = createClient(
+      "https://nqomiajgtmxxsupjgvvu.supabase.co",
+      "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA"
+    );
+
+    const loginBtn = document.getElementById("loginBtn");
+    const accountBtn = document.getElementById("accountBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const toast = document.getElementById("toast");
+
+    const grid = document.getElementById("athleteGrid");
+    const statApproved = document.getElementById("statApproved");
+
+    const searchInput = document.getElementById("searchInput");
+    const chips = Array.from(document.querySelectorAll(".ath-chip"));
+    let activeSport = "";
+
+    const applyBtn = document.getElementById("applyBtn");
+    const applyOverlay = document.getElementById("applyOverlay");
+    const closeApply = document.getElementById("closeApply");
+    const cancelApp = document.getElementById("cancelApp");
+    const applyForm = document.getElementById("applyForm");
+
+    const statusPill = document.getElementById("statusPill");
+    const appName = document.getElementById("appName");
+    const appEmail = document.getElementById("appEmail");
+    const appSport = document.getElementById("appSport");
+    const appDiscipline = document.getElementById("appDiscipline");
+    const appLocation = document.getElementById("appLocation");
+    const appSocial = document.getElementById("appSocial");
+    const appAvatar = document.getElementById("appAvatar");
+    const appBio = document.getElementById("appBio");
+    const appHighlights = document.getElementById("appHighlights");
+    const bioCount = document.getElementById("bioCount");
+
+    function showToast(message, type = "success") {
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.remove("hidden");
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.add("hidden"), 2600);
+    }
+
+    function wordCount(text) {
+      return text.trim().split(/\s+/).filter(Boolean).length;
+    }
+
+    function updateBioCount() {
+      const count = wordCount(appBio.value);
+      bioCount.textContent = String(count);
+      bioCount.style.color = count > 100 ? "#ef4444" : "";
+    }
+
+    function openDrawer() {
+      applyOverlay.classList.remove("hidden");
+      applyOverlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      updateBioCount();
+      setTimeout(() => appName?.focus(), 30);
+    }
+
+    function closeDrawer() {
+      applyOverlay.classList.add("hidden");
+      applyOverlay.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    function sportLabel(s) {
+      const map = {
+        strength: "Strength",
+        boxing: "Boxing",
+        cardio: "Cardio",
+        endurance: "Endurance",
+        team: "Team",
+        other: "Other"
+      };
+      return map[s] || s || "";
+    }
+
+    function pill(text, tone = "neutral") {
+      const el = document.createElement("span");
+      el.className = `ath-pill ${tone}`;
+      el.textContent = text;
+      return el;
+    }
+
+    function renderCard(a) {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "ath-card";
+
+      const top = document.createElement("div");
+      top.className = "ath-card-top";
+
+      const avatar = document.createElement("div");
+      avatar.className = "ath-avatar";
+      if (a.avatar_url) {
+        const img = document.createElement("img");
+        img.src = a.avatar_url;
+        img.alt = `${a.display_name || "Athlete"} avatar`;
+        img.loading = "lazy";
+        avatar.appendChild(img);
+      } else {
+        avatar.innerHTML = "<span>PL</span>";
+      }
+
+      const name = document.createElement("div");
+      name.className = "ath-name";
+      name.textContent = a.display_name || "Primal Lab Athlete";
+
+      const meta = document.createElement("div");
+      meta.className = "ath-meta";
+      meta.textContent = [sportLabel(a.sport), a.discipline, a.location].filter(Boolean).join(" • ");
+
+      top.appendChild(avatar);
+      top.appendChild(name);
+      top.appendChild(meta);
+
+      const body = document.createElement("div");
+      body.className = "ath-card-body";
+      const bio = document.createElement("p");
+      bio.textContent = a.bio || "";
+      body.appendChild(bio);
+
+      const foot = document.createElement("div");
+      foot.className = "ath-card-foot";
+      foot.appendChild(pill("Sponsored", "accent"));
+      if (a.highlights) foot.appendChild(pill(a.highlights, "soft"));
+
+      card.appendChild(top);
+      card.appendChild(body);
+      card.appendChild(foot);
+
+      if (a.social_url) {
+        card.addEventListener("click", () => window.open(a.social_url, "_blank", "noopener,noreferrer"));
+      } else {
+        card.classList.add("static");
+        card.disabled = true;
+      }
+
+      return card;
+    }
+
+    async function refreshAuth() {
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user || null;
+      if (user) {
+        loginBtn.style.display = "none";
+        accountBtn.style.display = "inline-flex";
+        logoutBtn.style.display = "inline-flex";
+      } else {
+        loginBtn.style.display = "inline-flex";
+        accountBtn.style.display = "none";
+        logoutBtn.style.display = "none";
+      }
+      return user;
+    }
+
+    async function loadMyStatus(user) {
+      if (!user) {
+        statusPill.classList.add("hidden");
+        statusPill.textContent = "";
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("athlete_sponsorships")
+        .select("status,created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (error || !data || data.length === 0) {
+        statusPill.classList.add("hidden");
+        statusPill.textContent = "";
+        return;
+      }
+
+      const row = data[0];
+      statusPill.classList.remove("hidden");
+      statusPill.className = "ath-status-pill";
+      if (row.status === "approved") {
+        statusPill.classList.add("ok");
+        statusPill.textContent = "Status: Approved";
+      } else if (row.status === "rejected") {
+        statusPill.classList.add("bad");
+        statusPill.textContent = "Status: Not approved";
+      } else {
+        statusPill.classList.add("neutral");
+        statusPill.textContent = "Status: Pending review";
+      }
+    }
+
+    async function loadRoster() {
+      if (!grid) return;
+      grid.innerHTML = "<div class='ath-loading'>Loading athletes…</div>";
+
+      let query = supabase
+        .from("athlete_sponsorships")
+        .select("id,display_name,sport,discipline,location,bio,highlights,avatar_url,social_url,approved_at", { count: "exact" })
+        .eq("status", "approved")
+        .order("approved_at", { ascending: false, nullsFirst: false })
+        .limit(80);
+
+      const term = searchInput.value.trim();
+      if (term) {
+        query = query.or(`display_name.ilike.%${term}%,discipline.ilike.%${term}%,location.ilike.%${term}%`);
+      }
+      if (activeSport) query = query.eq("sport", activeSport);
+
+      const { data, error, count } = await query;
+      if (statApproved) statApproved.textContent = (count ?? (data?.length || 0)).toString();
+
+      if (error) {
+        console.error("Athletes load error:", error);
+        grid.innerHTML = "<div class='ath-loading'>Failed to load athletes.</div>";
+        showToast("Failed to load athletes", "error");
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        grid.innerHTML = "<div class='ath-loading'>No athletes yet.</div>";
+        return;
+      }
+
+      grid.innerHTML = "";
+      data.forEach((a) => grid.appendChild(renderCard(a)));
+    }
+
+    loginBtn?.addEventListener("click", () => (window.location.href = "auth.html?redirect=athletes.html"));
+    accountBtn?.addEventListener("click", () => (window.location.href = "account.html"));
+    logoutBtn?.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      await refreshAuth();
+      showToast("Logged out", "success");
+    });
+
+    applyBtn?.addEventListener("click", async () => {
+      const user = await refreshAuth();
+      if (!user) {
+        showToast("Log in to apply", "error");
+        window.location.href = "auth.html?redirect=athletes.html";
+        return;
+      }
+
+      if (!user.email) {
+        showToast("Your account needs an email to apply", "error");
+        return;
+      }
+
+      if (appEmail) {
+        appEmail.value = user.email;
+        appEmail.readOnly = true;
+      }
+
+      // Prefill from profile if possible
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", user.id)
+          .single();
+        if (profile?.display_name && !appName.value.trim()) appName.value = profile.display_name;
+      } catch {}
+
+      openDrawer();
+    });
+
+    closeApply?.addEventListener("click", closeDrawer);
+    cancelApp?.addEventListener("click", closeDrawer);
+    applyOverlay?.addEventListener("click", (e) => {
+      if (e.target === applyOverlay) closeDrawer();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !applyOverlay.classList.contains("hidden")) closeDrawer();
+    });
+
+    appBio?.addEventListener("input", updateBioCount);
+
+    applyForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const user = await refreshAuth();
+      if (!user) {
+        showToast("Log in to apply", "error");
+        return;
+      }
+
+      if (!user.email) {
+        showToast("Your account needs an email to apply", "error");
+        return;
+      }
+
+      const payload = {
+        user_id: user.id,
+        email: user.email,
+        display_name: appName.value.trim(),
+        sport: appSport.value,
+        discipline: appDiscipline.value.trim(),
+        location: appLocation.value.trim(),
+        social_url: appSocial.value.trim() || null,
+        avatar_url: appAvatar.value.trim() || null,
+        bio: appBio.value.trim(),
+        highlights: appHighlights.value.trim() || null,
+        status: "pending"
+      };
+
+      const words = wordCount(payload.bio || "");
+      if (!payload.display_name || !payload.discipline || !payload.location || !payload.bio) {
+        showToast("Please fill all required fields", "error");
+        return;
+      }
+      if (words > 100) {
+        showToast("Bio must be 100 words or less", "error");
+        return;
+      }
+
+      try {
+        const { error } = await supabase.from("athlete_sponsorships").insert(payload);
+        if (error) throw error;
+      } catch (err) {
+        console.error("Athlete application error:", err);
+        showToast("Failed to submit (check Supabase table/RLS)", "error");
+        return;
+      }
+
+      closeDrawer();
+      applyForm.reset();
+      updateBioCount();
+      showToast("Application submitted", "success");
+      loadMyStatus(user);
+    });
+
+    chips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        chips.forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+        activeSport = chip.getAttribute("data-sport") || "";
+        loadRoster();
+      });
+    });
+
+    searchInput?.addEventListener("input", (e) => {
+      clearTimeout(e.target._timer);
+      e.target._timer = setTimeout(loadRoster, 240);
+    });
+
+    await refreshAuth().then(loadMyStatus);
+    loadRoster();
+  </script>
+
+  <script src="darkmode.js"></script>
+  <script>
+    const particlesContainer = document.getElementById('particles');
+    if (particlesContainer) {
+      for (let i = 0; i < 36; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (Math.random() * 12 + 8) + 's';
+        p.style.animationDelay = Math.random() * 5 + 's';
+        p.style.setProperty('--drift', (Math.random() * 200 - 100) + 'px');
+        particlesContainer.appendChild(p);
+      }
+    }
+  </script>
+</body>
+</html>

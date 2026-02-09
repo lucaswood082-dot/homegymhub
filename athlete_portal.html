@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (function () {
+      try {
+        const isDark = localStorage.getItem("darkMode") === "true";
+        const bg = isDark ? "#0f172a" : "#f6fff9";
+        document.write(`<style>html,body{background:var(--page-bg, ${bg}) !important;}</style>`);
+        if (isDark) document.documentElement.classList.add("dark-mode");
+        document.documentElement.style.setProperty("--page-bg", bg);
+        document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+      } catch (e) {}
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Athlete Portal – Primal Lab</title>
+  <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="athlete_portal.css">
+  <link rel="stylesheet" href="darkmode.css">
+  <style id="prepaint">
+    html, body { background: var(--page-bg, #f6fff9); }
+  </style>
+  <script>
+    (function () {
+      try {
+        const isDark = localStorage.getItem("darkMode") === "true";
+        document.documentElement.classList.toggle("dark-mode", isDark);
+        document.documentElement.style.setProperty("--page-bg", isDark ? "#0f172a" : "#f6fff9");
+        document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+        document.addEventListener("DOMContentLoaded", () => {
+          document.body.classList.toggle("dark-mode", isDark);
+          document.body.style.background = getComputedStyle(document.documentElement).getPropertyValue("--page-bg");
+        });
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body class="ap-page">
+  <div class="bg-gradient"></div>
+  <div id="particles"></div>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">Primal Lab</a>
+      <nav class="nav-links">
+        <a href="index.html#modules">Modules</a>
+        <a href="athletes.html">Athletes</a>
+        <a href="account.html">Account</a>
+      </nav>
+      <div class="auth-actions">
+        <button id="logoutBtn">Log Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="ap-main">
+    <section class="ap-hero">
+      <div class="ap-hero-inner">
+        <div>
+          <div class="ap-eyebrow">Athlete Portal</div>
+          <h1 id="apTitle">Direct line to Primal Lab</h1>
+          <p id="apIntro">
+            This is a private chat between you and the Primal Lab admin team.
+            No other athletes can see it.
+          </p>
+
+          <div id="apWelcome" class="ap-welcome hidden">
+            <div class="ap-welcome-title" id="apWelcomeTitle">Welcome.</div>
+            <div class="ap-welcome-body" id="apWelcomeBody">
+              Congrats — you’re officially a Primal Lab athlete.
+            </div>
+          </div>
+        </div>
+        <div class="ap-meta">
+          <div class="ap-pill" id="apStatus">Checking athlete status…</div>
+          <div class="ap-pill subtle" id="apEmail">—</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ap-chat">
+      <div class="ap-chat-card">
+        <div class="ap-chat-head">
+          <div>
+            <div class="ap-chat-title">Messages</div>
+            <div class="ap-chat-sub">Replies update live.</div>
+          </div>
+          <button id="closeChatBtn" class="btn ghost" type="button">Close on my end</button>
+        </div>
+
+        <div id="apMessages" class="ap-messages" aria-label="Chat messages">
+          <div class="ap-loading">Loading…</div>
+        </div>
+
+        <form id="apComposer" class="ap-composer">
+          <input id="apInput" type="text" placeholder="Type a message…" autocomplete="off" maxlength="400">
+          <button id="apSend" class="btn primary" type="submit">Send</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <footer class="footer">
+    © 2026 Primal Lab - Athlete Portal
+  </footer>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const ADMIN_UUID = "b4cb6833-f4ea-4dcd-8443-229a7767a041";
+
+    const supabase = createClient(
+      "https://nqomiajgtmxxsupjgvvu.supabase.co",
+      "sb_publishable_b8tpSFMffPkoDRqehct7nQ_g5HjWpxA"
+    );
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    const toast = document.getElementById("toast");
+
+    const apStatus = document.getElementById("apStatus");
+    const apEmail = document.getElementById("apEmail");
+    const apWelcome = document.getElementById("apWelcome");
+    const apWelcomeTitle = document.getElementById("apWelcomeTitle");
+    const apWelcomeBody = document.getElementById("apWelcomeBody");
+    const apTitle = document.getElementById("apTitle");
+    const apIntro = document.getElementById("apIntro");
+
+    const messagesEl = document.getElementById("apMessages");
+    const composer = document.getElementById("apComposer");
+    const input = document.getElementById("apInput");
+    const closeChatBtn = document.getElementById("closeChatBtn");
+
+    let currentUser = null;
+    let chatId = null;
+    let sub = null;
+
+    function showToast(message, type = "success") {
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.remove("hidden");
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.add("hidden"), 2600);
+    }
+
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s ?? "";
+      return d.innerHTML;
+    }
+
+    function renderMessage(m, mine) {
+      const row = document.createElement("div");
+      row.className = `ap-msg ${mine ? "mine" : "theirs"}`;
+      row.innerHTML = `
+        <div class="ap-bubble">
+          <div class="ap-body">${esc(m.body || "")}</div>
+          <div class="ap-time">${new Date(m.created_at).toLocaleString()}</div>
+        </div>
+      `;
+      return row;
+    }
+
+    function scrollToBottom() {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    async function requireAuth() {
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user || null;
+      if (!user) {
+        window.location.href = "auth.html?redirect=athlete_portal.html";
+        return null;
+      }
+      return user;
+    }
+
+    async function verifyApprovedAthlete(user) {
+      const { data, error } = await supabase
+        .from("athlete_sponsorships")
+        .select("status,display_name,sport,discipline,location,approved_at")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
+        .limit(1);
+      if (error) return false;
+      return Array.isArray(data) && data.length > 0 ? data[0] : false;
+    }
+
+    async function ensureChat(user) {
+      const { data, error } = await supabase
+        .from("athlete_chats")
+        .select("id,status")
+        .eq("athlete_id", user.id)
+        .eq("admin_id", ADMIN_UUID)
+        .limit(1);
+
+      if (!error && Array.isArray(data) && data.length > 0) return data[0];
+
+      const { data: created, error: createErr } = await supabase
+        .from("athlete_chats")
+        .insert({ athlete_id: user.id, admin_id: ADMIN_UUID, status: "open" })
+        .select("id,status")
+        .single();
+      if (createErr) throw createErr;
+      return created;
+    }
+
+    async function loadMessages() {
+      if (!chatId) return;
+      const { data, error } = await supabase
+        .from("athlete_chat_messages")
+        .select("id,body,sender_id,created_at")
+        .eq("chat_id", chatId)
+        .order("created_at", { ascending: true })
+        .limit(300);
+
+      if (error) {
+        console.error("Load athlete messages error:", error);
+        messagesEl.innerHTML = "<div class='ap-loading'>Failed to load messages.</div>";
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        messagesEl.innerHTML = "<div class='ap-empty'>No messages yet. Say hi.</div>";
+        return;
+      }
+
+      messagesEl.innerHTML = "";
+      data.forEach((m) => messagesEl.appendChild(renderMessage(m, m.sender_id === currentUser.id)));
+      scrollToBottom();
+    }
+
+    async function sendMessage(text) {
+      if (!text.trim()) return;
+      const { error } = await supabase
+        .from("athlete_chat_messages")
+        .insert({ chat_id: chatId, sender_id: currentUser.id, body: text.trim() });
+      if (error) throw error;
+    }
+
+    async function setChatStatus(nextStatus) {
+      if (!chatId) return;
+      const { error } = await supabase
+        .from("athlete_chats")
+        .update({ status: nextStatus })
+        .eq("id", chatId);
+      if (error) throw error;
+    }
+
+    async function boot() {
+      currentUser = await requireAuth();
+      if (!currentUser) return;
+
+      apEmail.textContent = currentUser.email || "No email";
+
+      const athlete = await verifyApprovedAthlete(currentUser);
+      if (!athlete) {
+        apStatus.textContent = "Access: Not an approved athlete";
+        apStatus.className = "ap-pill bad";
+        messagesEl.innerHTML = "<div class='ap-empty'>You must be an approved athlete to use the portal.</div>";
+        composer.classList.add("disabled");
+        composer.querySelector("button").disabled = true;
+        input.disabled = true;
+        return;
+      }
+
+      apStatus.textContent = "Access: Approved athlete";
+      apStatus.className = "ap-pill ok";
+
+      // Welcome banner (approved athletes only)
+      const displayName = athlete.display_name || "Athlete";
+      const metaBits = [athlete.sport, athlete.discipline, athlete.location].filter(Boolean).join(" • ");
+      if (apWelcome) {
+        apWelcome.classList.remove("hidden");
+        if (apWelcomeTitle) apWelcomeTitle.textContent = `Welcome, ${displayName}.`;
+        if (apWelcomeBody) {
+          apWelcomeBody.textContent =
+            `Congratulations — you’re officially a Primal Lab athlete. Use this portal anytime to message the team. ` +
+            (metaBits ? `(${metaBits})` : "");
+        }
+      }
+      if (apTitle) apTitle.textContent = "Athlete Portal";
+      if (apIntro) apIntro.textContent = "Private chat, updates, and support — just you and the Primal Lab team.";
+
+      let chat = null;
+      try {
+        chat = await ensureChat(currentUser);
+      } catch (err) {
+        console.error("Ensure athlete chat error:", err);
+        apStatus.textContent = "Chat unavailable";
+        apStatus.className = "ap-pill bad";
+        messagesEl.innerHTML =
+          "<div class='ap-empty'>Chat isn’t set up yet. Ask the admin to run <strong>supabase/athlete_chat.sql</strong> in Supabase SQL Editor.</div>";
+        composer.classList.add("disabled");
+        composer.querySelector("button").disabled = true;
+        input.disabled = true;
+        showToast("Chat not available (missing setup)", "error");
+        return;
+      }
+
+      chatId = chat.id;
+
+      await loadMessages();
+
+      if (sub) {
+        try { await supabase.removeChannel(sub); } catch {}
+      }
+
+      sub = supabase
+        .channel(`athlete_chat_${chatId}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "athlete_chat_messages", filter: `chat_id=eq.${chatId}` },
+          (payload) => {
+            const m = payload.new;
+            const mine = m.sender_id === currentUser.id;
+            messagesEl.querySelector(".ap-empty")?.remove();
+            messagesEl.appendChild(renderMessage(m, mine));
+            scrollToBottom();
+          }
+        )
+        .subscribe();
+    }
+
+    composer?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value;
+      if (!text.trim()) return;
+      input.value = "";
+      try {
+        await sendMessage(text);
+      } catch (err) {
+        console.error("Send athlete message error:", err);
+        showToast("Failed to send", "error");
+        input.value = text;
+      }
+    });
+
+    input?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        composer.requestSubmit();
+      }
+    });
+
+    closeChatBtn?.addEventListener("click", async () => {
+      try {
+        await setChatStatus("closed_athlete");
+        showToast("Chat closed on your end", "success");
+      } catch (err) {
+        console.error("Close chat error:", err);
+        showToast("Failed to close chat", "error");
+      }
+    });
+
+    logoutBtn?.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "index.html";
+    });
+
+    boot();
+  </script>
+
+  <script src="darkmode.js"></script>
+  <script>
+    const particlesContainer = document.getElementById('particles');
+    if (particlesContainer) {
+      for (let i = 0; i < 34; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (Math.random() * 12 + 8) + 's';
+        p.style.animationDelay = Math.random() * 5 + 's';
+        p.style.setProperty('--drift', (Math.random() * 200 - 100) + 'px');
+        particlesContainer.appendChild(p);
+      }
+    }
+  </script>
+</body>
+</html>

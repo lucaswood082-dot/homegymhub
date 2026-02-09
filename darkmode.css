@@ -177,6 +177,36 @@ body.dark-mode .admin-form-row select {
   border-color: rgba(148, 163, 184, 0.3);
 }
 
+body.dark-mode .admin-chat,
+body.dark-mode .admin-bubble,
+body.dark-mode .admin-chat-compose,
+.dark-mode .admin-chat,
+.dark-mode .admin-bubble,
+.dark-mode .admin-chat-compose {
+  background: rgba(17, 24, 39, 0.72);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #e5e7eb;
+}
+
+body.dark-mode .admin-bubble .body,
+body.dark-mode .admin-bubble .time,
+.dark-mode .admin-bubble .body,
+.dark-mode .admin-bubble .time {
+  color: rgba(226, 232, 240, 0.82);
+}
+
+body.dark-mode .admin-chat-compose input,
+.dark-mode .admin-chat-compose input {
+  background: rgba(15, 23, 42, 0.85);
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+body.dark-mode .admin-chat-compose input::placeholder,
+.dark-mode .admin-chat-compose input::placeholder {
+  color: rgba(226, 232, 240, 0.55);
+}
+
 body.dark-mode .about {
   background: rgba(15, 23, 42, 0.7);
 }
@@ -835,6 +865,210 @@ body.dark-mode .dark-toggle {
 body.dark-mode .slider {
   background: rgba(148, 163, 184, 0.25);
   box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.3);
+}
+
+/* Athletes page */
+body.dark-mode .ath-hero-inner,
+body.dark-mode .ath-card,
+body.dark-mode .ath-search input,
+body.dark-mode .ath-chip,
+body.dark-mode .ath-stat,
+.dark-mode .ath-hero-inner,
+.dark-mode .ath-card,
+.dark-mode .ath-search input,
+.dark-mode .ath-chip,
+.dark-mode .ath-stat {
+  background: rgba(17, 24, 39, 0.78);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #e5e7eb;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .ath-hero h1,
+.dark-mode .ath-hero h1 {
+  color: #f8fafc;
+}
+
+body.dark-mode .ath-hero-inner p,
+body.dark-mode .ath-meta,
+body.dark-mode .ath-card-body p,
+body.dark-mode .ath-roster-head p,
+body.dark-mode .ath-drawer-sub,
+.dark-mode .ath-hero-inner p,
+.dark-mode .ath-meta,
+.dark-mode .ath-card-body p,
+.dark-mode .ath-roster-head p,
+.dark-mode .ath-drawer-sub {
+  color: rgba(226, 232, 240, 0.82);
+}
+
+body.dark-mode .ath-name,
+body.dark-mode .ath-roster-head h2,
+.dark-mode .ath-name,
+.dark-mode .ath-roster-head h2 {
+  color: #e5e7eb;
+}
+
+body.dark-mode .ath-stat strong,
+.dark-mode .ath-stat strong {
+  color: #f8fafc;
+}
+
+body.dark-mode .ath-stat span,
+.dark-mode .ath-stat span {
+  color: rgba(226, 232, 240, 0.74);
+}
+
+body.dark-mode .ath-field label,
+body.dark-mode .ath-eyebrow,
+.dark-mode .ath-field label,
+.dark-mode .ath-eyebrow {
+  color: rgba(226, 232, 240, 0.78);
+}
+
+body.dark-mode .ath-eyebrow,
+.dark-mode .ath-eyebrow {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+body.dark-mode .ath-field input,
+body.dark-mode .ath-field select,
+body.dark-mode .ath-field textarea,
+.dark-mode .ath-field input,
+.dark-mode .ath-field select,
+.dark-mode .ath-field textarea {
+  background: rgba(15, 23, 42, 0.85);
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+body.dark-mode .ath-search input::placeholder,
+.dark-mode .ath-search input::placeholder,
+body.dark-mode .ath-field input::placeholder,
+body.dark-mode .ath-field textarea::placeholder,
+.dark-mode .ath-field input::placeholder,
+.dark-mode .ath-field textarea::placeholder {
+  color: rgba(226, 232, 240, 0.55);
+}
+
+body.dark-mode .ath-counter,
+.dark-mode .ath-counter {
+  color: rgba(226, 232, 240, 0.68);
+}
+
+body.dark-mode .ath-loading,
+.dark-mode .ath-loading {
+  background: rgba(17, 24, 39, 0.72);
+  border-color: rgba(148, 163, 184, 0.22);
+  color: #cbd5e1;
+}
+
+body.dark-mode .ath-overlay,
+.dark-mode .ath-overlay {
+  background: rgba(2, 6, 23, 0.65);
+}
+
+body.dark-mode .ath-drawer,
+.dark-mode .ath-drawer {
+  background: rgba(15, 23, 42, 0.92);
+  border-left-color: rgba(148, 163, 184, 0.18);
+  color: #e5e7eb;
+}
+
+body.dark-mode .ath-drawer-title,
+.dark-mode .ath-drawer-title {
+  color: #e5e7eb;
+}
+
+body.dark-mode .ath-status-pill,
+.dark-mode .ath-status-pill {
+  background: rgba(15, 23, 42, 0.75);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: #cbd5e1;
+}
+
+/* Athlete Portal */
+body.dark-mode .ap-hero-inner,
+body.dark-mode .ap-chat-card,
+body.dark-mode .ap-bubble,
+body.dark-mode .ap-composer,
+.dark-mode .ap-hero-inner,
+.dark-mode .ap-chat-card,
+.dark-mode .ap-bubble,
+.dark-mode .ap-composer {
+  background: rgba(17, 24, 39, 0.78);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #e5e7eb;
+}
+
+body.dark-mode .ap-hero h1,
+body.dark-mode .ap-chat-title,
+.dark-mode .ap-hero h1,
+.dark-mode .ap-chat-title {
+  color: #f8fafc;
+}
+
+body.dark-mode .ap-hero p,
+body.dark-mode .ap-chat-sub,
+body.dark-mode .ap-body,
+body.dark-mode .ap-time,
+.dark-mode .ap-hero p,
+.dark-mode .ap-chat-sub,
+.dark-mode .ap-body,
+.dark-mode .ap-time {
+  color: rgba(226, 232, 240, 0.82);
+}
+
+body.dark-mode .ap-welcome,
+.dark-mode .ap-welcome {
+  background: linear-gradient(135deg, rgba(31, 157, 98, 0.18), rgba(47, 199, 119, 0.08));
+  border-color: rgba(47, 199, 119, 0.28);
+}
+
+body.dark-mode .ap-welcome-title,
+.dark-mode .ap-welcome-title {
+  color: #f8fafc;
+}
+
+body.dark-mode .ap-welcome-body,
+.dark-mode .ap-welcome-body {
+  color: rgba(226, 232, 240, 0.82);
+}
+
+body.dark-mode .ap-loading,
+body.dark-mode .ap-empty,
+.dark-mode .ap-loading,
+.dark-mode .ap-empty {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: rgba(148, 163, 184, 0.22);
+  color: rgba(226, 232, 240, 0.82);
+}
+
+body.dark-mode .ap-composer input,
+.dark-mode .ap-composer input {
+  background: rgba(15, 23, 42, 0.85);
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+body.dark-mode .ap-composer input::placeholder,
+.dark-mode .ap-composer input::placeholder {
+  color: rgba(226, 232, 240, 0.55);
+}
+
+body.dark-mode .ap-pill,
+.dark-mode .ap-pill {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: rgba(226, 232, 240, 0.86);
+}
+
+body.dark-mode .ath-chip.active,
+.dark-mode .ath-chip.active {
+  border-color: rgba(47, 199, 119, 0.55);
+  background: linear-gradient(135deg, rgba(31, 157, 98, 0.26), rgba(47, 199, 119, 0.18));
+  color: #f8fafc;
 }
 
 body.dark-mode .slider::before {
