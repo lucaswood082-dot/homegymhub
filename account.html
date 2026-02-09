@@ -1,24 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    (function () {
+      try {
+        const isDark = localStorage.getItem("darkMode") === "true";
+        const bg = isDark ? "#0f172a" : "#f6fff9";
+        document.write(`<style>html,body{background:var(--page-bg, ${bg}) !important;}</style>`);
+        if (isDark) document.documentElement.classList.add("dark-mode");
+        document.documentElement.style.setProperty("--page-bg", bg);
+        document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+      } catch (e) {}
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Account | Primal Lab</title>
   <link rel="stylesheet" href="account.css">
   <link rel="stylesheet" href="darkmode.css">
-  <style>
-    html { background: #f6fff9; }
-    body { background: #f6fff9; }
+  <style id="prepaint">
+    html, body { background: var(--page-bg, #f6fff9); }
   </style>
   <script>
     (function () {
       try {
         const isDark = localStorage.getItem("darkMode") === "true";
         document.documentElement.classList.toggle("dark-mode", isDark);
-        document.documentElement.style.background = isDark ? "#0f172a" : "#f6fff9";
+        document.documentElement.style.setProperty("--page-bg", isDark ? "#0f172a" : "#f6fff9");
         document.documentElement.style.colorScheme = isDark ? "dark" : "light";
         document.addEventListener("DOMContentLoaded", () => {
           document.body.classList.toggle("dark-mode", isDark);
+          document.body.style.background = getComputedStyle(document.documentElement).getPropertyValue("--page-bg");
         });
       } catch (e) {}
     })();
@@ -198,20 +210,22 @@
       const { data } = supabase.storage
         .from('profile-images')
         .getPublicUrl(path);
-      
-      return data.publicUrl;
+
+      return `${data.publicUrl}?v=${Date.now()}`;
     }
 
     // Upload image to Supabase Storage
     async function uploadProfileImage(file, userId) {
       try {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${userId}/profile.${fileExt}`;
+        const fileName = `${userId}/profile-${Date.now()}.${fileExt}`;
         
         // Delete old image if it exists
-        await supabase.storage
-          .from('profile-images')
-          .remove([fileName]);
+        if (currentProfile?.profile_image_url) {
+          await supabase.storage
+            .from('profile-images')
+            .remove([currentProfile.profile_image_url]);
+        }
         
         // Upload new image
         const { data, error } = await supabase.storage
@@ -584,8 +598,9 @@
     if (darkToggle) {
       darkToggle.checked = localStorage.getItem("darkMode") === "true";
       darkToggle.addEventListener("change", () => {
-        localStorage.setItem("darkMode", darkToggle.checked ? "true" : "false");
-        document.body.classList.toggle("dark-mode", darkToggle.checked);
+        const isDark = darkToggle.checked;
+        localStorage.setItem("darkMode", isDark ? "true" : "false");
+        if (typeof window.applyTheme === "function") window.applyTheme(isDark);
       });
     }
   </script>

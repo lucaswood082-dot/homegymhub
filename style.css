@@ -22,7 +22,7 @@
 }
 
 html {
-  background: #f6fff9;
+  background: var(--page-bg, #0f172a);
 }
 
 body {
@@ -39,14 +39,14 @@ body {
 
 body.planner-page {
   position: relative;
-  background: #f7fbf8;
+  background: var(--page-bg, #f6fff9);
 }
 
 body.planner-page::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: linear-gradient(135deg, #f6fff9 0%, #e7fbf1 35%, #bfeedd 70%, #6bd5ab 100%);
+  background: linear-gradient(135deg, var(--page-bg, #f6fff9) 0%, #e7fbf1 35%, #bfeedd 70%, #6bd5ab 100%);
   background-size: 200% 200%;
   animation: plannerGradient 22s ease infinite;
   z-index: -2;

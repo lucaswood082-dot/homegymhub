@@ -13,9 +13,21 @@ html, body {
   width: 100%; 
   overflow-x: hidden; 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f6fff9; 
+  background: var(--page-bg, #f6fff9); 
   color: #1a1a1a; 
   scroll-behavior: smooth; 
+}
+
+html.dark-mode,
+body.dark-mode,
+html[data-theme="dark"] body,
+html[data-theme="dark"] {
+  background: #0f172a !important;
+}
+
+html[data-theme="light"] body,
+html[data-theme="light"] {
+  background: #f6fff9 !important;
 }
 
 /* Animated gradient background */
@@ -30,6 +42,26 @@ html, body {
   animation: gradientShift 20s ease infinite;
   z-index: -2;
   opacity: 0.7;
+}
+
+body.dark-mode .bg-gradient,
+.dark-mode .bg-gradient,
+html[data-theme="dark"] .bg-gradient {
+  background: linear-gradient(135deg, #0b1220 0%, #0f172a 25%, #0b1b2e 50%, #0f2a2a 75%, #0b1220 100%) !important;
+  opacity: 1 !important;
+}
+
+body.dark-mode .bg-gradient.dark,
+.dark-mode .bg-gradient.dark,
+html[data-theme="dark"] .bg-gradient.dark {
+  background: linear-gradient(135deg, #0b1220 0%, #0f172a 25%, #0b1b2e 50%, #0f2a2a 75%, #0b1220 100%) !important;
+  opacity: 1 !important;
+}
+
+body:not(.dark-mode) .bg-gradient,
+html[data-theme="light"] .bg-gradient {
+  background: linear-gradient(135deg, #fff 0%, #e9fbf2 20%, #c9f3df 40%, #5ad9a5 60%, #c9f3df 80%, #fff 100%) !important;
+  opacity: 0.7 !important;
 }
 
 @keyframes gradientShift {
@@ -248,16 +280,59 @@ html, body {
   z-index: 2;
 }
 
+/* THEME VARIABLES */
+:root {
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(255, 107, 53, 0.2);
+  --card-shadow: 0 30px 80px rgba(255, 107, 53, 0.15);
+}
+
 /* PROFILE CARD - CENTER */
 .profile-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--card-bg);
   border-radius: 30px;
   padding: 3rem;
-  border: 2px solid rgba(255, 107, 53, 0.2);
-  box-shadow: 0 30px 80px rgba(255, 107, 53, 0.15);
+  border: 2px solid var(--card-border);
+  box-shadow: var(--card-shadow);
   backdrop-filter: blur(20px);
   animation: fadeUp 0.6s ease;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+html.dark-mode .profile-card,
+body.dark-mode .profile-card,
+.dark-mode .profile-card {
+  background: rgba(17, 24, 39, 0.86) !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
+  box-shadow: 0 22px 55px rgba(3, 10, 16, 0.55) !important;
+}
+
+.profile-card.force-dark,
+.side-card.force-dark {
+  background: rgba(17, 24, 39, 0.86) !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
+  box-shadow: 0 22px 55px rgba(3, 10, 16, 0.55) !important;
+}
+
+.profile-card.force-light,
+.side-card.force-light {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(255, 107, 53, 0.2) !important;
+  box-shadow: 0 30px 80px rgba(255, 107, 53, 0.15) !important;
+}
+
+html[data-theme="dark"] .profile-card,
+html[data-theme="dark"] .side-card {
+  background: rgba(17, 24, 39, 0.86) !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
+  box-shadow: 0 22px 55px rgba(3, 10, 16, 0.55) !important;
+}
+
+html[data-theme="light"] .profile-card,
+html[data-theme="light"] .side-card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(255, 107, 53, 0.2) !important;
+  box-shadow: 0 30px 80px rgba(255, 107, 53, 0.15) !important;
 }
 
 .dark-toggle {
@@ -533,11 +608,11 @@ html, body {
 
 /* SIDE CARDS */
 .side-card {
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--card-bg);
   border-radius: 25px;
   padding: 2rem;
-  border: 2px solid rgba(255, 107, 53, 0.2);
-  box-shadow: 0 15px 50px rgba(255, 107, 53, 0.1);
+  border: 2px solid var(--card-border);
+  box-shadow: var(--card-shadow);
   backdrop-filter: blur(20px);
   animation: fadeUp 0.6s ease;
   transition: all 0.3s ease;

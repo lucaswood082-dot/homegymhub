@@ -1,23 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background:var(--page-bg, #0f172a);">
 <head>
+  <script>
+    (function () {
+      try {
+        const isDark = localStorage.getItem("darkMode") === "true";
+        const bg = isDark ? "#0f172a" : "#f6fff9";
+        document.write(`<style>html,body{background:var(--page-bg, ${bg}) !important;}</style>`);
+        if (isDark) document.documentElement.classList.add("dark-mode");
+        document.documentElement.style.setProperty("--page-bg", bg);
+        document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+      } catch (e) {}
+    })();
+  </script>
   <meta charset="UTF-8" />
   <title>Primal Lab Planner</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="darkmode.css" />
-  <style>
-    html { background: #f6fff9; }
-    body { background: #f6fff9; }
+  <style id="prepaint">
+    html, body { background: var(--page-bg, #0f172a); }
+
+    /* Planner flash-guard: ensure key UI surfaces render dark immediately when html.dark-mode is present,
+       even before external CSS finishes loading. Keep this small + aligned with darkmode.css. */
+    html.dark-mode body.planner-page { background: var(--page-bg, #0f172a); }
+    html.dark-mode body.planner-page::before {
+      background: linear-gradient(135deg, #0b1220 0%, #0f172a 35%, #0b1b2e 70%, #0f2a2a 100%);
+      opacity: 0.92;
+    }
+    html.dark-mode body.planner-page::after {
+      background: radial-gradient(circle, rgba(47,199,119,0.18), rgba(47,199,119,0));
+      opacity: 0.9;
+    }
+
+    html.dark-mode body.planner-page .header {
+      background: rgba(15, 23, 42, 0.78);
+      border-bottom-color: rgba(148, 163, 184, 0.18);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    html.dark-mode body.planner-page .sidebar-left,
+    html.dark-mode body.planner-page .search,
+    html.dark-mode body.planner-page .panel,
+    html.dark-mode body.planner-page .design-tabs,
+    html.dark-mode body.planner-page .snap,
+    html.dark-mode body.planner-page .view-toggle,
+    html.dark-mode body.planner-page .modal-card,
+    html.dark-mode body.planner-page .tool-modal,
+    html.dark-mode body.planner-page .custom-shape-panel {
+      background: rgba(17, 24, 39, 0.72);
+      border-color: rgba(148, 163, 184, 0.18);
+      color: #e5e7eb;
+    }
+
+    html.dark-mode body.planner-page .canvas-wrap { background: rgba(15, 23, 42, 0.45); }
+
+    html.dark-mode body.planner-page #grid {
+      background-color: #0b1220;
+      background-image:
+        linear-gradient(to right, rgba(148, 163, 184, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.18) 1px, transparent 1px);
+      border-color: rgba(226, 232, 240, 0.7);
+    }
+
+    html.dark-mode body.planner-page input,
+    html.dark-mode body.planner-page textarea,
+    html.dark-mode body.planner-page select {
+      background: rgba(15, 23, 42, 0.85);
+      color: #e5e7eb;
+      border-color: rgba(148, 163, 184, 0.28);
+    }
+
+    html.dark-mode body.planner-page .header-btn,
+    html.dark-mode body.planner-page .view-btn,
+    html.dark-mode body.planner-page .tool-tab {
+      background: rgba(15, 23, 42, 0.8);
+      color: #e5e7eb;
+      border-color: rgba(148, 163, 184, 0.28);
+    }
   </style>
   <script>
     (function () {
       try {
         const isDark = localStorage.getItem("darkMode") === "true";
         document.documentElement.classList.toggle("dark-mode", isDark);
-        document.documentElement.style.background = isDark ? "#0f172a" : "#f6fff9";
+        document.documentElement.style.setProperty("--page-bg", isDark ? "#0f172a" : "#f6fff9");
         document.documentElement.style.colorScheme = isDark ? "dark" : "light";
         document.addEventListener("DOMContentLoaded", () => {
           document.body.classList.toggle("dark-mode", isDark);
+          document.body.style.background = getComputedStyle(document.documentElement).getPropertyValue("--page-bg");
         });
       } catch (e) {}
     })();
@@ -25,7 +95,7 @@
 </head>
 
 
-<body class="planner-page">
+<body class="planner-page" style="background:var(--page-bg, #0f172a);">
   <div id="particles"></div>
 
 

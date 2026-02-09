@@ -104,6 +104,7 @@ let loadingDesign = false;
 let pendingDeleteId = null;
 let useSupabaseDesigns = false;
 let currentUserId = null;
+const LAST_DESIGN_KEY_PREFIX = "pl_last_design_";
 
 let selectedItems = new Set();
 let selectionBox = null;
@@ -941,12 +942,14 @@ function getRotationDeg(el) {
 function serializeDesign() {
   const items = Array.from(document.querySelectorAll(".equipment")).map((el) => {
     const isCircle = el.style.borderRadius === "50%";
+    const xPx = parseFloat(el.style.left) || 0;
+    const yPx = parseFloat(el.style.top) || 0;
     return {
       name: el.dataset.name || "",
       w: Number(el.dataset.w) || 0,
       h: Number(el.dataset.h) || 0,
-      x: parseFloat(el.style.left) || 0,
-      y: parseFloat(el.style.top) || 0,
+      x: xPx * metersPerPixelX,
+      y: yPx * metersPerPixelY,
       rot: getRotationDeg(el),
       layer: el.dataset.layer || "equipment",
       locked: el.dataset.locked === "true",
@@ -964,19 +967,33 @@ function serializeDesign() {
 function applyDesign(data) {
   if (!grid) return;
   loadingDesign = true;
+  const prevSnap = snapEnabled;
+  snapEnabled = false;
   grid.querySelectorAll(".equipment, .selection-box, .wall-preview").forEach((el) => el.remove());
   if (drawLayer && !grid.contains(drawLayer)) {
     grid.appendChild(drawLayer);
   }
-  if (roomW) roomW.value = data.roomW ?? 6;
-  if (roomL) roomL.value = data.roomL ?? 4;
+  const safeRoomW = Number(data.roomW);
+  const safeRoomL = Number(data.roomL);
+  if (roomW) roomW.value = safeRoomW > 0 ? safeRoomW : 6;
+  if (roomL) roomL.value = safeRoomL > 0 ? safeRoomL : 4;
   syncGridScale();
+
+  const roomWVal = Number(data.roomW ?? roomW?.value) || 6;
+  const roomLVal = Number(data.roomL ?? roomL?.value) || 4;
 
   (data.items || []).forEach((item) => {
     const pxW = item.w / metersPerPixelX;
     const pxH = item.h / metersPerPixelY;
-    const cx = item.x + pxW / 2;
-    const cy = item.y + pxH / 2;
+    let xMeters = Number(item.x) || 0;
+    let yMeters = Number(item.y) || 0;
+    // Back-compat: if stored in px, convert to meters
+    if (xMeters > roomWVal * 1.2 || yMeters > roomLVal * 1.2) {
+      xMeters = xMeters * metersPerPixelX;
+      yMeters = yMeters * metersPerPixelY;
+    }
+    const cx = (xMeters / metersPerPixelX) + pxW / 2;
+    const cy = (yMeters / metersPerPixelY) + pxH / 2;
     const el = spawn(item.name, item.w, item.h, cx, cy, item.layer);
     if (!el) return;
     el.style.transform = `rotate(${item.rot || 0}deg)`;
@@ -990,6 +1007,7 @@ function applyDesign(data) {
   });
 
   applyViewFilter();
+  snapEnabled = prevSnap;
   loadingDesign = false;
 }
 
@@ -1052,6 +1070,10 @@ function switchDesign(id) {
   if (id === activeDesignId) return;
   saveCurrentDesign();
   activeDesignId = id;
+  try {
+    const key = `${LAST_DESIGN_KEY_PREFIX}${currentUserId || "local"}`;
+    localStorage.setItem(key, activeDesignId);
+  } catch {}
   const design = designs.find((d) => d.id === id);
   if (design) applyDesign(design);
   renderTabs();
@@ -1087,6 +1109,10 @@ async function initDesignTabsAsync() {
   useSupabaseDesigns = false;
   designs = [{ id: generateId(), name: "Design 1", roomW: 6, roomL: 4, items: [] }];
   activeDesignId = designs[0].id;
+  try {
+    const key = `${LAST_DESIGN_KEY_PREFIX}local`;
+    localStorage.setItem(key, activeDesignId);
+  } catch {}
   renderTabs();
   applyDesign(designs[0]);
   handleMarketplaceImport();
@@ -1176,6 +1202,7 @@ async function loadDesignsFromSupabase() {
   const { data, error } = await client
     .from("user_designs")
     .select("id, name, room_w, room_l, items")
+    .eq("user_id", currentUserId)
     .order("updated_at", { ascending: false });
   if (error) {
     showToast("Failed to load your designs");
@@ -1184,8 +1211,8 @@ async function loadDesignsFromSupabase() {
   designs = (data || []).map((row) => ({
     id: row.id,
     name: row.name,
-    roomW: Number(row.room_w),
-    roomL: Number(row.room_l),
+    roomW: Number(row.room_w) > 0 ? Number(row.room_w) : 6,
+    roomL: Number(row.room_l) > 0 ? Number(row.room_l) : 4,
     items: row.items || []
   }));
   if (!designs.length) {
@@ -1198,9 +1225,17 @@ async function loadDesignsFromSupabase() {
     await upsertDesignSupabase(seed);
     return;
   }
-  activeDesignId = designs[0].id;
+  let preferred = null;
+  try {
+    const key = `${LAST_DESIGN_KEY_PREFIX}${currentUserId}`;
+    const lastId = localStorage.getItem(key);
+    preferred = designs.find((d) => d.id === lastId) || designs[0];
+  } catch {
+    preferred = designs[0];
+  }
+  activeDesignId = preferred.id;
   renderTabs();
-  applyDesign(designs[0]);
+  applyDesign(preferred);
 }
 
 async function upsertDesignSupabase(design) {
@@ -1208,6 +1243,7 @@ async function upsertDesignSupabase(design) {
   if (!client || !currentUserId || !design) return;
   await client.from("user_designs").upsert({
     id: design.id,
+    user_id: currentUserId,
     name: design.name,
     room_w: Number(design.roomW) || 6,
     room_l: Number(design.roomL) || 4,
@@ -1606,7 +1642,7 @@ function handleSaveName() {
   if (isCreate) {
     saveCurrentDesign();
     const id = generateId();
-    const design = { id, name, roomW: Number(roomW?.value) || 6, roomL: Number(roomL?.value) || 4, items: [] };
+    const design = { id, name, roomW: 6, roomL: 4, items: [] };
     designs.push(design);
     activeDesignId = id;
     applyDesign(design);

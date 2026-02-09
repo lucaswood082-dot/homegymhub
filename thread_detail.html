@@ -175,7 +175,7 @@ function getPublicImageUrl(path) {
     .from('profile-images')
     .getPublicUrl(path);
   
-  return data.publicUrl;
+  return `${data.publicUrl}?v=${Date.now()}`;
 }
 
 function getReplyImageUrl(path) {
